@@ -381,7 +381,7 @@ int dwt_transform(struct transform_t *transform)
 			dwt_transform_line(data + y*width, width_j, 1);
 		}
 		/* for each column */
-		for(x = 0; x < width; ++x) {
+		for(x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
 			dwt_transform_line(data + x, height_j, width);
 		}
