@@ -311,6 +311,8 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 	int *D, *C;
 	size_t n;
 
+	assert( (size&1) == 0 );
+
 	line_ = malloc( size * sizeof(int) );
 
 	if (NULL == line_) {
@@ -432,6 +434,7 @@ int main(int argc, char *argv[])
 	}
 
 	/** (2) DWT */
+
 	if (dwt_create(&frame, &transform)) {
 		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
 		return EXIT_FAILURE;
@@ -443,9 +446,10 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "dwt3.pgm", 2);
 
-	dwt_destroy(&transform);
-
 	/** (3) BPE */
+
+	/** (2) release resources */
+	dwt_destroy(&transform);
 
 	/** (1) free image */
 	frame_free(&frame);
