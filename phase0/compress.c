@@ -322,6 +322,10 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 
 	/* lifting */
 
+	/* coefficients: D = H = odd indices, C = L = even indices */
+
+	/* NOTE: per C89 standard, the right shift of negative signed type is implementation-defined */
+
 	D[0] = line[stride*1] - 0/*FIXME*/;
 
 	for (n = 1; n <= size/2-3; ++n) {
@@ -337,8 +341,6 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 	for (n = 1; n <= size/2-1; ++n) {
 		C[n] = line[stride*(2*n)] - 0/*FIXME*/;
 	}
-
-	/* coefficients: D = H = odd indices, C = L = even indices */
 
 	/* unpack */
 	for (n = 0; n < size; ++n) {
