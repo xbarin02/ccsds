@@ -196,9 +196,37 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
+struct transform_t {
+	size_t width;
+	size_t height;
+	int *data;
+};
+
+int dwt(const struct frame_t *frame, struct transform_t *transform)
+{
+	size_t width;
+	size_t height;
+	int *data;
+
+	assert( frame );
+
+	/* the image dimensions be integer multiples of eight */
+	width = (frame->width + 7) / 8 * 8;
+	height = (frame->height + 7) / 8 * 8;
+
+	data = malloc( width * height );
+
+	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
+
+	/* (2.2) forward two-dimensional transform */
+
+	return RET_SUCCESS;
+}
+
 int main(int argc, char *argv[])
 {
 	struct frame_t frame;
+	struct transform_t transform;
 
 	if (argc < 2) {
 		fprintf(stderr, "[ERROR] argument expected\n");
@@ -213,17 +241,18 @@ int main(int argc, char *argv[])
 
 	fprintf(stdout, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
 
-	if( frame.width > (1<<20) || frame.width < 17 ) {
+	if ( frame.width > (1<<20) || frame.width < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image width\n");
 		return EXIT_FAILURE;
 	}
 
-	if( frame.height < 17 ) {
+	if ( frame.height < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image height\n");
 		return EXIT_FAILURE;
 	}
 
 	/** (2) DWT */
+	dwt(&frame, &transform);
 
 	/** (3) BPE */
 
