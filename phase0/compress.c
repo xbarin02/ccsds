@@ -55,7 +55,6 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 {
 	FILE *stream;
 	char magic[2];
-	int retval;
 	unsigned long maxval;
 	size_t y;
 	size_t width;
@@ -80,8 +79,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	/* (1.2) read header */
 
-	retval = fscanf(stream, "%c%c", magic, magic+1);
-	if (retval != 2) {
+	if (fscanf(stream, "%c%c", magic, magic+1) != 2) {
 		fprintf(stderr, "[ERROR] cannot read a magic number\n");
 		return RET_FAILURE_FILE_IO;
 	}
@@ -109,8 +107,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	}
 
 	/* NOTE: C89 does not support 'z' length modifier */
-	retval = fscanf(stream, " %lu", &width);
-	if (retval != 1) {
+	if (fscanf(stream, " %lu", &width) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a width\n");
 		return RET_FAILURE_FILE_IO;
 	}
@@ -123,8 +120,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		ungetc(c, stream);
 	}
 
-	retval = fscanf(stream, " %lu", &height);
-	if (retval != 1) {
+	if (fscanf(stream, " %lu", &height) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a height\n");
 		return RET_FAILURE_FILE_IO;
 	}
@@ -137,8 +133,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		ungetc(c, stream);
 	}
 
-	retval = fscanf(stream, " %lu", &maxval);
-	if (retval != 1) {
+	if (fscanf(stream, " %lu", &maxval) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a maximum gray value\n");
 		return RET_FAILURE_FILE_IO;
 	}
