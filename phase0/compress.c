@@ -324,7 +324,7 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 
 	/* coefficients: D = H = odd indices, C = L = even indices */
 
-	/* NOTE: per C89 standard, the right shift of negative signed type is implementation-defined */
+	/* FIXME: per C89 standard, the right shift of negative signed type is implementation-defined */
 
 	D[0] = line[stride*1] - ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 )/*FIXME*/;
 
@@ -332,14 +332,14 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 		D[n] = line[stride*(2*n+1)] - ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 )/*FIXME*/;
 	}
 
-	D[size/2-2] = line[stride*(size-3)] - 0/*FIXME*/;
+	D[size/2-2] = line[stride*(size-3)] - ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) -1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 )/*FIXME*/;
 
-	D[size/2-1] = line[stride*(size-1)] - 0/*FIXME*/;
+	D[size/2-1] = line[stride*(size-1)] - ( ( 9*line[stride*(size-2)] -1*line[stride*(size-4)] + 4 ) >> 3 )/*FIXME*/;
 
-	C[0] = line[stride*0] - 0/*FIXME*/;
+	C[0] = line[stride*0] - ( ( -D[0] + 1 ) >> 1 )/*FIXME*/;
 
 	for (n = 1; n <= size/2-1; ++n) {
-		C[n] = line[stride*(2*n)] - 0/*FIXME*/;
+		C[n] = line[stride*(2*n)] - ( ( -(D[n-1]+D[n]) + 2 ) >> 2 )/*FIXME*/;
 	}
 
 	/* unpack */
