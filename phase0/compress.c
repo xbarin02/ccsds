@@ -31,6 +31,7 @@ struct frame_t frame_load_pgm(const char *path)
 	unsigned long maxval;
 	size_t y;
 	void *data;
+	int c;
 
 	assert( path );
 
@@ -70,7 +71,13 @@ struct frame_t frame_load_pgm(const char *path)
 			return frame;
 	}
 
-	/* TODO look ahead for a comment, ungetc */
+	/* look ahead for a comment, ungetc */
+	if( (c = getc(stream)) == '#' ) {
+		char com[4096];
+		fgets(com, 4096, stream);
+	} else {
+		ungetc(c, stream);
+	}
 
 	/* NOTE: C89 does not support 'z' length modifier */
 	retval = fscanf(stream, " %lu", &frame.width);
@@ -79,7 +86,13 @@ struct frame_t frame_load_pgm(const char *path)
 		return frame;
 	}
 
-	/* TODO look ahead for a comment, ungetc */
+	/* look ahead for a comment, ungetc */
+	if( (c = getc(stream)) == '#' ) {
+		char com[4096];
+		fgets(com, 4096, stream);
+	} else {
+		ungetc(c, stream);
+	}
 
 	retval = fscanf(stream, " %lu", &frame.height);
 	if (retval != 1) {
@@ -87,7 +100,13 @@ struct frame_t frame_load_pgm(const char *path)
 		return frame;
 	}
 
-	/* TODO look ahead for a comment, ungetc */
+	/* look ahead for a comment, ungetc */
+	if( (c = getc(stream)) == '#' ) {
+		char com[4096];
+		fgets(com, 4096, stream);
+	} else {
+		ungetc(c, stream);
+	}
 
 	retval = fscanf(stream, " %lu", &maxval);
 	if (retval != 1) {
@@ -104,7 +123,13 @@ struct frame_t frame_load_pgm(const char *path)
 			return frame;
 	}
 
-	/* TODO look ahead for a comment, ungetc */
+	/* look ahead for a comment, ungetc */
+	if( (c = getc(stream)) == '#' ) {
+		char com[4096];
+		fgets(com, 4096, stream);
+	} else {
+		ungetc(c, stream);
+	}
 
 	/* consume a single whitespace character */
 	if ( !isspace(fgetc(stream)) ) {
@@ -155,7 +180,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	(void) frame;
+	fprintf(stdout, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
 
 	/** (2) DWT */
 
