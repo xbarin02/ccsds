@@ -256,7 +256,31 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 
 int dwt_transform(struct transform_t *transform)
 {
+	int j;
+	size_t width, height;
+	size_t y, x;
+
+	assert( transform );
+
+	width = transform->width;
+	height = transform->height;
+
+	/* size_t is unsigned integer type */
+	assert( 0 == (width & 7) && 0 == (height & 7) );
+
 	/* (2.2) forward two-dimensional transform */
+
+	/* for each level */
+	for(j = 0; j < 3; ++j) {
+		/* for each row */
+		for(y = 0; y < height; ++y) {
+			/* invoke one-dimensional transform */
+		}
+		/* for each column */
+		for(x = 0; x < width; ++x) {
+			/* invoke one-dimensional transform */
+		}
+	}
 
 	return RET_SUCCESS;
 }
