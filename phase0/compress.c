@@ -290,7 +290,7 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 
 			magnitude /= factor;
 
-			assert( magnitude > 0 && magnitude < 256 );
+			assert( magnitude >= 0 && magnitude < 256 );
 
 			c = (unsigned char)magnitude;
 
@@ -307,6 +307,46 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 
 int dwt_transform_line(int *line, size_t size, size_t stride)
 {
+	int *line_;
+	int *D, *C;
+	size_t n;
+
+	line_ = malloc( size * sizeof(int) );
+
+	if (NULL == line_) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	D = line_ + size/2;
+	C = line_;
+
+	/* lifting */
+
+	D[0] = line[stride*1] - 0/*FIXME*/;
+
+	for (n = 1; n <= size/2-3; ++n) {
+		D[n] = line[stride*(2*n+1)] - 0/*FIXME*/;
+	}
+
+	D[size/2-2] = line[stride*(size-3)] - 0/*FIXME*/;
+
+	D[size/2-1] = line[stride*(size-1)] - 0/*FIXME*/;
+
+	C[0] = line[stride*0] - 0/*FIXME*/;
+
+	for (n = 1; n <= size/2-1; ++n) {
+		C[n] = line[stride*(2*n)] - 0/*FIXME*/;
+	}
+
+	/* coefficients: D = H = odd indices, C = L = even indices */
+
+	/* unpack */
+	for (n = 0; n < size; ++n) {
+		line[stride*n] = line_[n];
+	}
+
+	free(line_);
+
 	return RET_SUCCESS;
 }
 
@@ -398,6 +438,8 @@ int main(int argc, char *argv[])
 	dwt_dump(&transform, "input.pgm", 1);
 
 	dwt_transform(&transform);
+
+	dwt_dump(&transform, "dwt3.pgm", 1);
 
 	dwt_destroy(&transform);
 
