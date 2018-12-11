@@ -14,18 +14,24 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+/**
+ * error codes
+ */
 enum return_t {
 	/* 0x0000 successful completion */
-	RET_SUCCESS                   = 0x0000,
+	RET_SUCCESS                   = 0x0000, /**< success */
 	/* 0x1xxx input/output errors */
-	RET_FAILURE_FILE_IO           = 0x1000, /* I/O error */
-	RET_FAILURE_FILE_UNSUPPORTED  = 0x1001, /* unsupported feature or file type */
-	RET_FAILURE_FILE_OPEN         = 0x1002, /* file open failure */
+	RET_FAILURE_FILE_IO           = 0x1000, /**< I/O error */
+	RET_FAILURE_FILE_UNSUPPORTED  = 0x1001, /**< unsupported feature or file type */
+	RET_FAILURE_FILE_OPEN         = 0x1002, /**< file open failure */
 	/* 0x2xxx memory errors */
-	RET_FAILURE_MEMORY_ALLOCATION = 0x2000, /* unable to allocate dynamic memory */
+	RET_FAILURE_MEMORY_ALLOCATION = 0x2000, /**< unable to allocate dynamic memory */
 	RET_LAST
 };
 
+/**
+ * image parameters and pointer to image data
+ */
 struct frame_t {
 	size_t width;  /**< number of columns, range [17; 1<<20] */
 	size_t height; /**< number of rows, range [17; infty) */
@@ -201,16 +207,26 @@ int main(int argc, char *argv[])
 
 	if (argc < 2) {
 		fprintf(stderr, "[ERROR] argument expected\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	/** (1) load input image */
 	if ( frame_load_pgm(&frame, argv[1]) ) {
 		fprintf(stderr, "[ERROR] unable to load an input raster\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	fprintf(stdout, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
+
+	if( frame.width > (1<<20) || frame.width < 17 ) {
+		fprintf(stderr, "[ERROR] unsupported image width\n");
+		return EXIT_FAILURE;
+	}
+
+	if( frame.height < 17 ) {
+		fprintf(stderr, "[ERROR] unsupported image height\n");
+		return EXIT_FAILURE;
+	}
 
 	/** (2) DWT */
 
@@ -219,5 +235,5 @@ int main(int argc, char *argv[])
 	/** (1) free image */
 	frame_free(&frame);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
