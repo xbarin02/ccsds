@@ -13,6 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <limits.h>
 
 /**
  * error codes
@@ -62,8 +63,6 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	size_t bpp;
 	void *data;
 	int c;
-
-	assert( path );
 
 	/* (1.1) open file */
 
@@ -254,6 +253,58 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+int dwt_dump(struct transform_t *transform, const char *path, int factor)
+{
+	FILE *stream;
+	size_t width, height;
+	size_t y, x;
+	int *data;
+
+	stream = fopen(path, "w");
+
+	if (NULL == stream) {
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	assert( transform );
+
+	width = transform->width;
+	height = transform->height;
+
+	if( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, 255UL) < 0 ) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	data = transform->data;
+
+	assert( data );
+
+	for(y = 0; y < height; ++y) {
+		for(x = 0; x < width; ++x) {
+			int rawval = *(data + y*width + x);
+			int magnitude = abs(rawval);
+			unsigned char c;
+
+			if( magnitude < 0 )
+				magnitude = INT_MAX;
+
+			magnitude /= factor;
+
+			assert( magnitude > 0 && magnitude < 256 );
+
+			c = (unsigned char)magnitude;
+
+			if( 1 != fwrite(&c, 1, 1, stream) ) {
+				return RET_FAILURE_FILE_IO;
+			}
+		}
+	}
+
+	fclose(stream);
+
+	return RET_SUCCESS;
+}
+
 int dwt_transform(struct transform_t *transform)
 {
 	int j;
@@ -329,6 +380,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
 		return EXIT_FAILURE;
 	}
+
+	dwt_dump(&transform, "input.pgm", 1);
 
 	dwt_transform(&transform);
 
