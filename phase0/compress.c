@@ -22,6 +22,17 @@ struct frame_t {
 	void *data;
 };
 
+int frame_free(struct frame_t *frame)
+{
+	assert( frame );
+
+	free(frame->data);
+
+	frame->data = NULL;
+
+	return 0;
+}
+
 struct frame_t frame_load_pgm(const char *path)
 {
 	FILE *stream;
@@ -187,6 +198,7 @@ int main(int argc, char *argv[])
 	/** (3) BPE */
 
 	/** (1) free image */
+	frame_free(&frame);
 
 	return 0;
 }
