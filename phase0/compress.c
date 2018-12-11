@@ -202,10 +202,10 @@ struct transform_t {
 	int *data;
 };
 
-int dwt(const struct frame_t *frame, struct transform_t *transform)
+int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 {
-	size_t width, height;
 	size_t width_, height_;
+	size_t width, height;
 	void *data_;
 	int *data;
 	size_t y, x;
@@ -224,6 +224,10 @@ int dwt(const struct frame_t *frame, struct transform_t *transform)
 
 	data = malloc( width * height * sizeof *data );
 
+	if (NULL == data) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
 	for (y = 0; y < height_; ++y) {
 		/* input data */
@@ -241,7 +245,29 @@ int dwt(const struct frame_t *frame, struct transform_t *transform)
 		memcpy(data + y*width, data + (y-1)*width, width * sizeof *data);
 	}
 
+	assert( transform );
+
+	transform->width = width;
+	transform->height = height;
+	transform->data = data;
+
+	return RET_SUCCESS;
+}
+
+int dwt_transform(struct transform_t *transform)
+{
 	/* (2.2) forward two-dimensional transform */
+
+	return RET_SUCCESS;
+}
+
+int dwt_destroy(struct transform_t *transform)
+{
+	assert( transform );
+
+	free(transform->data);
+
+	transform->data = NULL;
 
 	return RET_SUCCESS;
 }
@@ -275,7 +301,14 @@ int main(int argc, char *argv[])
 	}
 
 	/** (2) DWT */
-	dwt(&frame, &transform);
+	if (dwt_create(&frame, &transform)) {
+		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
+		return EXIT_FAILURE;
+	}
+
+	dwt_transform(&transform);
+
+	dwt_destroy(&transform);
 
 	/** (3) BPE */
 
