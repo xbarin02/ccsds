@@ -305,11 +305,17 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 	return RET_SUCCESS;
 }
 
+int dwt_transform_line(int *line, size_t size, size_t stride)
+{
+	return RET_SUCCESS;
+}
+
 int dwt_transform(struct transform_t *transform)
 {
 	int j;
 	size_t width, height;
 	size_t y, x;
+	int *data;
 
 	assert( transform );
 
@@ -319,17 +325,25 @@ int dwt_transform(struct transform_t *transform)
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
 
+	data = transform->data;
+
+	assert( data );
+
 	/* (2.2) forward two-dimensional transform */
 
 	/* for each level */
 	for(j = 0; j < 3; ++j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
 		/* for each row */
-		for(y = 0; y < height; ++y) {
+		for(y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
+			dwt_transform_line(data + y*width, width_j, 1);
 		}
 		/* for each column */
 		for(x = 0; x < width; ++x) {
 			/* invoke one-dimensional transform */
+			dwt_transform_line(data + x, height_j, width);
 		}
 	}
 
