@@ -204,19 +204,42 @@ struct transform_t {
 
 int dwt(const struct frame_t *frame, struct transform_t *transform)
 {
-	size_t width;
-	size_t height;
+	size_t width, height;
+	size_t width_, height_;
+	void *data_;
 	int *data;
+	size_t y, x;
 
 	assert( frame );
+
+	width_ = frame->width;
+	height_ = frame->height;
+	data_ = frame->data;
+
+	assert( data_ );
 
 	/* the image dimensions be integer multiples of eight */
 	width = (frame->width + 7) / 8 * 8;
 	height = (frame->height + 7) / 8 * 8;
 
-	data = malloc( width * height );
+	data = malloc( width * height * sizeof *data );
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
+	for (y = 0; y < height_; ++y) {
+		/* input data */
+		for (x = 0; x < width_; ++x) {
+			*(data + y*width + x) = *( (char *)data_ + y*width_ + x );
+		}
+		/* padding */
+		for (; x < width; ++x) {
+			*(data + y*width + x) = *( (char *)data_ + y*width_ + width_-1 );
+		}
+	}
+	/* padding */
+	for (; y < height; ++y) {
+		/* copy (y-1)-th row to y-th one */
+		memcpy(data + y*width, data + (y-1)*width, width * sizeof *data);
+	}
 
 	/* (2.2) forward two-dimensional transform */
 
