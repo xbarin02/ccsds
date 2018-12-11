@@ -326,10 +326,10 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 
 	/* NOTE: per C89 standard, the right shift of negative signed type is implementation-defined */
 
-	D[0] = line[stride*1] - 0/*FIXME*/;
+	D[0] = line[stride*1] - ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 )/*FIXME*/;
 
 	for (n = 1; n <= size/2-3; ++n) {
-		D[n] = line[stride*(2*n+1)] - 0/*FIXME*/;
+		D[n] = line[stride*(2*n+1)] - ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 )/*FIXME*/;
 	}
 
 	D[size/2-2] = line[stride*(size-3)] - 0/*FIXME*/;
@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
 
 	dwt_transform(&transform);
 
-	dwt_dump(&transform, "dwt3.pgm", 1);
+	dwt_dump(&transform, "dwt3.pgm", 2);
 
 	dwt_destroy(&transform);
 
