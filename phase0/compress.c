@@ -80,7 +80,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	/* (1.2) read header */
 
-	if (fscanf(stream, "%c%c", magic, magic+1) != 2) {
+	if (fscanf(stream, "%c%c ", magic, magic+1) != 2) {
 		fprintf(stderr, "[ERROR] cannot read a magic number\n");
 		return RET_FAILURE_FILE_IO;
 	}
@@ -108,7 +108,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	}
 
 	/* NOTE: C89 does not support 'z' length modifier */
-	if (fscanf(stream, " %lu", &width) != 1) {
+	if (fscanf(stream, " %lu ", &width) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a width\n");
 		return RET_FAILURE_FILE_IO;
 	}
@@ -121,7 +121,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		ungetc(c, stream);
 	}
 
-	if (fscanf(stream, " %lu", &height) != 1) {
+	if (fscanf(stream, " %lu ", &height) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a height\n");
 		return RET_FAILURE_FILE_IO;
 	}
@@ -148,6 +148,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 			return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
+	/* FIXME this consumens and pushes back the '\n', not the following '#' */
 	/* look ahead for a comment, ungetc */
 	if ( (c = getc(stream)) == '#' ) {
 		char com[4096];
