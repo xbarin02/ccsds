@@ -331,6 +331,8 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 
 	/* coefficients: D = H = odd indices, C = L = even indices */
 
+	assert( line );
+
 	/* FIXME: per C89 standard, the right shift of negative signed type is implementation-defined */
 
 	D[0] = line[stride*1] - ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 )/*FIXME*/;
@@ -359,6 +361,19 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
+int dwt_weight_line(int *line, size_t size, size_t stride, int weight)
+{
+	size_t n;
+
+	assert( line );
+
+	for (n = 0; n < size; ++n) {
+		line[stride*n] <<= weight;
+	}
+
+	return RET_SUCCESS;
+}
+
 int dwt_transform(struct transform_t *transform)
 {
 	int j;
@@ -381,22 +396,39 @@ int dwt_transform(struct transform_t *transform)
 	/* (2.2) forward two-dimensional transform */
 
 	/* for each level */
-	for(j = 0; j < 3; ++j) {
+	for (j = 0; j < 3; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
 
 		/* for each row */
-		for(y = 0; y < height_j; ++y) {
+		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
 			dwt_transform_line(data + y*width, width_j, 1);
 		}
 		/* for each column */
-		for(x = 0; x < width_j; ++x) {
+		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
 			dwt_transform_line(data + x, height_j, width);
 		}
 	}
 
-	/* TODO apply Subband Weights */
+	/* (2.3) apply Subband Weights */
+
+	for (j = 1; j < 4; ++j) {
+		size_t width_j = width>>j, height_j = height>>j;
+		/* HL (width_j, 0), LH (0, height_j) */
+		for (y = 0; y < height_j; ++y) {
+			dwt_weight_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
+			dwt_weight_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
+		}
+		/* HH (width_j, height_j) */
+		for (y = 0; y < height_j; ++y) {
+			dwt_weight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
+		}
+	}
+	/* LL (0,0) */
+	for (y = 0; y < height>>3; ++y) {
+		dwt_weight_line(data + (0+y)*width + 0, width>>3, 1, 3);
+	}
 
 	return RET_SUCCESS;
 }
@@ -451,7 +483,7 @@ int main(int argc, char *argv[])
 
 	dwt_transform(&transform);
 
-	dwt_dump(&transform, "dwt3.pgm", 2);
+	dwt_dump(&transform, "dwt3.pgm", 8);
 
 	/** (3) BPE */
 
