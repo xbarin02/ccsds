@@ -343,7 +343,7 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-	/* FIXME: per C89 standard, the right shift of negative signed type is implementation-defined */
+	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
 
 	D[0] = line[stride*1] - ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 );
 
@@ -458,6 +458,15 @@ int main(int argc, char *argv[])
 {
 	struct frame_t frame;
 	struct transform_t transform;
+
+	/*
+	 * NOTE The C standard states that the result of the >> operator is
+	 * implementation-defined if the left operand has a signed type and
+	 * a negative value. I have never seen the compiler that would
+	 * implement this differently than using an arithmetic right shift.
+	 * However, the following assert checks the sanity of this assumption.
+	 */
+	assert( -1 >> 1 == -1 );
 
 	if (argc < 2) {
 		fprintf(stderr, "[ERROR] argument expected\n");
