@@ -182,7 +182,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	for (y = 0; y < height; ++y) {
 		/* load a single row */
-		if( 1 != fread((unsigned char *)data + y*width, width, 1, stream) ) {
+		if ( 1 != fread((unsigned char *)data + y*width, width, 1, stream) ) {
 			fprintf(stderr, "[ERROR] end-of-file or error while reading a row\n");
 			return RET_FAILURE_FILE_IO;
 		}
@@ -285,7 +285,7 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 	width = transform->width;
 	height = transform->height;
 
-	if( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, 255UL) < 0 ) {
+	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, 255UL) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -293,13 +293,13 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 
 	assert( data );
 
-	for(y = 0; y < height; ++y) {
-		for(x = 0; x < width; ++x) {
+	for (y = 0; y < height; ++y) {
+		for (x = 0; x < width; ++x) {
 			int rawval = *(data + y*width + x);
 			int magnitude = abs(rawval);
 			unsigned char c;
 
-			if( magnitude < 0 )
+			if ( magnitude < 0 )
 				magnitude = INT_MAX;
 
 			magnitude /= factor;
@@ -308,7 +308,7 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 
 			c = (unsigned char)magnitude;
 
-			if( 1 != fwrite(&c, 1, 1, stream) ) {
+			if ( 1 != fwrite(&c, 1, 1, stream) ) {
 				return RET_FAILURE_FILE_IO;
 			}
 		}
