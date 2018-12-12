@@ -454,8 +454,26 @@ int dwt_destroy(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
-int bpe_encode(struct transform_t *transform)
+/**
+ * compression parameters
+ */
+struct parameters_t {
+	 /**
+	  * A segment is defined as a group of S consecutive blocks.
+	  * 16 \le S \le 2^20
+	  */
+	unsigned S;
+};
+
+int bpe_encode(const struct transform_t *transform, const struct parameters_t *parameters)
 {
+	/* LL band size */
+	size_t width_s = transform->width >> 3;
+	size_t height_s = transform->height >> 3;
+
+	/* start of the current segment (in LL band) */
+	size_t segment_y = 0, segment_x = 0;
+
 	/* for each segment */
 	{
 		/* encode segment header, BLUE BOOK section 4.2 */
@@ -485,6 +503,7 @@ int main(int argc, char *argv[])
 {
 	struct frame_t frame;
 	struct transform_t transform;
+	struct parameters_t parameters;
 
 	/*
 	 * NOTE The C standard states that the result of the >> operator is
@@ -532,7 +551,10 @@ int main(int argc, char *argv[])
 	dwt_dump(&transform, "dwt3.pgm", 8);
 
 	/** (3) BPE */
-	bpe_encode(&transform);
+
+	parameters.S = 16;
+
+	bpe_encode(&transform, &parameters);
 
 	/** (2) release resources */
 	dwt_destroy(&transform);
