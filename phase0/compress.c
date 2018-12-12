@@ -172,7 +172,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	for (y = 0; y < height; ++y) {
 		/* load a single row */
-		if( 1 != fread((char *)data + y*width, width, 1, stream) ) {
+		if( 1 != fread((unsigned char *)data + y*width, width, 1, stream) ) {
 			fprintf(stderr, "[ERROR] end-of-file or error while reading a row\n");
 			return RET_FAILURE_FILE_IO;
 		}
@@ -231,11 +231,11 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	for (y = 0; y < height_; ++y) {
 		/* input data */
 		for (x = 0; x < width_; ++x) {
-			*(data + y*width + x) = *( (char *)data_ + y*width_ + x );
+			*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + x );
 		}
 		/* padding */
 		for (; x < width; ++x) {
-			*(data + y*width + x) = *( (char *)data_ + y*width_ + width_-1 );
+			*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + width_-1 );
 		}
 	}
 	/* padding */
@@ -390,6 +390,8 @@ int dwt_transform(struct transform_t *transform)
 			dwt_transform_line(data + x, height_j, width);
 		}
 	}
+
+	/* TODO apply Subband Weights */
 
 	return RET_SUCCESS;
 }
