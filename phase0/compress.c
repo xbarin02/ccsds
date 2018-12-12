@@ -5,6 +5,8 @@
  * - lossless compression (Integer DWT)
  * - frame-based input
  * - Pixel Type: Unsigned Integer, 8 bpp
+ *
+ * @author David Barina <ibarina@fit.vutbr.cz>
  */
 
 #include <stddef.h>
@@ -195,6 +197,9 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
+/**
+ * wavelet coefficients
+ */
 struct transform_t {
 	size_t width;
 	size_t height;
