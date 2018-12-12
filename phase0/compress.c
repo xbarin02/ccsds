@@ -454,6 +454,33 @@ int dwt_destroy(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+int bpe_encode(struct transform_t *transform)
+{
+	/* for each segment */
+	{
+		/* encode segment header, BLUE BOOK section 4.2 */
+
+		/* quantize DC coefficients, BLUE BOOK section 4.3 */
+
+		/* encode quantized DC coefficients, BLUE BOOK section 4.3 */
+
+		/* output additional DC bit planes, BLUE BOOK section 4.3 */
+
+		/* encode AC bit depths, BLUE BOOK section 4.4 */
+
+		/* for each bit plane, , BLUE BOOK section 4.5 */
+		{
+			/* stage 0: DC refinement bits for all blocks */
+			/* stage 1: code parents update for all blocks */
+			/* stage 2: code children updates for all blocks */
+			/* stage 3: code grandchildren updates for all blocks */
+			/* stage 4: produce refinement bits for all blocks */
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int main(int argc, char *argv[])
 {
 	struct frame_t frame;
@@ -505,6 +532,7 @@ int main(int argc, char *argv[])
 	dwt_dump(&transform, "dwt3.pgm", 8);
 
 	/** (3) BPE */
+	bpe_encode(&transform);
 
 	/** (2) release resources */
 	dwt_destroy(&transform);
