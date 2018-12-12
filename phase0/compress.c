@@ -102,9 +102,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	/* look ahead for a comment, ungetc */
 	if ( (c = getc(stream)) == '#' ) {
 		char com[4096];
-		fgets(com, 4096, stream);
+		if (NULL == fgets(com, 4096, stream))
+			return RET_FAILURE_FILE_IO;
 	} else {
-		ungetc(c, stream);
+		if (EOF == ungetc(c, stream))
+			return RET_FAILURE_FILE_IO;
 	}
 
 	/* NOTE: C89 does not support 'z' length modifier */
@@ -116,9 +118,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	/* look ahead for a comment, ungetc */
 	if ( (c = getc(stream)) == '#' ) {
 		char com[4096];
-		fgets(com, 4096, stream);
+		if (NULL == fgets(com, 4096, stream))
+			return RET_FAILURE_FILE_IO;
 	} else {
-		ungetc(c, stream);
+		if (EOF == ungetc(c, stream))
+			return RET_FAILURE_FILE_IO;
 	}
 
 	if (fscanf(stream, " %lu ", &height) != 1) {
@@ -129,9 +133,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	/* look ahead for a comment, ungetc */
 	if ( (c = getc(stream)) == '#' ) {
 		char com[4096];
-		fgets(com, 4096, stream);
+		if (NULL == fgets(com, 4096, stream))
+			return RET_FAILURE_FILE_IO;
 	} else {
-		ungetc(c, stream);
+		if (EOF == ungetc(c, stream))
+			return RET_FAILURE_FILE_IO;
 	}
 
 	if (fscanf(stream, " %lu", &maxval) != 1) {
@@ -151,9 +157,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	/* look ahead for a comment, ungetc */
 	if ( (c = getc(stream)) == '#' ) {
 		char com[4096];
-		fgets(com, 4096, stream);
+		if (NULL == fgets(com, 4096, stream))
+			return RET_FAILURE_FILE_IO;
 	} else {
-		ungetc(c, stream);
+		if (EOF == ungetc(c, stream))
+			return RET_FAILURE_FILE_IO;
 	}
 
 	/* consume a single whitespace character */
