@@ -148,7 +148,6 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 			return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
-	/* FIXME this consumens and pushes back the '\n', not the following '#' */
 	/* look ahead for a comment, ungetc */
 	if ( (c = getc(stream)) == '#' ) {
 		char com[4096];
