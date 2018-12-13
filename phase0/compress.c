@@ -559,15 +559,15 @@ int dwt_decode(struct transform_t *transform)
 	for (j = 2; j >= 0; --j) {
 		size_t width_j = width>>j, height_j = height>>j;
 
-		/* for each row */
-		for (y = 0; y < height_j; ++y) {
-			/* invoke one-dimensional transform */
-			dwt_decode_line(data + y*width, width_j, 1);
-		}
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
 			dwt_decode_line(data + x, height_j, width);
+		}
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwt_decode_line(data + y*width, width_j, 1);
 		}
 	}
 
@@ -677,6 +677,8 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "input.pgm", 1);
 
+	/* ***** encoding ***** */
+
 	dwt_encode(&transform);
 
 	dwt_dump(&transform, "dwt3.pgm", 8);
@@ -687,7 +689,8 @@ int main(int argc, char *argv[])
 
 	bpe_encode(&transform, &parameters);
 
-	/* decoding */
+	/* ***** decoding ***** */
+
 	dwt_decode(&transform);
 
 	dwt_dump(&transform, "decoded.pgm", 1);
