@@ -454,6 +454,67 @@ int dwt_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
+int dwt_encode_line_float(int *line, size_t size, size_t stride)
+{
+	int *line_;
+	int *D, *C;
+	size_t n;
+
+	assert( (size&1) == 0 );
+
+	line_ = malloc( size * sizeof(int) );
+
+	if (NULL == line_) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	D = line_ + size/2;
+	C = line_;
+
+	/* convolution */
+
+	assert( line );
+
+#	define x(m) ( (m) & 1<<(sizeof(size_t)-1) ? line[stride*-(m)] : \
+		( (m) > (size-1) ? line[stride*((size-1)-(m))] : \
+		line[stride*(m)] ) )
+
+	for (n = 0; n < size/2; ++n) {
+		C[n] = (int) /* FIXME round */ (
+			+0.037828455507 * x(2*n-4)
+			-0.023849465020 * x(2*n-3)
+			-0.110624404418 * x(2*n-2)
+			+0.377402855613 * x(2*n-1)
+			+0.852698679009 * x(2*n+0)
+			+0.377402855613 * x(2*n+1)
+			-0.110624404418 * x(2*n+2)
+			-0.023849465020 * x(2*n+3)
+			+0.037828455507 * x(2*n+4)
+		);
+
+		D[n] = (int) /* FIXME round */ (
+			-0.064538882629 * x(2*n+1-3)
+			+0.040689417609 * x(2*n+1-2)
+			+0.418092273222 * x(2*n+1-1)
+			-0.788485616406 * x(2*n+1+0)
+			+0.418092273222 * x(2*n+1+1)
+			+0.040689417609 * x(2*n+1+2)
+			-0.064538882629 * x(2*n+1+3)
+		);
+	}
+
+#	undef x
+
+	/* unpack */
+	for (n = 0; n < size; ++n) {
+		line[stride*n] = line_[n];
+	}
+
+	free(line_);
+
+	return RET_SUCCESS;
+}
+
 int dwt_decode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
