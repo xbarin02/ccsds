@@ -384,10 +384,27 @@ int dwt_weight_line(int *line, size_t size, size_t stride, int weight)
 	return RET_SUCCESS;
 }
 
-int dwt_transform(struct transform_t *transform)
+/**
+ * inverse function to dwt_weight_line
+ */
+int dwt_slim_line(int *line, size_t size, size_t stride, int weight)
+{
+	size_t n;
+
+	assert( line );
+
+	for (n = 0; n < size; ++n) {
+		line[stride*n] >>= weight;
+	}
+
+	return RET_SUCCESS;
+}
+
+int dwt_encode(struct transform_t *transform)
 {
 	int j;
 	size_t width, height;
+	size_t width_s, height_s;
 	size_t y, x;
 	int *data;
 
@@ -395,6 +412,9 @@ int dwt_transform(struct transform_t *transform)
 
 	width = transform->width;
 	height = transform->height;
+
+	width_s = width >> 3;
+	height_s = height >> 3;
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -435,9 +455,10 @@ int dwt_transform(struct transform_t *transform)
 			dwt_weight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
 		}
 	}
+
 	/* LL (0,0) */
-	for (y = 0; y < height>>3; ++y) {
-		dwt_weight_line(data + (0+y)*width + 0, width>>3, 1, 3);
+	for (y = 0; y < height_s; ++y) {
+		dwt_weight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
 
 	return RET_SUCCESS;
@@ -546,7 +567,7 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "input.pgm", 1);
 
-	dwt_transform(&transform);
+	dwt_encode(&transform);
 
 	dwt_dump(&transform, "dwt3.pgm", 8);
 
