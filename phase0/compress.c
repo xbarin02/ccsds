@@ -672,7 +672,15 @@ int dwt_destroy(struct transform_t *transform)
  * compression parameters
  */
 struct parameters_t {
+	/**
+	 * Specifies DWT type:
+	 * 0: Float DWT
+	 * 1: Integer DWT
+	 */
+	int DWTtype;
+
 	 /**
+	  * segment size in blocks
 	  * A segment is defined as a group of S consecutive blocks.
 	  * 16 \le S \le 2^20
 	  */
@@ -768,6 +776,7 @@ int main(int argc, char *argv[])
 
 	/** (3) BPE */
 
+	parameters.DWTtype = 1;
 	parameters.S = 16;
 
 	bpe_encode(&transform, &parameters);
