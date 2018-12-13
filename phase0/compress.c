@@ -511,6 +511,69 @@ int dwt_encode(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+int dwt_decode(struct transform_t *transform)
+{
+	int j;
+	size_t width, height;
+	size_t width_s, height_s;
+	size_t y, x;
+	int *data;
+
+	assert( transform );
+
+	width = transform->width;
+	height = transform->height;
+
+	width_s = width >> 3;
+	height_s = height >> 3;
+
+	/* size_t is unsigned integer type */
+	assert( 0 == (width & 7) && 0 == (height & 7) );
+
+	data = transform->data;
+
+	assert( data );
+
+	/* undo Subband Weights */
+
+	for (j = 1; j < 4; ++j) {
+		size_t width_j = width>>j, height_j = height>>j;
+		/* HL (width_j, 0), LH (0, height_j) */
+		for (y = 0; y < height_j; ++y) {
+			dwt_slim_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
+			dwt_slim_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
+		}
+		/* HH (width_j, height_j) */
+		for (y = 0; y < height_j; ++y) {
+			dwt_slim_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
+		}
+	}
+
+	/* LL (0,0) */
+	for (y = 0; y < height_s; ++y) {
+		dwt_slim_line(data + (0+y)*width + 0, width_s, 1, 3);
+	}
+
+	/* inverse two-dimensional transform */
+
+	for (j = 2; j >= 0; --j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwt_decode_line(data + y*width, width_j, 1);
+		}
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwt_decode_line(data + x, height_j, width);
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int dwt_destroy(struct transform_t *transform)
 {
 	assert( transform );
@@ -623,6 +686,11 @@ int main(int argc, char *argv[])
 	parameters.S = 16;
 
 	bpe_encode(&transform, &parameters);
+
+	/* decoding */
+	dwt_decode(&transform);
+
+	dwt_dump(&transform, "decoded.pgm", 1);
 
 	/** (2) release resources */
 	dwt_destroy(&transform);
