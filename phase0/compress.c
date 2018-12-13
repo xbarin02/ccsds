@@ -744,6 +744,13 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "decoded.pgm", 1);
 
+	/* TODO: convert data from transform into frame */
+
+	if ( frame_save_pgm(&frame, "output.pgm") ) {
+		fprintf(stderr, "[ERROR] unable to save an output raster\n");
+		return EXIT_FAILURE;
+	}
+
 	/** (2) release resources */
 	dwt_destroy(&transform);
 
