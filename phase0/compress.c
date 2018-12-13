@@ -54,6 +54,55 @@ int frame_free(struct frame_t *frame)
 	return 0;
 }
 
+int frame_save_pgm(const struct frame_t *frame, const char *path)
+{
+	FILE *stream;
+	size_t y;
+	size_t width;
+	size_t height;
+	const void *data;
+
+	if (0 == strcmp(path, "-"))
+		stream = stdout;
+	else
+		stream = fopen(path, "w");
+
+	if (NULL == stream) {
+		fprintf(stderr, "[ERROR] fopen fails\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	/* write header */
+
+	assert( frame );
+
+	height = frame->height;
+	width = frame->width;
+
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, 255UL) < 0) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	data = frame->data;
+
+	assert( data );
+
+	/* save data */
+
+	for (y = 0; y < height; ++y) {
+		if (fwrite((const unsigned char *)data + y*width, width, 1, stream) < 1) {
+			return RET_FAILURE_FILE_IO;
+		}
+	}
+
+	if (stream != stdout) {
+		if (EOF == fclose(stream))
+			return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
 int frame_load_pgm(struct frame_t *frame, const char *path)
 {
 	FILE *stream;
