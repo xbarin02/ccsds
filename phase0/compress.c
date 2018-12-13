@@ -17,6 +17,11 @@
 #include <stdlib.h>
 #include <limits.h>
 
+/* floor */
+#include <math.h>
+
+#define round_(x) floor( (x) + 0.5 )
+
 /**
  * error codes
  */
@@ -480,7 +485,7 @@ int dwt_encode_line_float(int *line, size_t size, size_t stride)
 		line[stride*(m)] ) )
 
 	for (n = 0; n < size/2; ++n) {
-		C[n] = (int) /* FIXME round */ (
+		C[n] = (int) /* FIXME round */ round_ (
 			+0.037828455507 * x(2*n-4)
 			-0.023849465020 * x(2*n-3)
 			-0.110624404418 * x(2*n-2)
@@ -492,7 +497,7 @@ int dwt_encode_line_float(int *line, size_t size, size_t stride)
 			+0.037828455507 * x(2*n+4)
 		);
 
-		D[n] = (int) /* FIXME round */ (
+		D[n] = (int) /* FIXME round */ round_ (
 			-0.064538882629 * x(2*n+1-3)
 			+0.040689417609 * x(2*n+1-2)
 			+0.418092273222 * x(2*n+1-1)
@@ -598,7 +603,7 @@ int dwt_decode_line_float(int *line, size_t size, size_t stride)
 		D[(m)] ) )
 
 	for (n = 0; n < size/2; ++n) {
-		line[stride*(2*n)] = (int) /* FIXME round */ (
+		line[stride*(2*n)] = (int) /* FIXME round */ round_ (
 			-0.040689417609 * c(n-1)
 			+0.788485616406 * c(n+0)
 			-0.040689417609 * c(n+1)
@@ -608,7 +613,7 @@ int dwt_decode_line_float(int *line, size_t size, size_t stride)
 			-0.023849465020 * d(n+1)
 		);
 
-		line[stride*(2*n+1)] = (int) /* FIXME round */ (
+		line[stride*(2*n+1)] = (int) /* FIXME round */ round_ (
 			-0.064538882629 * c(n-1)
 			+0.418092273222 * c(n+0)
 			+0.418092273222 * c(n+1)

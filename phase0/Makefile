@@ -1,5 +1,5 @@
 CFLAGS=-std=c89 -pedantic -Wall -Wextra -Wconversion
-LDLIBS=
+LDLIBS=-lm
 
 .PHONY: all clean
 
