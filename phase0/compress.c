@@ -562,6 +562,73 @@ int dwt_decode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
+int dwt_decode_line_float(int *line, size_t size, size_t stride)
+{
+	int *line_;
+	int *D, *C;
+	size_t n;
+
+	assert( (size&1) == 0 );
+
+	line_ = malloc( size * sizeof(int) );
+
+	if (NULL == line_) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	D = line_ + size/2;
+	C = line_;
+
+	assert( line );
+
+	/* pack */
+	for (n = 0; n < size; ++n) {
+		line_[n] = line[stride*n];
+	}
+
+	/* inverse convolution */
+
+	line[stride*0] = C[0] + ( ( -D[0] + 1 ) >> 1 );
+
+#	define c(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? C[-(m)] : \
+		( (m) > (size/2-1) ? C[((size/2-1)-(m)+(size/2))] : \
+		C[(m)] ) )
+#	define d(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? D[-(m)-1] : \
+		( (m) > (size/2-1) ? D[(2*(size/2-1)-(m))] : \
+		D[(m)] ) )
+
+	for (n = 0; n < size/2; ++n) {
+		line[stride*(2*n)] = (int) /* FIXME round */ (
+			-0.040689417609 * c(n-1)
+			+0.788485616406 * c(n+0)
+			-0.040689417609 * c(n+1)
+			-0.023849465020 * d(n-2)
+			+0.377402855613 * d(n-1)
+			+0.377402855613 * d(n+0)
+			-0.023849465020 * d(n+1)
+		);
+
+		line[stride*(2*n+1)] = (int) /* FIXME round */ (
+			-0.064538882629 * c(n-1)
+			+0.418092273222 * c(n+0)
+			+0.418092273222 * c(n+1)
+			-0.064538882629 * c(n+2)
+			-0.037828455507 * d(n-2)
+			+0.110624404418 * d(n-1)
+			-0.852698679009 * d(n+0)
+			+0.110624404418 * d(n+1)
+			-0.037828455507 * d(n+2)
+		);
+	}
+
+#	undef c
+#	undef d
+
+	free(line_);
+
+	return RET_SUCCESS;
+}
+
 int dwt_weight_line(int *line, size_t size, size_t stride, int weight)
 {
 	size_t n;
@@ -762,6 +829,49 @@ int dwt_decode(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+int dwt_decode_float(struct transform_t *transform)
+{
+	int j;
+	size_t width, height;
+	size_t width_s, height_s;
+	size_t y, x;
+	int *data;
+
+	assert( transform );
+
+	width = transform->width;
+	height = transform->height;
+
+	width_s = width >> 3;
+	height_s = height >> 3;
+
+	/* size_t is unsigned integer type */
+	assert( 0 == (width & 7) && 0 == (height & 7) );
+
+	data = transform->data;
+
+	assert( data );
+
+	/* inverse two-dimensional transform */
+
+	for (j = 2; j >= 0; --j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwt_decode_line_float(data + x, height_j, width);
+		}
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwt_decode_line_float(data + y*width, width_j, 1);
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int dwt_destroy(struct transform_t *transform)
 {
 	assert( transform );
@@ -891,7 +1001,10 @@ int main(int argc, char *argv[])
 
 	/* ***** decoding ***** */
 
-	dwt_decode(&transform);
+	if (parameters.DWTtype == 1)
+		dwt_decode(&transform);
+	else
+		dwt_decode_float(&transform);
 
 	dwt_dump(&transform, "decoded.pgm", 1);
 
