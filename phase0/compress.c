@@ -316,6 +316,40 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+/**
+ * export the transform into frame
+ *
+ * - frame dimensions must be set
+ */
+int dwt_export(const struct transform_t *transform, struct frame_t *frame)
+{
+	size_t width_, height_;
+	size_t width;
+	size_t y, x;
+	void *data_;
+	const int *data;
+
+	assert( frame );
+
+	width_ = frame->width;
+	height_ = frame->height;
+
+	assert( transform );
+
+	width = transform->width;
+
+	data_ = frame->data;
+	data = transform->data;
+
+	for (y = 0; y < height_; ++y) {
+		for (x = 0; x < width_; ++x) {
+			*( (unsigned char *)data_ + y*width_ + x ) = (unsigned char) *(data + y*width + x);
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int dwt_dump(struct transform_t *transform, const char *path, int factor)
 {
 	FILE *stream;
@@ -744,7 +778,8 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "decoded.pgm", 1);
 
-	/* TODO: convert data from transform into frame */
+	/* convert data from transform into frame */
+	dwt_export(&transform, &frame);
 
 	if ( frame_save_pgm(&frame, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
