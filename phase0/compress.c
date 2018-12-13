@@ -475,8 +475,8 @@ int dwt_encode_line_float(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-#	define x(m) ( (m) & 1<<(sizeof(size_t)-1) ? line[stride*-(m)] : \
-		( (m) > (size-1) ? line[stride*((size-1)-(m))] : \
+#	define x(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? line[stride*-(m)] : \
+		( (m) > (size-1) ? line[stride*(2*(size-1)-(m))] : \
 		line[stride*(m)] ) )
 
 	for (n = 0; n < size/2; ++n) {
@@ -650,6 +650,50 @@ int dwt_encode(struct transform_t *transform)
 	/* LL (0,0) */
 	for (y = 0; y < height_s; ++y) {
 		dwt_weight_line(data + (0+y)*width + 0, width_s, 1, 3);
+	}
+
+	return RET_SUCCESS;
+}
+
+int dwt_encode_float(struct transform_t *transform)
+{
+	int j;
+	size_t width, height;
+	size_t width_s, height_s;
+	size_t y, x;
+	int *data;
+
+	assert( transform );
+
+	width = transform->width;
+	height = transform->height;
+
+	width_s = width >> 3;
+	height_s = height >> 3;
+
+	/* size_t is unsigned integer type */
+	assert( 0 == (width & 7) && 0 == (height & 7) );
+
+	data = transform->data;
+
+	assert( data );
+
+	/* (2.2) forward two-dimensional transform */
+
+	/* for each level */
+	for (j = 0; j < 3; ++j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwt_encode_line_float(data + y*width, width_j, 1);
+		}
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwt_encode_line_float(data + x, height_j, width);
+		}
 	}
 
 	return RET_SUCCESS;
@@ -829,16 +873,19 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "input.pgm", 1);
 
+	parameters.DWTtype = 0;
+	parameters.S = 16;
+
 	/* ***** encoding ***** */
 
-	dwt_encode(&transform);
+	if (parameters.DWTtype == 1)
+		dwt_encode(&transform);
+	else
+		dwt_encode_float(&transform);
 
 	dwt_dump(&transform, "dwt3.pgm", 8);
 
 	/** (3) BPE */
-
-	parameters.DWTtype = 1;
-	parameters.S = 16;
 
 	bpe_encode(&transform, &parameters);
 
