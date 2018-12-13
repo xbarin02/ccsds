@@ -320,7 +320,7 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 	return RET_SUCCESS;
 }
 
-int dwt_transform_line(int *line, size_t size, size_t stride)
+int dwt_encode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
@@ -339,7 +339,7 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 
 	/* lifting */
 
-	/* coefficients: D = H = odd indices, C = L = even indices */
+	/* subbands: D (H) at odd indices, C (L) at even indices */
 
 	assert( line );
 
@@ -365,6 +365,53 @@ int dwt_transform_line(int *line, size_t size, size_t stride)
 	for (n = 0; n < size; ++n) {
 		line[stride*n] = line_[n];
 	}
+
+	free(line_);
+
+	return RET_SUCCESS;
+}
+
+int dwt_decode_line(int *line, size_t size, size_t stride)
+{
+	int *line_;
+	int *D, *C;
+	size_t n;
+
+	assert( (size&1) == 0 );
+
+	line_ = malloc( size * sizeof(int) );
+
+	if (NULL == line_) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	D = line_ + size/2;
+	C = line_;
+
+	assert( line );
+
+	/* pack */
+	for (n = 0; n < size; ++n) {
+		line_[n] = line[stride*n];
+	}
+
+	/* inverse lifting */
+
+	line[stride*0] = C[0] + ( ( -D[0] + 1 ) >> 1 );
+
+	for (n = 1; n <= size/2-1; ++n) {
+		line[stride*(2*n)] = C[n] + ( ( -(D[n-1]+D[n]) + 2 ) >> 2 );
+	}
+
+	line[stride*1] = D[0] + ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 );
+
+	for (n = 1; n <= size/2-3; ++n) {
+		line[stride*(2*n+1)] = D[n] + ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 );
+	}
+
+	line[stride*(size-3)] = D[size/2-2] + ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) -1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
+
+	line[stride*(size-1)] = D[size/2-1] + ( ( 9*line[stride*(size-2)] -1*line[stride*(size-4)] + 4 ) >> 3 );
 
 	free(line_);
 
@@ -432,12 +479,12 @@ int dwt_encode(struct transform_t *transform)
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwt_transform_line(data + y*width, width_j, 1);
+			dwt_encode_line(data + y*width, width_j, 1);
 		}
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwt_transform_line(data + x, height_j, width);
+			dwt_encode_line(data + x, height_j, width);
 		}
 	}
 
