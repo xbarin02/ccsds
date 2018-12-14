@@ -357,6 +357,11 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+/* FIXME support for 16-bit data */
+int dwt_import(const struct frame_t *frame, struct transform_t *transform)
+{
+}
+
 /**
  * export the transform into frame
  *
@@ -778,7 +783,6 @@ int dwt_encode_float(struct transform_t *transform)
 {
 	int j;
 	size_t width, height;
-	size_t width_s, height_s;
 	size_t y, x;
 	int *data;
 
@@ -786,9 +790,6 @@ int dwt_encode_float(struct transform_t *transform)
 
 	width = transform->width;
 	height = transform->height;
-
-	width_s = width >> 3;
-	height_s = height >> 3;
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -885,7 +886,6 @@ int dwt_decode_float(struct transform_t *transform)
 {
 	int j;
 	size_t width, height;
-	size_t width_s, height_s;
 	size_t y, x;
 	int *data;
 
@@ -893,9 +893,6 @@ int dwt_decode_float(struct transform_t *transform)
 
 	width = transform->width;
 	height = transform->height;
-
-	width_s = width >> 3;
-	height_s = height >> 3;
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -935,6 +932,7 @@ int dwt_destroy(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+#if 0
 int bpe_encode(const struct transform_t *transform, const struct parameters_t *parameters)
 {
 	/* LL band size */
@@ -968,6 +966,7 @@ int bpe_encode(const struct transform_t *transform, const struct parameters_t *p
 
 	return RET_SUCCESS;
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -1014,6 +1013,7 @@ int main(int argc, char *argv[])
 
 	/** (2) DWT */
 
+	/* FIXME split create and import */
 	if (dwt_create(&frame, &transform)) {
 		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
 		return EXIT_FAILURE;
@@ -1034,9 +1034,9 @@ int main(int argc, char *argv[])
 	dwt_dump(&transform, "dwt3.pgm", 8);
 
 	/** (3) BPE */
-
+#if 0
 	bpe_encode(&transform, &parameters);
-
+#endif
 	/* ***** decoding ***** */
 
 	if (parameters.DWTtype == 1)
