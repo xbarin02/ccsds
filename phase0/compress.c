@@ -349,13 +349,14 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	for (y = 0; y < height_; ++y) {
 		for (x = 0; x < width_; ++x) {
 			int sample = *(data + y*width + x);
+			unsigned char *target = (unsigned char *)data_ + y*width_ + x;
 
 			if ( sample < 0 )
-				*( (unsigned char *)data_ + y*width_ + x ) = 0;
+				*target = 0;
 			else if ( sample > 255 )
-				*( (unsigned char *)data_ + y*width_ + x ) = 255;
+				*target = 255;
 			else
-				*( (unsigned char *)data_ + y*width_ + x ) = (unsigned char) sample;
+				*target = (unsigned char) sample;
 		}
 	}
 
