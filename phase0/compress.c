@@ -162,6 +162,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	size_t width;
 	size_t height;
 	size_t bpp;
+	size_t stride;
 	void *data;
 	int c;
 
@@ -248,6 +249,9 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		case 255:
 			bpp = 8;
 			break;
+		case 65535:
+			bpp = 16;
+			break;
 		default:
 			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
 			return RET_FAILURE_FILE_UNSUPPORTED;
@@ -269,8 +273,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
+	/* stride in bytes (aka chars) */
+	stride = width * bpp/CHAR_BIT;
+
 	/* allocate a raster */
-	data = malloc(width * height);
+	data = malloc(height * stride);
 
 	if (NULL == data) {
 		fprintf(stderr, "[ERROR] cannot allocate a memory\n");
@@ -281,7 +288,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	for (y = 0; y < height; ++y) {
 		/* load a single row */
-		if ( 1 != fread((unsigned char *)data + y*width, width, 1, stream) ) {
+		if ( 1 != fread((unsigned char *)data + y*stride, stride, 1, stream) ) {
 			fprintf(stderr, "[ERROR] end-of-file or error while reading a row\n");
 			return RET_FAILURE_FILE_IO;
 		}
@@ -332,15 +339,34 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	}
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
-	for (y = 0; y < height_; ++y) {
-		/* input data */
-		for (x = 0; x < width_; ++x) {
-			*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + x );
-		}
-		/* padding */
-		for (; x < width; ++x) {
-			*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + width_-1 );
-		}
+	switch( frame->bpp ) {
+		case CHAR_BIT:
+			for (y = 0; y < height_; ++y) {
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + x );
+				}
+				/* padding */
+				for (; x < width; ++x) {
+					*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + width_-1 );
+				}
+			}
+			break;
+		case CHAR_BIT * sizeof(unsigned short):
+			for (y = 0; y < height_; ++y) {
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					*(data + y*width + x) = *( (unsigned short *)data_ + y*width_ + x );
+				}
+				/* padding */
+				for (; x < width; ++x) {
+					*(data + y*width + x) = *( (unsigned short *)data_ + y*width_ + width_-1 );
+				}
+			}
+			break;
+		default:
+			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
+			return -1;
 	}
 	/* padding */
 	for (; y < height; ++y) {
@@ -411,6 +437,7 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 {
 	FILE *stream;
 	size_t width, height;
+	size_t bpp;
 	size_t y, x;
 	int *data;
 
@@ -422,10 +449,13 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 
 	assert( transform );
 
+	/* FIXME does not work for bpp != 16 */
+	bpp = 16;
+
 	width = transform->width;
 	height = transform->height;
 
-	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, 255UL) < 0 ) {
+	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (1UL<<bpp)-1UL) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -437,19 +467,34 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 		for (x = 0; x < width; ++x) {
 			int rawval = *(data + y*width + x);
 			int magnitude = abs(rawval);
-			unsigned char c;
 
 			if ( magnitude < 0 )
 				magnitude = INT_MAX;
 
 			magnitude /= factor;
 
-			assert( magnitude >= 0 && magnitude < 256 );
+			if( magnitude >= (1<<bpp) )
+				magnitude = (1<<bpp) - 1;
 
-			c = (unsigned char)magnitude;
+			switch ( bpp ) {
+				case CHAR_BIT: {
+						unsigned char c = (unsigned char)magnitude;
 
-			if ( 1 != fwrite(&c, 1, 1, stream) ) {
-				return RET_FAILURE_FILE_IO;
+						if ( 1 != fwrite(&c, 1, 1, stream) ) {
+							return RET_FAILURE_FILE_IO;
+						}
+						break;
+					}
+				case CHAR_BIT * sizeof(short): {
+						unsigned short c = (unsigned short)magnitude;
+
+						if ( 1 != fwrite(&c, 2, 1, stream) ) {
+							return RET_FAILURE_FILE_IO;
+						}
+						break;
+					}
+				default:
+					abort();
 			}
 		}
 	}
@@ -1014,24 +1059,28 @@ int main(int argc, char *argv[])
 	/** (2) DWT */
 
 	/* FIXME split create and import */
-	if (dwt_create(&frame, &transform)) {
+	if ( dwt_create(&frame, &transform) ) {
 		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
 		return EXIT_FAILURE;
 	}
 
 	dwt_dump(&transform, "input.pgm", 1);
 
-	parameters.DWTtype = 0;
+	parameters.DWTtype = 1;
 	parameters.S = 16;
 
 	/* ***** encoding ***** */
+
+	fprintf(stderr, "[DEBUG] transform...\n");
 
 	if (parameters.DWTtype == 1)
 		dwt_encode(&transform);
 	else
 		dwt_encode_float(&transform);
 
-	dwt_dump(&transform, "dwt3.pgm", 8);
+	fprintf(stderr, "[DEBUG] transform done\n");
+
+	dwt_dump(&transform, "dwt3.pgm", 1024);
 
 	/** (3) BPE */
 #if 0
