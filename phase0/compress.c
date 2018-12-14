@@ -348,8 +348,14 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 
 	for (y = 0; y < height_; ++y) {
 		for (x = 0; x < width_; ++x) {
-			/* TODO assert pixel in 0..255 before the cast to unsigned char */
-			*( (unsigned char *)data_ + y*width_ + x ) = (unsigned char) *(data + y*width + x);
+			int sample = *(data + y*width + x);
+
+			if ( sample < 0 )
+				*( (unsigned char *)data_ + y*width_ + x ) = 0;
+			else if ( sample > 255 )
+				*( (unsigned char *)data_ + y*width_ + x ) = 255;
+			else
+				*( (unsigned char *)data_ + y*width_ + x ) = (unsigned char) sample;
 		}
 	}
 
