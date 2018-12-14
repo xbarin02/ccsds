@@ -853,6 +853,12 @@ int dwt_encode(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
+/*
+ * FIXME
+ * When applying
+ * the Float DWT, it would not be necessary for coefficients in these subbands to be rounded to
+ * integer values, and so presumably the binary word size is irrelevant for these subbands.
+ */
 int dwt_encode_float(struct transform_t *transform)
 {
 	int j;
@@ -1095,7 +1101,7 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&transform, "input.pgm", 1);
 
-	parameters.DWTtype = 1;
+	parameters.DWTtype = 0;
 	parameters.S = 16;
 
 	/* ***** encoding ***** */
