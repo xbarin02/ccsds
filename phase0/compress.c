@@ -948,6 +948,11 @@ int main(int argc, char *argv[])
 	struct transform_t transform;
 	struct parameters_t parameters;
 
+	/* NOTE Since we implement the floor function for negative numbers using
+	 * an arithmetic right shift, we must check whether the underlying
+	 * signed integer representation is two's complement. */
+	assert( ~-1 == 0 );
+
 	/*
 	 * NOTE The C standard states that the result of the >> operator is
 	 * implementation-defined if the left operand has a signed type and
