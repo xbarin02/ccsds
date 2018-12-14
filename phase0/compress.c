@@ -110,6 +110,8 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 	size_t y;
 	size_t width;
 	size_t height;
+	size_t bpp;
+	size_t stride;
 	const void *data;
 
 	if (0 == strcmp(path, "-"))
@@ -128,8 +130,9 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 
 	height = frame->height;
 	width = frame->width;
+	bpp = frame->bpp;
 
-	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, 255UL) < 0) {
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (1UL<<bpp)-1UL) < 0) {
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -139,8 +142,10 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 
 	/* save data */
 
+	stride = width * bpp/CHAR_BIT;
+
 	for (y = 0; y < height; ++y) {
-		if (fwrite((const unsigned char *)data + y*width, width, 1, stream) < 1) {
+		if (fwrite((const unsigned char *)data + y*stride, stride, 1, stream) < 1) {
 			return RET_FAILURE_FILE_IO;
 		}
 	}
@@ -392,17 +397,20 @@ int dwt_import(const struct frame_t *frame, struct transform_t *transform)
  * export the transform into frame
  *
  * - frame dimensions must be set
+ * - frame data pointer must be allocated
  */
 int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 {
 	size_t width_, height_;
 	size_t width;
+	size_t bpp;
 	size_t y, x;
 	void *data_;
 	const int *data;
 
 	assert( frame );
 
+	bpp = frame->bpp;
 	width_ = frame->width;
 	height_ = frame->height;
 
@@ -416,18 +424,39 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	assert( data );
 	assert( data_ );
 
-	for (y = 0; y < height_; ++y) {
-		for (x = 0; x < width_; ++x) {
-			int sample = *(data + y*width + x);
-			unsigned char *target = (unsigned char *)data_ + y*width_ + x;
+	switch (bpp) {
+		case CHAR_BIT:
+			for (y = 0; y < height_; ++y) {
+				for (x = 0; x < width_; ++x) {
+					int sample = *(data + y*width + x);
+					unsigned char *target = (unsigned char *)data_ + y*width_ + x;
 
-			if ( sample < 0 )
-				*target = 0;
-			else if ( sample > 255 )
-				*target = 255;
-			else
-				*target = (unsigned char) sample;
-		}
+					if ( sample < 0 )
+						*target = 0;
+					else if ( sample > UCHAR_MAX )
+						*target = UCHAR_MAX;
+					else
+						*target = (unsigned char) sample;
+				}
+			}
+			break;
+		case CHAR_BIT * sizeof(unsigned short):
+			for (y = 0; y < height_; ++y) {
+				for (x = 0; x < width_; ++x) {
+					int sample = *(data + y*width + x);
+					unsigned short *target = (unsigned short *)data_ + y*width_ + x;
+
+					if ( sample < 0 )
+						*target = 0;
+					else if ( sample > USHRT_MAX )
+						*target = USHRT_MAX;
+					else
+						*target = (unsigned short) sample;
+				}
+			}
+			break;
+		default:
+			abort();
 	}
 
 	return RET_SUCCESS;
