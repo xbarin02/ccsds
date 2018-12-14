@@ -346,6 +346,9 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	data_ = frame->data;
 	data = transform->data;
 
+	assert( data );
+	assert( data_ );
+
 	for (y = 0; y < height_; ++y) {
 		for (x = 0; x < width_; ++x) {
 			int sample = *(data + y*width + x);
