@@ -17,28 +17,6 @@
 #include <stdlib.h>
 #include <limits.h>
 
-static int floor_(double x)
-{
-	/*
-	 * per C89 standard, 6.2.1.3 Floating and integral:
-	 *
-	 * When a value of floating type is convened to integral type,
-	 * the fractional part is discarded. If the value of the integral part
-	 * cannot be represented by the integral type, the behavior is
-	 * undetined.
-	 *
-	 * "... discarded", i.e., the value is truncated toward zero
-	 */
-
-	/* truncate */
-	int i = (int) x;
-
-	/* convert trunc to floor */
-	return i - (int) ( (double) i > x );
-}
-
-#define round_(x) floor_( (x) + 0.5 )
-
 /**
  * error codes
  */
@@ -64,6 +42,56 @@ struct frame_t {
 
 	void *data;
 };
+
+/**
+ * wavelet coefficients
+ */
+struct transform_t {
+	size_t width;
+	size_t height;
+	int *data;
+};
+
+/**
+ * compression parameters
+ */
+struct parameters_t {
+	/**
+	 * Specifies DWT type:
+	 * 0: Float DWT
+	 * 1: Integer DWT
+	 */
+	int DWTtype;
+
+	 /**
+	  * segment size in blocks
+	  * A segment is defined as a group of S consecutive blocks.
+	  * @f$ 16 \le S \le 2^20 @f$
+	  */
+	unsigned S;
+};
+
+static int floor_(double x)
+{
+	/*
+	 * per C89 standard, 6.2.1.3 Floating and integral:
+	 *
+	 * When a value of floating type is convened to integral type,
+	 * the fractional part is discarded. If the value of the integral part
+	 * cannot be represented by the integral type, the behavior is
+	 * undetined.
+	 *
+	 * "... discarded", i.e., the value is truncated toward zero
+	 */
+
+	/* truncate */
+	int i = (int) x;
+
+	/* convert trunc to floor */
+	return i - (int) ( (double) i > x );
+}
+
+#define round_(x) floor_( (x) + 0.5 )
 
 int frame_free(struct frame_t *frame)
 {
@@ -276,15 +304,6 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	return RET_SUCCESS;
 }
-
-/**
- * wavelet coefficients
- */
-struct transform_t {
-	size_t width;
-	size_t height;
-	int *data;
-};
 
 int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 {
@@ -915,25 +934,6 @@ int dwt_destroy(struct transform_t *transform)
 
 	return RET_SUCCESS;
 }
-
-/**
- * compression parameters
- */
-struct parameters_t {
-	/**
-	 * Specifies DWT type:
-	 * 0: Float DWT
-	 * 1: Integer DWT
-	 */
-	int DWTtype;
-
-	 /**
-	  * segment size in blocks
-	  * A segment is defined as a group of S consecutive blocks.
-	  * 16 \le S \le 2^20
-	  */
-	unsigned S;
-};
 
 int bpe_encode(const struct transform_t *transform, const struct parameters_t *parameters)
 {
