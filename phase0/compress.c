@@ -462,13 +462,13 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int dwt_dump(struct transform_t *transform, const char *path, int factor)
+int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 {
 	FILE *stream;
 	size_t width, height;
 	size_t bpp;
 	size_t y, x;
-	int *data;
+	const int *data;
 
 	stream = fopen(path, "w");
 
@@ -497,13 +497,15 @@ int dwt_dump(struct transform_t *transform, const char *path, int factor)
 			int rawval = *(data + y*width + x);
 			int magnitude = abs(rawval);
 
-			if ( magnitude < 0 )
+			if ( magnitude < 0 ) {
 				magnitude = INT_MAX;
+			}
 
 			magnitude /= factor;
 
-			if( magnitude >= (1<<bpp) )
+			if( magnitude >= (1<<bpp) ) {
 				magnitude = (1<<bpp) - 1;
+			}
 
 			switch ( bpp ) {
 				case CHAR_BIT: {
@@ -1115,7 +1117,7 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "[DEBUG] transform done\n");
 
-	dwt_dump(&transform, "dwt3.pgm", 1024);
+	dwt_dump(&transform, "dwt3.pgm", 8);
 
 	/** (3) BPE */
 #if 0
