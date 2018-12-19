@@ -104,6 +104,35 @@ int frame_free(struct frame_t *frame)
 	return 0;
 }
 
+#define SWAP_BYTE_ORDER
+
+/**
+ * convert big endian to native byte order
+ */
+static unsigned short be_to_native_s(unsigned short a)
+{
+#ifdef SWAP_BYTE_ORDER
+	return (unsigned short) (
+		((a & 0xff00U) >> 8U) |
+		((a & 0x00ffU) << 8U)
+	);
+#else
+	return a;
+#endif
+}
+
+static unsigned short native_to_be_s(unsigned short a)
+{
+#ifdef SWAP_BYTE_ORDER
+	return (unsigned short) (
+		((a & 0xff00U) >> 8U) |
+		((a & 0x00ffU) << 8U)
+	);
+#else
+	return a;
+#endif
+}
+
 int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
@@ -361,11 +390,11 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 			for (y = 0; y < height_; ++y) {
 				/* input data */
 				for (x = 0; x < width_; ++x) {
-					*(data + y*width + x) = *( (unsigned short *)data_ + y*width_ + x );
+					*(data + y*width + x) = be_to_native_s( *( (unsigned short *)data_ + y*width_ + x ) );
 				}
 				/* padding */
 				for (; x < width; ++x) {
-					*(data + y*width + x) = *( (unsigned short *)data_ + y*width_ + width_-1 );
+					*(data + y*width + x) = be_to_native_s( *( (unsigned short *)data_ + y*width_ + width_-1 ) );
 				}
 			}
 			break;
@@ -451,7 +480,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 					else if ( sample > USHRT_MAX )
 						*target = USHRT_MAX;
 					else
-						*target = (unsigned short) sample;
+						*target = native_to_be_s( (unsigned short) sample );
 				}
 			}
 			break;
@@ -509,7 +538,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 			switch ( bpp ) {
 				case CHAR_BIT: {
-						unsigned char c = (unsigned char)magnitude;
+						unsigned char c = (unsigned char) magnitude;
 
 						if ( 1 != fwrite(&c, 1, 1, stream) ) {
 							return RET_FAILURE_FILE_IO;
@@ -517,7 +546,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 						break;
 					}
 				case CHAR_BIT * sizeof(short): {
-						unsigned short c = (unsigned short)magnitude;
+						unsigned short c = native_to_be_s( (unsigned short) magnitude );
 
 						if ( 1 != fwrite(&c, 2, 1, stream) ) {
 							return RET_FAILURE_FILE_IO;
