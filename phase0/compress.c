@@ -382,27 +382,27 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	switch (frame->bpp) {
 		case CHAR_BIT:
 			for (y = 0; y < height_; ++y) {
-				const unsigned char *data_c = frame->data;
+				const unsigned char *data_ = frame->data;
 				/* input data */
 				for (x = 0; x < width_; ++x) {
-					*(data + y*width + x) = *( data_c + y*width_ + x );
+					*(data + y*width + x) = *( data_ + y*width_ + x );
 				}
 				/* padding */
 				for (; x < width; ++x) {
-					*(data + y*width + x) = *( data_c + y*width_ + width_-1 );
+					*(data + y*width + x) = *( data_ + y*width_ + width_-1 );
 				}
 			}
 			break;
 		case CHAR_BIT * sizeof(unsigned short):
 			for (y = 0; y < height_; ++y) {
-				const unsigned short *data_s = frame->data;
+				const unsigned short *data_ = frame->data;
 				/* input data */
 				for (x = 0; x < width_; ++x) {
-					*(data + y*width + x) = be_to_native_s( *( data_s + y*width_ + x ) );
+					*(data + y*width + x) = be_to_native_s( *( data_ + y*width_ + x ) );
 				}
 				/* padding */
 				for (; x < width; ++x) {
-					*(data + y*width + x) = be_to_native_s( *( data_s + y*width_ + width_-1 ) );
+					*(data + y*width + x) = be_to_native_s( *( data_ + y*width_ + width_-1 ) );
 				}
 			}
 			break;
