@@ -531,8 +531,8 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
-			int rawval = data [y*width + x];
-			int magnitude = abs(rawval);
+			int sample = data [y*width + x];
+			int magnitude = abs(sample);
 
 			if ( magnitude < 0 ) {
 				magnitude = INT_MAX;
