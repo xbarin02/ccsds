@@ -2,9 +2,9 @@
  * C89 implementation of CCSDS 122.0-B-2 compressor
  *
  * supported features:
- * - lossless compression (Integer DWT)
+ * - lossy (Float DWT) and lossless compression (Integer DWT)
  * - frame-based input
- * - Pixel Type: Unsigned Integer, 8 bpp
+ * - Pixel Type: Unsigned Integer, 8 bpp and 16 bpp
  *
  * @author David Barina <ibarina@fit.vutbr.cz>
  */
@@ -29,6 +29,8 @@ enum return_t {
 	RET_FAILURE_FILE_OPEN         = 0x1002, /**< file open failure */
 	/* 0x2xxx memory errors */
 	RET_FAILURE_MEMORY_ALLOCATION = 0x2000, /**< unable to allocate dynamic memory */
+	/* 0x3xxx general exceptions */
+	RET_FAILURE_LOGIC_ERROR       = 0x3000, /**< faulty logic within the program */
 	RET_LAST
 };
 
@@ -104,6 +106,9 @@ int frame_free(struct frame_t *frame)
 	return 0;
 }
 
+/**
+ * this should be enabled on little endian architectures
+ */
 #define SWAP_BYTE_ORDER
 
 /**
@@ -121,6 +126,9 @@ static unsigned short be_to_native_s(unsigned short a)
 #endif
 }
 
+/**
+ * convert native byte order to big endian
+ */
 static unsigned short native_to_be_s(unsigned short a)
 {
 #ifdef SWAP_BYTE_ORDER
@@ -373,7 +381,7 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	}
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
-	switch( frame->bpp ) {
+	switch (frame->bpp) {
 		case CHAR_BIT:
 			for (y = 0; y < height_; ++y) {
 				/* input data */
@@ -400,7 +408,7 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 			break;
 		default:
 			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
-			return -1;
+			return RET_FAILURE_LOGIC_ERROR;
 	}
 	/* padding */
 	for (; y < height; ++y) {
@@ -485,7 +493,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 			}
 			break;
 		default:
-			abort();
+			return RET_FAILURE_LOGIC_ERROR;
 	}
 
 	return RET_SUCCESS;
@@ -532,11 +540,11 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 			magnitude /= factor;
 
-			if( magnitude >= (1<<bpp) ) {
+			if ( magnitude >= (1<<bpp) ) {
 				magnitude = (1<<bpp) - 1;
 			}
 
-			switch ( bpp ) {
+			switch (bpp) {
 				case CHAR_BIT: {
 						unsigned char c = (unsigned char) magnitude;
 
@@ -554,7 +562,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 						break;
 					}
 				default:
-					abort();
+					return RET_FAILURE_LOGIC_ERROR;
 			}
 		}
 	}
