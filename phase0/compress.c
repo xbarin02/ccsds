@@ -358,7 +358,6 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 {
 	size_t width_, height_;
 	size_t width, height;
-	void *data_;
 	int *data;
 	size_t y, x;
 
@@ -366,9 +365,6 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 
 	width_ = frame->width;
 	height_ = frame->height;
-	data_ = frame->data;
-
-	assert( data_ );
 
 	/* the image dimensions be integer multiples of eight */
 	width = (frame->width + 7) / 8 * 8;
@@ -380,29 +376,33 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
+	assert( frame->data );
+
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
 	switch (frame->bpp) {
 		case CHAR_BIT:
 			for (y = 0; y < height_; ++y) {
+				const unsigned char *data_c = frame->data;
 				/* input data */
 				for (x = 0; x < width_; ++x) {
-					*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + x );
+					*(data + y*width + x) = *( data_c + y*width_ + x );
 				}
 				/* padding */
 				for (; x < width; ++x) {
-					*(data + y*width + x) = *( (unsigned char *)data_ + y*width_ + width_-1 );
+					*(data + y*width + x) = *( data_c + y*width_ + width_-1 );
 				}
 			}
 			break;
 		case CHAR_BIT * sizeof(unsigned short):
 			for (y = 0; y < height_; ++y) {
+				const unsigned short *data_s = frame->data;
 				/* input data */
 				for (x = 0; x < width_; ++x) {
-					*(data + y*width + x) = be_to_native_s( *( (unsigned short *)data_ + y*width_ + x ) );
+					*(data + y*width + x) = be_to_native_s( *( data_s + y*width_ + x ) );
 				}
 				/* padding */
 				for (; x < width; ++x) {
-					*(data + y*width + x) = be_to_native_s( *( (unsigned short *)data_ + y*width_ + width_-1 ) );
+					*(data + y*width + x) = be_to_native_s( *( data_s + y*width_ + width_-1 ) );
 				}
 			}
 			break;
