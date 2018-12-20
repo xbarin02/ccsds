@@ -465,7 +465,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 		case CHAR_BIT:
 			for (y = 0; y < height_; ++y) {
 				for (x = 0; x < width_; ++x) {
-					int sample = *(data + y*width + x);
+					int sample = data [y*width + x];
 					unsigned char *target = (unsigned char *)data_ + y*width_ + x;
 
 					if ( sample < 0 )
@@ -480,7 +480,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 		case CHAR_BIT * sizeof(unsigned short):
 			for (y = 0; y < height_; ++y) {
 				for (x = 0; x < width_; ++x) {
-					int sample = *(data + y*width + x);
+					int sample = data [y*width + x];
 					unsigned short *target = (unsigned short *)data_ + y*width_ + x;
 
 					if ( sample < 0 )
@@ -531,7 +531,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
-			int rawval = *(data + y*width + x);
+			int rawval = data [y*width + x];
 			int magnitude = abs(rawval);
 
 			if ( magnitude < 0 ) {
