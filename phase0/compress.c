@@ -556,7 +556,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 				case CHAR_BIT * sizeof(short): {
 						unsigned short c = native_to_be_s( (unsigned short) magnitude );
 
-						if ( 1 != fwrite(&c, 2, 1, stream) ) {
+						if ( 1 != fwrite(&c, sizeof(short), 1, stream) ) {
 							return RET_FAILURE_FILE_IO;
 						}
 						break;
