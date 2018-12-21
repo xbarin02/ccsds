@@ -73,6 +73,9 @@ struct parameters_t {
 	unsigned S;
 };
 
+/**
+ * largest integral value not greater than argument
+ */
 static int floor_(double x)
 {
 	/*
@@ -93,6 +96,9 @@ static int floor_(double x)
 	return i - (int) ( (double) i > x );
 }
 
+/**
+ * round to nearest integer
+ */
 #define round_(x) floor_( (x) + 0.5 )
 
 int frame_free(struct frame_t *frame)
@@ -354,6 +360,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
+static size_t ceil_multiple8(size_t n)
+{
+	return (n + 7) / 8 * 8;
+}
+
 int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 {
 	size_t width_, height_;
@@ -367,8 +378,8 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	height_ = frame->height;
 
 	/* the image dimensions be integer multiples of eight */
-	width = (frame->width + 7) / 8 * 8;
-	height = (frame->height + 7) / 8 * 8;
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	data = malloc( width * height * sizeof *data );
 
@@ -425,10 +436,11 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
-/* FIXME support for 16-bit data */
+#if 0
 int dwt_import(const struct frame_t *frame, struct transform_t *transform)
 {
 }
+#endif
 
 /**
  * export the transform into frame
@@ -515,7 +527,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	assert( transform );
 
-	/* FIXME does not work for bpp != 16 */
+	/* FIXME this should be stored in transform_t */
 	bpp = 16;
 
 	width = transform->width;
