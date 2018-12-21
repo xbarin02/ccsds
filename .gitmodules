@@ -1,0 +1,3 @@
+[submodule "phase0/data"]
+	path = phase0/data
+	url = git@bitbucket.org:ibarina/ccsds-data.git
