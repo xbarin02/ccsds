@@ -394,32 +394,32 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
 	if (frame->bpp <= CHAR_BIT) {
-			for (y = 0; y < height_; ++y) {
-				const unsigned char *data_ = frame->data;
-				/* input data */
-				for (x = 0; x < width_; ++x) {
-					data [y*width + x] = data_ [y*width_ + x];
-				}
-				/* padding */
-				for (; x < width; ++x) {
-					data [y*width + x] = data_ [y*width_ + width_-1];
-				}
+		for (y = 0; y < height_; ++y) {
+			const unsigned char *data_ = frame->data;
+			/* input data */
+			for (x = 0; x < width_; ++x) {
+				data [y*width + x] = data_ [y*width_ + x];
 			}
+			/* padding */
+			for (; x < width; ++x) {
+				data [y*width + x] = data_ [y*width_ + width_-1];
+			}
+		}
 	} else if (frame->bpp <= CHAR_BIT * sizeof(unsigned short)) {
-			for (y = 0; y < height_; ++y) {
-				const unsigned short *data_ = frame->data;
-				/* input data */
-				for (x = 0; x < width_; ++x) {
-					data [y*width + x] = be_to_native_s( data_ [y*width_ + x] );
-				}
-				/* padding */
-				for (; x < width; ++x) {
-					data [y*width + x] = be_to_native_s( data_ [y*width_ + width_-1] );
-				}
+		for (y = 0; y < height_; ++y) {
+			const unsigned short *data_ = frame->data;
+			/* input data */
+			for (x = 0; x < width_; ++x) {
+				data [y*width + x] = be_to_native_s( data_ [y*width_ + x] );
 			}
+			/* padding */
+			for (; x < width; ++x) {
+				data [y*width + x] = be_to_native_s( data_ [y*width_ + width_-1] );
+			}
+		}
 	} else {
-			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
-			return RET_FAILURE_LOGIC_ERROR;
+		fprintf(stderr, "[ERROR] unsupported pixel depth\n");
+		return RET_FAILURE_LOGIC_ERROR;
 	}
 	/* padding */
 	for (; y < height; ++y) {
