@@ -325,7 +325,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	}
 
 	/* stride in bytes (aka chars) */
-	stride = width * bpp/CHAR_BIT;
+	stride = width * ( bpp <= CHAR_BIT ? 1 : sizeof(short) );
 
 	/* allocate a raster */
 	data = malloc(height * stride);
@@ -393,8 +393,7 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	assert( frame->data );
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
-	switch (frame->bpp) {
-		case CHAR_BIT:
+	if (frame->bpp <= CHAR_BIT) {
 			for (y = 0; y < height_; ++y) {
 				const unsigned char *data_ = frame->data;
 				/* input data */
@@ -406,8 +405,7 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 					data [y*width + x] = data_ [y*width_ + width_-1];
 				}
 			}
-			break;
-		case CHAR_BIT * sizeof(unsigned short):
+	} else if (frame->bpp <= CHAR_BIT * sizeof(unsigned short)) {
 			for (y = 0; y < height_; ++y) {
 				const unsigned short *data_ = frame->data;
 				/* input data */
@@ -419,8 +417,7 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 					data [y*width + x] = be_to_native_s( data_ [y*width_ + width_-1] );
 				}
 			}
-			break;
-		default:
+	} else {
 			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
 			return RET_FAILURE_LOGIC_ERROR;
 	}
@@ -1133,7 +1130,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stdout, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
+	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
 
 	if ( frame.width > (1<<20) || frame.width < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image width\n");
