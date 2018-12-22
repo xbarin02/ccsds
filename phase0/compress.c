@@ -297,6 +297,9 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		case 255:
 			bpp = 8;
 			break;
+		case 1023:
+			bpp = 10;
+			break;
 		case 4095:
 			bpp = 12;
 			break;
