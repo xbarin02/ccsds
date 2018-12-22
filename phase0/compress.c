@@ -147,6 +147,38 @@ static unsigned short native_to_be_s(unsigned short a)
 #endif
 }
 
+/**
+ * the result is undefined for n == 0
+ */
+static unsigned long floor_log2_l(unsigned long n)
+{
+	unsigned long r = 0;
+
+	while (n >>= 1) {
+		r++;
+	}
+
+	return r;
+}
+
+static size_t convert_maxval_to_bpp(unsigned long maxval)
+{
+	if (maxval) {
+		return floor_log2_l(maxval) + 1;
+	}
+
+	return 0;
+}
+
+static unsigned long convert_bpp_to_maxval(size_t bpp)
+{
+	if (bpp) {
+		return (1UL << bpp) - 1;
+	}
+
+	return 0;
+}
+
 int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
@@ -175,7 +207,7 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 	width = frame->width;
 	bpp = frame->bpp;
 
-	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (1UL<<bpp)-1UL) < 0) {
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, convert_bpp_to_maxval(bpp)) < 0) {
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -293,22 +325,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		return RET_FAILURE_FILE_IO;
 	}
 
-	switch (maxval) {
-		case 255:
-			bpp = 8;
-			break;
-		case 1023:
-			bpp = 10;
-			break;
-		case 4095:
-			bpp = 12;
-			break;
-		case 65535:
-			bpp = 16;
-			break;
-		default:
-			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
-			return RET_FAILURE_FILE_UNSUPPORTED;
+	bpp = convert_maxval_to_bpp(maxval);
+
+	if (bpp > 16) {
+		fprintf(stderr, "[ERROR] unsupported pixel depth\n");
+		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
 	/* look ahead for a comment, ungetc */
