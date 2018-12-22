@@ -474,35 +474,35 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	assert( data_ );
 
 	if (bpp <= CHAR_BIT) {
-			for (y = 0; y < height_; ++y) {
-				for (x = 0; x < width_; ++x) {
-					int sample = data [y*width + x];
-					unsigned char *target = (unsigned char *)data_ + y*width_ + x;
+		for (y = 0; y < height_; ++y) {
+			for (x = 0; x < width_; ++x) {
+				int sample = data [y*width + x];
+				unsigned char *target = (unsigned char *)data_ + y*width_ + x;
 
-					if ( sample < 0 )
-						*target = 0;
-					else if ( sample > UCHAR_MAX )
-						*target = UCHAR_MAX;
-					else
-						*target = (unsigned char) sample;
-				}
+				if ( sample < 0 )
+					*target = 0;
+				else if ( sample > UCHAR_MAX )
+					*target = UCHAR_MAX;
+				else
+					*target = (unsigned char) sample;
 			}
+		}
 	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
-			for (y = 0; y < height_; ++y) {
-				for (x = 0; x < width_; ++x) {
-					int sample = data [y*width + x];
-					unsigned short *target = (unsigned short *)data_ + y*width_ + x;
+		for (y = 0; y < height_; ++y) {
+			for (x = 0; x < width_; ++x) {
+				int sample = data [y*width + x];
+				unsigned short *target = (unsigned short *)data_ + y*width_ + x;
 
-					if ( sample < 0 )
-						*target = 0;
-					else if ( sample > USHRT_MAX )
-						*target = USHRT_MAX;
-					else
-						*target = native_to_be_s( (unsigned short) sample );
-				}
+				if ( sample < 0 )
+					*target = 0;
+				else if ( sample > USHRT_MAX )
+					*target = USHRT_MAX;
+				else
+					*target = native_to_be_s( (unsigned short) sample );
 			}
+		}
 	} else {
-			return RET_FAILURE_LOGIC_ERROR;
+		return RET_FAILURE_LOGIC_ERROR;
 	}
 
 	return RET_SUCCESS;
