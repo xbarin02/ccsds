@@ -185,7 +185,7 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 
 	/* save data */
 
-	stride = width * bpp/CHAR_BIT;
+	stride = width * ( bpp <= CHAR_BIT ? 1 : sizeof(unsigned short) );
 
 	for (y = 0; y < height; ++y) {
 		if (fwrite((const unsigned char *)data + y*stride, stride, 1, stream) < 1) {
@@ -473,8 +473,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	assert( data );
 	assert( data_ );
 
-	switch (bpp) {
-		case CHAR_BIT:
+	if (bpp <= CHAR_BIT) {
 			for (y = 0; y < height_; ++y) {
 				for (x = 0; x < width_; ++x) {
 					int sample = data [y*width + x];
@@ -488,8 +487,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 						*target = (unsigned char) sample;
 				}
 			}
-			break;
-		case CHAR_BIT * sizeof(unsigned short):
+	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
 			for (y = 0; y < height_; ++y) {
 				for (x = 0; x < width_; ++x) {
 					int sample = data [y*width + x];
@@ -503,8 +501,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 						*target = native_to_be_s( (unsigned short) sample );
 				}
 			}
-			break;
-		default:
+	} else {
 			return RET_FAILURE_LOGIC_ERROR;
 	}
 
