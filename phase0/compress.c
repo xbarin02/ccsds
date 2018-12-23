@@ -548,6 +548,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	size_t bpp;
 	size_t y, x;
 	const int *data;
+	int maxval;
 
 	stream = fopen(path, "w");
 
@@ -559,6 +560,8 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	/* FIXME this should be stored in transform_t */
 	bpp = 16;
+
+	maxval = (int) convert_bpp_to_maxval(bpp);
 
 	width = transform->width;
 	height = transform->height;
@@ -578,8 +581,8 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 			magnitude /= factor;
 
-			if ( magnitude >= (1<<bpp) ) {
-				magnitude = (1<<bpp) - 1;
+			if ( magnitude > maxval ) {
+				magnitude = maxval;
 			}
 
 			switch (bpp) {
