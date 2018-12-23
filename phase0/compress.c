@@ -640,9 +640,9 @@ int dwt_encode_line(int *line, size_t size, size_t stride)
 		D[n] = line[stride*(2*n+1)] - ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 );
 	}
 
-	D[size/2-2] = line[stride*(size-3)] - ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) -1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
+	D[size/2-2] = line[stride*(size-3)] - ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
 
-	D[size/2-1] = line[stride*(size-1)] - ( ( 9*line[stride*(size-2)] -1*line[stride*(size-4)] + 4 ) >> 3 );
+	D[size/2-1] = line[stride*(size-1)] - ( ( 9*line[stride*(size-2)] - 1*line[stride*(size-4)] + 4 ) >> 3 );
 
 	C[0] = line[stride*0] - ( ( -D[0] + 1 ) >> 1 );
 
@@ -759,9 +759,9 @@ int dwt_decode_line(int *line, size_t size, size_t stride)
 		line[stride*(2*n+1)] = D[n] + ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 );
 	}
 
-	line[stride*(size-3)] = D[size/2-2] + ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) -1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
+	line[stride*(size-3)] = D[size/2-2] + ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
 
-	line[stride*(size-1)] = D[size/2-1] + ( ( 9*line[stride*(size-2)] -1*line[stride*(size-4)] + 4 ) >> 3 );
+	line[stride*(size-1)] = D[size/2-1] + ( ( 9*line[stride*(size-2)] - 1*line[stride*(size-4)] + 4 ) >> 3 );
 
 	free(line_);
 
