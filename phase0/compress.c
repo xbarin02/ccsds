@@ -466,6 +466,11 @@ int dwt_import(const struct frame_t *frame, struct transform_t *transform)
 }
 #endif
 
+int clamp(int v, int lo, int hi)
+{
+	return v < lo ? lo : ( hi < v ? hi : v );
+}
+
 /**
  * export the transform into frame
  *
@@ -503,12 +508,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 				int sample = data [y*width + x];
 				unsigned char *target = (unsigned char *)data_ + y*width_ + x;
 
-				if ( sample < 0 )
-					*target = 0;
-				else if ( sample > UCHAR_MAX )
-					*target = UCHAR_MAX;
-				else
-					*target = (unsigned char) sample;
+				*target = (unsigned char) clamp(sample, 0, UCHAR_MAX);
 			}
 		}
 	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
@@ -517,12 +517,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 				int sample = data [y*width + x];
 				unsigned short *target = (unsigned short *)data_ + y*width_ + x;
 
-				if ( sample < 0 )
-					*target = 0;
-				else if ( sample > USHRT_MAX )
-					*target = USHRT_MAX;
-				else
-					*target = native_to_be_s( (unsigned short) sample );
+				*target = native_to_be_s( (unsigned short) clamp(sample, 0, USHRT_MAX) );
 			}
 		}
 	} else {
