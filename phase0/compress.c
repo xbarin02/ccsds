@@ -525,6 +525,22 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
+/**
+ * compute the absolute value of an integer
+ *
+ * Unlike abs(), the absolute value of the most negative integer is defined to be INT_MAX.
+ */
+int abs_(int j)
+{
+	int r = abs(j);
+
+	if (r < 0) {
+		return INT_MAX;
+	}
+
+	return r;
+}
+
 int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 {
 	FILE *stream;
@@ -558,11 +574,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
 			int sample = data [y*width + x];
-			int magnitude = abs(sample);
-
-			if ( magnitude < 0 ) {
-				magnitude = INT_MAX;
-			}
+			int magnitude = abs_(sample);
 
 			magnitude /= factor;
 
