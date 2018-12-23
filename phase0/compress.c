@@ -578,9 +578,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
 			int sample = data [y*width + x];
-			int magnitude = abs_(sample);
-
-			magnitude /= factor;
+			int magnitude = abs_(sample) / factor;
 
 			switch (bpp) {
 				case CHAR_BIT: {
