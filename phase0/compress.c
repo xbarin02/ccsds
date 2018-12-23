@@ -506,7 +506,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 			for (x = 0; x < width_; ++x) {
 				int sample = data [y*width + x];
 
-				*(data_ + y*width_ + x) = (unsigned char) clamp(sample, 0, UCHAR_MAX);
+				data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, UCHAR_MAX);
 			}
 		}
 	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
@@ -515,7 +515,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 			for (x = 0; x < width_; ++x) {
 				int sample = data [y*width + x];
 
-				*(data_ + y*width_ + x) = native_to_be_s( (unsigned short) clamp(sample, 0, USHRT_MAX) );
+				data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, USHRT_MAX) );
 			}
 		}
 	} else {
