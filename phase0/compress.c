@@ -573,6 +573,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	data = transform->data;
 
 	assert( data );
+	assert( factor );
 
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
@@ -581,13 +582,9 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 			magnitude /= factor;
 
-			if ( magnitude > maxval ) {
-				magnitude = maxval;
-			}
-
 			switch (bpp) {
 				case CHAR_BIT: {
-						unsigned char c = (unsigned char) magnitude;
+						unsigned char c = (unsigned char) clamp(magnitude, 0, maxval);
 
 						if ( 1 != fwrite(&c, 1, 1, stream) ) {
 							return RET_FAILURE_FILE_IO;
@@ -595,7 +592,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 						break;
 					}
 				case CHAR_BIT * sizeof(short): {
-						unsigned short c = native_to_be_s( (unsigned short) magnitude );
+						unsigned short c = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
 
 						if ( 1 != fwrite(&c, sizeof(short), 1, stream) ) {
 							return RET_FAILURE_FILE_IO;
