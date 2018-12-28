@@ -31,14 +31,14 @@ struct frame_t {
 };
 
 /**
- * wavelet coefficients
+ * framebuffer holding either image or wavelet coefficients
  *
  * NOTE the width, height are exact image dimensions, i.e. not rounded to next multiple of eight
  */
 struct transform_t {
-	size_t width;
-	size_t height;
-	size_t bpp;
+	size_t width;  /**< number of columns, range [17; 1<<20] */
+	size_t height; /**< number of rows, range [17; infty) */
+	size_t bpp;    /**< pixel bit depth (valid in image domain, not in transform domain) */
 
 	int *data;
 };
