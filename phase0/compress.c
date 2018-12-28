@@ -33,7 +33,7 @@ struct frame_t {
 /**
  * wavelet coefficients
  *
- * TODO change the code in such way that width, height are exact image dimensions, i.e. not rounded to next multiple of eight
+ * NOTE the width, height are exact image dimensions, i.e. not rounded to next multiple of eight
  */
 struct transform_t {
 	size_t width;
@@ -337,8 +337,8 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 
 	assert( transform );
 
-	transform->width = width;
-	transform->height = height;
+	transform->width = width_;
+	transform->height = height_;
 	transform->data = data;
 	transform->bpp = frame->bpp;
 
@@ -374,7 +374,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 
 	assert( transform );
 
-	width = transform->width;
+	width = ceil_multiple8(transform->width);
 
 	data = transform->data;
 
@@ -429,8 +429,8 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	maxval = (int) convert_bpp_to_maxval(bpp);
 
-	width = transform->width;
-	height = transform->height;
+	width = ceil_multiple8(transform->width);
+	height = ceil_multiple8(transform->height);
 
 	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (unsigned long) maxval) < 0 ) {
 		return RET_FAILURE_FILE_IO;
@@ -735,8 +735,8 @@ int dwt_encode(struct transform_t *transform)
 
 	assert( transform );
 
-	width = transform->width;
-	height = transform->height;
+	width = ceil_multiple8(transform->width);
+	height = ceil_multiple8(transform->height);
 
 	width_s = width >> 3;
 	height_s = height >> 3;
@@ -804,8 +804,8 @@ int dwt_encode_float(struct transform_t *transform)
 
 	assert( transform );
 
-	width = transform->width;
-	height = transform->height;
+	width = ceil_multiple8(transform->width);
+	height = ceil_multiple8(transform->height);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -845,8 +845,8 @@ int dwt_decode(struct transform_t *transform)
 
 	assert( transform );
 
-	width = transform->width;
-	height = transform->height;
+	width = ceil_multiple8(transform->width);
+	height = ceil_multiple8(transform->height);
 
 	width_s = width >> 3;
 	height_s = height >> 3;
@@ -907,8 +907,8 @@ int dwt_decode_float(struct transform_t *transform)
 
 	assert( transform );
 
-	width = transform->width;
-	height = transform->height;
+	width = ceil_multiple8(transform->width);
+	height = ceil_multiple8(transform->height);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
