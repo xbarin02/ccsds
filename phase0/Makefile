@@ -4,3 +4,5 @@ LDLIBS=
 .PHONY: all clean
 
 all: compress
+
+compress.o: compress.c utils.h
