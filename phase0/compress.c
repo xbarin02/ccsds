@@ -32,6 +32,8 @@ struct frame_t {
 
 /**
  * wavelet coefficients
+ *
+ * TODO change the code in such way that width, height are exact image dimensions, i.e. not rounded to next multiple of eight
  */
 struct transform_t {
 	size_t width;
@@ -362,7 +364,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	size_t bpp;
 	size_t y, x;
 	const int *data;
-	int i_maxval;
+	int maxval;
 
 	assert( frame );
 
@@ -379,7 +381,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	assert( data );
 	assert( frame->data );
 
-	i_maxval = (int) convert_bpp_to_maxval(bpp);
+	maxval = (int) convert_bpp_to_maxval(bpp);
 
 	if (bpp <= CHAR_BIT) {
 		unsigned char *data_ = frame->data;
@@ -387,7 +389,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 			for (x = 0; x < width_; ++x) {
 				int sample = data [y*width + x];
 
-				data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, i_maxval);
+				data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, maxval);
 			}
 		}
 	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
@@ -396,7 +398,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 			for (x = 0; x < width_; ++x) {
 				int sample = data [y*width + x];
 
-				data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, i_maxval) );
+				data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, maxval) );
 			}
 		}
 	} else {
@@ -430,8 +432,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	width = transform->width;
 	height = transform->height;
 
-	/* FIXME use maxval */
-	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (1UL<<bpp)-1UL) < 0 ) {
+	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (unsigned long) maxval) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
 
