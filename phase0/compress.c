@@ -25,7 +25,7 @@
 struct frame_t {
 	size_t width;  /**< number of columns, range [17; 1<<20] */
 	size_t height; /**< number of rows, range [17; infty) */
-	size_t bpp;    /**< pixel bit depth */
+	size_t bpp;    /**< pixel bit depth (valid in image domain, not in transform domain) */
 
 	void *data;
 };
@@ -36,6 +36,8 @@ struct frame_t {
 struct transform_t {
 	size_t width;
 	size_t height;
+	size_t bpp;
+
 	int *data;
 };
 
@@ -336,6 +338,7 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 	transform->width = width;
 	transform->height = height;
 	transform->data = data;
+	transform->bpp = frame->bpp;
 
 	return RET_SUCCESS;
 }
@@ -349,7 +352,7 @@ int dwt_import(const struct frame_t *frame, struct transform_t *transform)
 /**
  * export the transform into frame
  *
- * - frame dimensions must be set
+ * - frame dimensions and depth must be set
  * - frame data pointer must be allocated
  */
 int dwt_export(const struct transform_t *transform, struct frame_t *frame)
@@ -420,14 +423,14 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	assert( transform );
 
-	/* FIXME this should be stored in transform_t */
-	bpp = 16;
+	bpp = transform->bpp;
 
 	maxval = (int) convert_bpp_to_maxval(bpp);
 
 	width = transform->width;
 	height = transform->height;
 
+	/* FIXME use maxval */
 	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (1UL<<bpp)-1UL) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
@@ -442,25 +445,20 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 			int sample = data [y*width + x];
 			int magnitude = abs_(sample) / factor;
 
-			switch (bpp) {
-				case CHAR_BIT: {
-						unsigned char c = (unsigned char) clamp(magnitude, 0, maxval);
+			if (bpp <= CHAR_BIT) {
+				unsigned char c = (unsigned char) clamp(magnitude, 0, maxval);
 
-						if ( 1 != fwrite(&c, 1, 1, stream) ) {
-							return RET_FAILURE_FILE_IO;
-						}
-						break;
-					}
-				case CHAR_BIT * sizeof(short): {
-						unsigned short c = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
+				if ( 1 != fwrite(&c, 1, 1, stream) ) {
+					return RET_FAILURE_FILE_IO;
+				}
+			} else if (bpp <= CHAR_BIT * sizeof(short)) {
+				unsigned short c = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
 
-						if ( 1 != fwrite(&c, sizeof(short), 1, stream) ) {
-							return RET_FAILURE_FILE_IO;
-						}
-						break;
-					}
-				default:
-					return RET_FAILURE_LOGIC_ERROR;
+				if ( 1 != fwrite(&c, sizeof(short), 1, stream) ) {
+					return RET_FAILURE_FILE_IO;
+				}
+			} else {
+				return RET_FAILURE_LOGIC_ERROR;
 			}
 		}
 	}
