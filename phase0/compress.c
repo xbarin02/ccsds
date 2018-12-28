@@ -484,6 +484,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	size_t bpp;
 	size_t y, x;
 	const int *data;
+	int i_maxval;
 
 	assert( frame );
 
@@ -500,13 +501,15 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 	assert( data );
 	assert( frame->data );
 
+	i_maxval = (int) convert_bpp_to_maxval(bpp);
+
 	if (bpp <= CHAR_BIT) {
 		unsigned char *data_ = frame->data;
 		for (y = 0; y < height_; ++y) {
 			for (x = 0; x < width_; ++x) {
 				int sample = data [y*width + x];
 
-				data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, UCHAR_MAX);
+				data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, i_maxval);
 			}
 		}
 	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
@@ -515,7 +518,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 			for (x = 0; x < width_; ++x) {
 				int sample = data [y*width + x];
 
-				data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, USHRT_MAX) );
+				data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, i_maxval) );
 			}
 		}
 	} else {
