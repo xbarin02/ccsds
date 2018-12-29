@@ -10,12 +10,12 @@
 #include <stdlib.h>
 
 /**
- * error codes
+ * \brief Error codes
  *
  * The standard (C89, 6.1.3.3 Enumeration constants) states that
- * an identifier declared as an enumeration constant has type int.
+ * an identifier declared as an enumeration constant has type \c int.
  * Therefore, it is fine if the function returning these constants
- * has return type int.
+ * has return type \c int.
  */
 enum return_t {
 	/* 0x0000 successful completion */
@@ -32,9 +32,9 @@ enum return_t {
 };
 
 /**
- * largest integral value not greater than argument
+ * \brief Largest integral value not greater than argument
  *
- * Unlike floor(), this function does not require linking with -lm.
+ * Unlike floor(), this function does not require linking with \c -lm.
  */
 static int floor_(double x)
 {
@@ -57,21 +57,21 @@ static int floor_(double x)
 }
 
 /**
- * round to nearest integer
+ * \brief Round to nearest integer
  *
  * The round() function is not present in C89.
  */
 #define round_(x) floor_( (x) + 0.5 )
 
 /**
- * indicates the layout of multi-byte integers
+ * \brief Indicates the layout of multi-byte integers
  *
  * The macro should be defined on little endian architectures.
  */
 #define SWAP_BYTE_ORDER
 
 /**
- * convert big endian to native byte order
+ * \brief Convert big-endian to native byte order
  *
  * This function is similar to htons(). However the htons() is not present in C89.
  */
@@ -88,7 +88,7 @@ static unsigned short be_to_native_s(unsigned short a)
 }
 
 /**
- * convert native byte order to big endian
+ * \brief Convert native byte order to big endian
  *
  * This function is similar to ntohs(). However the ntohs() is not present in C89.
  */
@@ -105,9 +105,9 @@ static unsigned short native_to_be_s(unsigned short a)
 }
 
 /**
- * base-2 logarithmic function
+ * \brief Base-2 logarithm
  *
- * The result is undefined for n == 0.
+ * The result is undefined for zero \p n.
  */
 static unsigned long floor_log2_l(unsigned long n)
 {
@@ -138,13 +138,16 @@ static unsigned long convert_bpp_to_maxval(size_t bpp)
 	return 0;
 }
 
+/**
+ * \brief Round \p n up to the nearest multiple of 8
+ */
 static size_t ceil_multiple8(size_t n)
 {
 	return (n + 7) / 8 * 8;
 }
 
 /**
- * convert \p bpp into the number of bytes required by the smallest type that can hold the bpp-bit samples
+ * \brief Convert \p bpp into the number of bytes required by the smallest type that can hold the \p bpp bit samples
  *
  * If no suitable type can be found, returns zero.
  */
@@ -156,7 +159,7 @@ static size_t convert_bpp_to_depth(size_t bpp)
 }
 
 /**
- * returns the value of \p v constrained to the range \p lo to \p hi
+ * \brief Returns the value of \p v constrained to the range \p lo to \p hi
  */
 int clamp(int v, int lo, int hi)
 {
@@ -164,7 +167,7 @@ int clamp(int v, int lo, int hi)
 }
 
 /**
- * compute the absolute value of an integer
+ * \brief Compute the absolute value of an integer
  *
  * Unlike abs(), the absolute value of the most negative integer is defined to be INT_MAX.
  */
