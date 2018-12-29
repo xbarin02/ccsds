@@ -417,7 +417,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	size_t y, x;
 	const int *data;
 	int maxval;
-	void *row;
+	void *line;
 
 	stream = fopen(path, "w");
 
@@ -446,9 +446,9 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 	depth = convert_bpp_to_depth(bpp);
 	stride = width * depth;
-	row = malloc( stride );
+	line = malloc( stride );
 
-	if (NULL == row)
+	if (NULL == line)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 
 	for (y = 0; y < height; ++y) {
@@ -458,16 +458,16 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 
 			switch (depth) {
 				case sizeof(char): {
-					unsigned char *row_ = row;
+					unsigned char *line_ = line;
 
-					row_ [x] = (unsigned char) clamp(magnitude, 0, maxval);
+					line_ [x] = (unsigned char) clamp(magnitude, 0, maxval);
 
 					break;
 				}
 				case sizeof(short): {
-					unsigned short *row_ = row;
+					unsigned short *line_ = line;
 
-					row_ [x] = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
+					line_ [x] = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
 
 					break;
 				}
@@ -476,12 +476,12 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 			}
 		}
 
-		if ( 1 != fwrite(row, stride, 1, stream) ) {
+		if ( 1 != fwrite(line, stride, 1, stream) ) {
 			return RET_FAILURE_FILE_IO;
 		}
 	}
 
-	free(row);
+	free(line);
 
 	if (EOF == fclose(stream))
 		return RET_FAILURE_FILE_IO;
