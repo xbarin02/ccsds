@@ -120,6 +120,9 @@ static unsigned long floor_log2_l(unsigned long n)
 	return r;
 }
 
+/**
+ * \brief Find the smallest bit depth needed to hold the \p maxval
+ */
 static size_t convert_maxval_to_bpp(unsigned long maxval)
 {
 	if (maxval) {
@@ -129,6 +132,9 @@ static size_t convert_maxval_to_bpp(unsigned long maxval)
 	return 0;
 }
 
+/**
+ * \brief Get the maximum value that can be represented on \p bpp bit word
+ */
 static unsigned long convert_bpp_to_maxval(size_t bpp)
 {
 	if (bpp) {
