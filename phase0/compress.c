@@ -413,9 +413,11 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	FILE *stream;
 	size_t width, height;
 	size_t bpp;
+	size_t stride;
 	size_t y, x;
 	const int *data;
 	int maxval;
+	void *row;
 
 	stream = fopen(path, "w");
 
@@ -441,6 +443,12 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	assert( data );
 	assert( factor );
 
+	stride = width * (bpp <= CHAR_BIT ? 1 : sizeof(short));
+	row = malloc( stride );
+
+	if (NULL == row)
+		return RET_FAILURE_MEMORY_ALLOCATION;
+
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
 			int sample = data [y*width + x];
@@ -449,20 +457,22 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 			if (bpp <= CHAR_BIT) {
 				unsigned char c = (unsigned char) clamp(magnitude, 0, maxval);
 
-				if ( 1 != fwrite(&c, 1, 1, stream) ) {
-					return RET_FAILURE_FILE_IO;
-				}
+				*((unsigned char *)row + x) = c;
 			} else if (bpp <= CHAR_BIT * sizeof(short)) {
 				unsigned short c = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
 
-				if ( 1 != fwrite(&c, sizeof(short), 1, stream) ) {
-					return RET_FAILURE_FILE_IO;
-				}
+				*((unsigned short *)row + x) = c;
 			} else {
 				return RET_FAILURE_LOGIC_ERROR;
 			}
 		}
+
+		if ( 1 != fwrite(row, stride, 1, stream) ) {
+			return RET_FAILURE_FILE_IO;
+		}
 	}
+
+	free(row);
 
 	if (EOF == fclose(stream))
 		return RET_FAILURE_FILE_IO;
