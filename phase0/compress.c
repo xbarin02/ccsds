@@ -457,7 +457,7 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 			int magnitude = abs_(sample) / factor;
 
 			switch (depth) {
-				case 1: {
+				case sizeof(char): {
 					unsigned char *row_ = row;
 
 					row_ [x] = (unsigned char) clamp(magnitude, 0, maxval);
