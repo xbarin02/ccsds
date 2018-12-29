@@ -143,7 +143,9 @@ static size_t ceil_multiple8(size_t n)
 }
 
 /**
- * convert bpp into the number of bytes required
+ * convert 'bpp' into the number of bytes required by the smallest type that can hold the bpp-bit samples
+ *
+ * If no suitable type can be found, returns zero.
  */
 static size_t convert_bpp_to_depth(size_t bpp)
 {

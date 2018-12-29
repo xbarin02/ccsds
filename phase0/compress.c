@@ -77,8 +77,7 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
 	size_t y;
-	size_t width;
-	size_t height;
+	size_t width, height, depth;
 	size_t bpp;
 	size_t stride;
 	const void *data;
@@ -101,7 +100,7 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 	width = frame->width;
 	bpp = frame->bpp;
 
-	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, convert_bpp_to_maxval(bpp)) < 0) {
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, convert_bpp_to_maxval(bpp)) < 0) {
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -111,7 +110,8 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 
 	/* save data */
 
-	stride = width * ( bpp <= CHAR_BIT ? 1 : sizeof(unsigned short) );
+	depth = convert_bpp_to_depth(bpp);
+	stride = width * depth;
 
 	for (y = 0; y < height; ++y) {
 		if (fwrite((const unsigned char *)data + y*stride, stride, 1, stream) < 1) {
@@ -153,8 +153,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	char magic[2];
 	unsigned long maxval;
 	size_t y;
-	size_t width;
-	size_t height;
+	size_t width, height, depth;
 	size_t bpp;
 	size_t stride;
 	void *data;
@@ -238,7 +237,8 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	}
 
 	/* stride in bytes (aka chars) */
-	stride = width * ( bpp <= CHAR_BIT ? 1 : sizeof(short) );
+	depth = convert_bpp_to_depth(bpp);
+	stride = width * depth;
 
 	/* allocate a raster */
 	data = malloc(height * stride);
