@@ -411,7 +411,7 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 {
 	FILE *stream;
-	size_t width, height;
+	size_t width, height, depth;
 	size_t bpp;
 	size_t stride;
 	size_t y, x;
@@ -444,7 +444,8 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	assert( data );
 	assert( factor );
 
-	stride = width * (bpp <= CHAR_BIT ? 1 : sizeof(short));
+	depth = convert_bpp_to_depth(bpp);
+	stride = width * depth;
 	row = malloc( stride );
 
 	if (NULL == row)
@@ -455,16 +456,23 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 			int sample = data [y*width + x];
 			int magnitude = abs_(sample) / factor;
 
-			if (bpp <= CHAR_BIT) {
-				unsigned char *row_ = row;
+			switch (depth) {
+				case 1: {
+					unsigned char *row_ = row;
 
-				row_ [x] = (unsigned char) clamp(magnitude, 0, maxval);
-			} else if (bpp <= CHAR_BIT * sizeof(short)) {
-				unsigned short *row_ = row;
+					row_ [x] = (unsigned char) clamp(magnitude, 0, maxval);
 
-				row_ [x] = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
-			} else {
-				return RET_FAILURE_LOGIC_ERROR;
+					break;
+				}
+				case sizeof(short): {
+					unsigned short *row_ = row;
+
+					row_ [x] = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
+
+					break;
+				}
+				default:
+					return RET_FAILURE_LOGIC_ERROR;
 			}
 		}
 

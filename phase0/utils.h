@@ -143,6 +143,16 @@ static size_t ceil_multiple8(size_t n)
 }
 
 /**
+ * convert bpp into the number of bytes required
+ */
+static size_t convert_bpp_to_depth(size_t bpp)
+{
+	return bpp <= CHAR_BIT ? 1
+		: ( bpp <= CHAR_BIT * sizeof(short) ? sizeof(short)
+			: 0);
+}
+
+/**
  * returns the value of 'v' constrained to the range 'lo' to 'hi'
  */
 int clamp(int v, int lo, int hi)
