@@ -434,7 +434,8 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 	width = ceil_multiple8(transform->width);
 	height = ceil_multiple8(transform->height);
 
-	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", width, height, (unsigned long) maxval) < 0 ) {
+	/* NOTE casting from size_t to unsigned long due to missing 'z' modifier */
+	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, (unsigned long) maxval) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
 
