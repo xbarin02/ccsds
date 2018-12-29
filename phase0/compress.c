@@ -278,7 +278,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 {
-	size_t width_, height_;
+	size_t width_, height_, depth_;
 	size_t width, height;
 	int *data;
 	size_t y, x;
@@ -300,31 +300,37 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 
 	assert( frame->data );
 
+	depth_ = convert_bpp_to_depth(frame->bpp);
+
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
 	for (y = 0; y < height_; ++y) {
-		if (frame->bpp <= CHAR_BIT) {
-			const unsigned char *data_ = frame->data;
-			/* input data */
-			for (x = 0; x < width_; ++x) {
-				data [y*width + x] = data_ [y*width_ + x];
+		switch (depth_) {
+			case sizeof(char): {
+				const unsigned char *data_ = frame->data;
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					data [y*width + x] = data_ [y*width_ + x];
+				}
+				/* padding */
+				for (; x < width; ++x) {
+					data [y*width + x] = data_ [y*width_ + width_-1];
+				}
+				break;
 			}
-			/* padding */
-			for (; x < width; ++x) {
-				data [y*width + x] = data_ [y*width_ + width_-1];
+			case sizeof(short): {
+				const unsigned short *data_ = frame->data;
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					data [y*width + x] = be_to_native_s( data_ [y*width_ + x] );
+				}
+				/* padding */
+				for (; x < width; ++x) {
+					data [y*width + x] = be_to_native_s( data_ [y*width_ + width_-1] );
+				}
+				break;
 			}
-		} else if (frame->bpp <= CHAR_BIT * sizeof(unsigned short)) {
-			const unsigned short *data_ = frame->data;
-			/* input data */
-			for (x = 0; x < width_; ++x) {
-				data [y*width + x] = be_to_native_s( data_ [y*width_ + x] );
-			}
-			/* padding */
-			for (; x < width; ++x) {
-				data [y*width + x] = be_to_native_s( data_ [y*width_ + width_-1] );
-			}
-		} else {
-			fprintf(stderr, "[ERROR] unsupported pixel depth\n");
-			return RET_FAILURE_LOGIC_ERROR;
+			default:
+				return RET_FAILURE_LOGIC_ERROR;
 		}
 	}
 	/* padding */
