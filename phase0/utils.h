@@ -175,7 +175,7 @@ int clamp(int v, int lo, int hi)
 /**
  * \brief Compute the absolute value of an integer
  *
- * Unlike abs(), the absolute value of the most negative integer is defined to be INT_MAX.
+ * Unlike abs(), the absolute value of the most negative integer is defined to be \c INT_MAX.
  */
 int abs_(int j)
 {
