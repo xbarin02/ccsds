@@ -363,7 +363,7 @@ int dwt_import(const struct frame_t *frame, struct transform_t *transform)
  */
 int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 {
-	size_t width_, height_;
+	size_t width_, height_, depth_;
 	size_t width;
 	size_t bpp;
 	size_t y, x;
@@ -387,26 +387,31 @@ int dwt_export(const struct transform_t *transform, struct frame_t *frame)
 
 	maxval = (int) convert_bpp_to_maxval(bpp);
 
-	if (bpp <= CHAR_BIT) {
-		unsigned char *data_ = frame->data;
-		for (y = 0; y < height_; ++y) {
-			for (x = 0; x < width_; ++x) {
-				int sample = data [y*width + x];
+	depth_ = convert_bpp_to_depth(bpp);
 
-				data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, maxval);
-			}
-		}
-	} else if (bpp <= CHAR_BIT * sizeof(unsigned short)) {
-		unsigned short *data_ = frame->data;
-		for (y = 0; y < height_; ++y) {
-			for (x = 0; x < width_; ++x) {
-				int sample = data [y*width + x];
+	for (y = 0; y < height_; ++y) {
+		switch (depth_) {
+			case sizeof(char): {
+				unsigned char *data_ = frame->data;
+				for (x = 0; x < width_; ++x) {
+					int sample = data [y*width + x];
 
-				data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, maxval) );
+					data_ [y*width_ + x] = (unsigned char) clamp(sample, 0, maxval);
+				}
+				break;
 			}
+			case sizeof(short): {
+				unsigned short *data_ = frame->data;
+				for (x = 0; x < width_; ++x) {
+					int sample = data [y*width + x];
+
+					data_ [y*width_ + x] = native_to_be_s( (unsigned short) clamp(sample, 0, maxval) );
+				}
+				break;
+			}
+			default:
+				return RET_FAILURE_LOGIC_ERROR;
 		}
-	} else {
-		return RET_FAILURE_LOGIC_ERROR;
 	}
 
 	return RET_SUCCESS;
