@@ -1,5 +1,6 @@
 /**
- * various useful routines
+ * \file utils.h
+ * \brief Various useful routines
  */
 #ifndef UTILS_H_
 #define UTILS_H_
@@ -143,7 +144,7 @@ static size_t ceil_multiple8(size_t n)
 }
 
 /**
- * convert 'bpp' into the number of bytes required by the smallest type that can hold the bpp-bit samples
+ * convert \p bpp into the number of bytes required by the smallest type that can hold the bpp-bit samples
  *
  * If no suitable type can be found, returns zero.
  */
@@ -155,7 +156,7 @@ static size_t convert_bpp_to_depth(size_t bpp)
 }
 
 /**
- * returns the value of 'v' constrained to the range 'lo' to 'hi'
+ * returns the value of \p v constrained to the range \p lo to \p hi
  */
 int clamp(int v, int lo, int hi)
 {
