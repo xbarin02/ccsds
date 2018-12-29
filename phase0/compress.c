@@ -455,13 +455,13 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 			int magnitude = abs_(sample) / factor;
 
 			if (bpp <= CHAR_BIT) {
-				unsigned char c = (unsigned char) clamp(magnitude, 0, maxval);
+				unsigned char *row_ = row;
 
-				*((unsigned char *)row + x) = c;
+				row_ [x] = (unsigned char) clamp(magnitude, 0, maxval);
 			} else if (bpp <= CHAR_BIT * sizeof(short)) {
-				unsigned short c = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
+				unsigned short *row_ = row;
 
-				*((unsigned short *)row + x) = c;
+				row_ [x] = native_to_be_s( (unsigned short) clamp(magnitude, 0, maxval) );
 			} else {
 				return RET_FAILURE_LOGIC_ERROR;
 			}
