@@ -1161,7 +1161,7 @@ int dwt_encode(struct transform_t *transform)
 }
 
 /*
- * FIXME
+ * NOTE
  * When applying
  * the Float DWT, it would not be necessary for coefficients in these subbands to be rounded to
  * integer values, and so presumably the binary word size is irrelevant for these subbands.
@@ -1357,7 +1357,6 @@ int bpe_encode(const struct transform_t *transform, const struct parameters_t *p
 
 int main(int argc, char *argv[])
 {
-	struct frame_t frame;
 	struct transform_t transform;
 	struct parameters_t parameters;
 
@@ -1381,37 +1380,24 @@ int main(int argc, char *argv[])
 	}
 
 	/** (1) load input image */
-	if ( frame_load_pgm(&frame, argv[1]) ) {
-		fprintf(stderr, "[ERROR] unable to load an input raster\n");
-		return EXIT_FAILURE;
-	}
 
-	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
-
-	if ( frame.width > (1<<20) || frame.width < 17 ) {
-		fprintf(stderr, "[ERROR] unsupported image width\n");
-		return EXIT_FAILURE;
-	}
-
-	if ( frame.height < 17 ) {
-		fprintf(stderr, "[ERROR] unsupported image height\n");
-		return EXIT_FAILURE;
-	}
-
-	/** (2) DWT */
-#if 0
-	/* FIXME split create and import */
-	if ( dwt_create(&frame, &transform) ) {
-		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
-		return EXIT_FAILURE;
-	}
-#else
-	/* TODO */
 	if ( transform_load_pgm(&transform, argv[1]) ) {
 		fprintf(stderr, "[ERROR] unable to load image\n");
 		return EXIT_FAILURE;
 	}
-#endif
+
+	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", transform.width, transform.height, transform.bpp);
+
+	if ( transform.width > (1<<20) || transform.width < 17 ) {
+		fprintf(stderr, "[ERROR] unsupported image width\n");
+		return EXIT_FAILURE;
+	}
+
+	if ( transform.height < 17 ) {
+		fprintf(stderr, "[ERROR] unsupported image height\n");
+		return EXIT_FAILURE;
+	}
+
 	dwt_dump(&transform, "input.pgm", 1);
 
 	parameters.DWTtype = 0;
@@ -1420,6 +1406,8 @@ int main(int argc, char *argv[])
 	/* ***** encoding ***** */
 
 	fprintf(stderr, "[DEBUG] transform...\n");
+
+	/** (2) DWT */
 
 	if (parameters.DWTtype == 1)
 		dwt_encode(&transform);
@@ -1444,24 +1432,14 @@ int main(int argc, char *argv[])
 	dwt_dump(&transform, "decoded.pgm", 1);
 
 	/* convert data from transform into frame */
-#if 0
-	dwt_export(&transform, &frame);
-
-	if ( frame_save_pgm(&frame, "output.pgm") ) {
-		fprintf(stderr, "[ERROR] unable to save an output raster\n");
-		return EXIT_FAILURE;
-	}
-#else
 	if ( transform_save_pgm(&transform, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
 		return EXIT_FAILURE;
 	}
-#endif
-	/** (2) release resources */
-	dwt_destroy(&transform);
 
-	/** (1) free image */
-	frame_free(&frame);
+	/** (1) release resources */
+
+	dwt_destroy(&transform);
 
 	return EXIT_SUCCESS;
 }
