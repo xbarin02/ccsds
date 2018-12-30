@@ -147,28 +147,12 @@ int stream_skip_comment(FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_load_pgm(struct frame_t *frame, const char *path)
+int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 {
-	FILE *stream;
 	char magic[2];
 	unsigned long maxval;
-	size_t y;
-	size_t width, height, depth;
+	size_t width, height;
 	size_t bpp;
-	size_t stride;
-	void *data;
-
-	/* (1.1) open file */
-
-	if (0 == strcmp(path, "-"))
-		stream = stdin;
-	else
-		stream = fopen(path, "r");
-
-	if (NULL == stream) {
-		fprintf(stderr, "[ERROR] fopen fails\n");
-		return RET_FAILURE_FILE_OPEN;
-	}
 
 	/* (1.2) read header */
 
@@ -236,8 +220,51 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
+	/* fill the frame struct */
+	assert( frame );
+
+	frame->width = width;
+	frame->height = height;
+	frame->bpp = bpp;
+
+	return RET_SUCCESS;
+}
+
+int frame_load_pgm(struct frame_t *frame, const char *path)
+{
+	FILE *stream;
+	int err;
+	size_t y;
+	size_t width, height, depth;
+	size_t stride;
+	void *data;
+
+	/* (1.1) open file */
+
+	if (0 == strcmp(path, "-"))
+		stream = stdin;
+	else
+		stream = fopen(path, "r");
+
+	if (NULL == stream) {
+		fprintf(stderr, "[ERROR] fopen fails\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	/* (1.2) read header */
+	err = frame_read_pgm_header(frame, stream);
+
+	if (err) {
+		return err;
+	}
+
+	assert( frame );
+
+	width = frame->width;
+	height = frame->height;
+	depth = convert_bpp_to_depth(frame->bpp);
+
 	/* stride in bytes (aka chars) */
-	depth = convert_bpp_to_depth(bpp);
 	stride = width * depth;
 
 	/* allocate a raster */
@@ -259,11 +286,6 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	}
 
 	/* fill the frame struct */
-	assert( frame );
-
-	frame->width = width;
-	frame->height = height;
-	frame->bpp = bpp;
 	frame->data = data;
 
 	/* (1.4) close file */
