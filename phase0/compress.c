@@ -73,9 +73,30 @@ int frame_free(struct frame_t *frame)
 	return 0;
 }
 
+int frame_save_pgm_write_header(const struct frame_t *frame, FILE *stream)
+{
+	size_t width, height;
+	size_t bpp;
+
+	/* write header */
+
+	assert( frame );
+
+	height = frame->height;
+	width = frame->width;
+	bpp = frame->bpp;
+
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, convert_bpp_to_maxval(bpp)) < 0) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
 int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
+	int err;
 	size_t y;
 	size_t width, height, depth;
 	size_t bpp;
@@ -93,16 +114,17 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 	}
 
 	/* write header */
+	err = frame_save_pgm_write_header(frame, stream);
+
+	if (err) {
+		return err;
+	}
 
 	assert( frame );
 
 	height = frame->height;
 	width = frame->width;
 	bpp = frame->bpp;
-
-	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, convert_bpp_to_maxval(bpp)) < 0) {
-		return RET_FAILURE_FILE_IO;
-	}
 
 	data = frame->data;
 
