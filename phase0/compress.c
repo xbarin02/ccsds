@@ -4,7 +4,7 @@
  * supported features:
  * - lossy (Float DWT) and lossless compression (Integer DWT)
  * - frame-based input
- * - Pixel Type: Unsigned Integer, 8 bpp and 16 bpp
+ * - Pixel Type: Unsigned Integer
  *
  * @author David Barina <ibarina@fit.vutbr.cz>
  */
@@ -25,7 +25,7 @@
  * The \c width and \c height are exact image dimensions, i.e. not rounded to next multiple of eight.
  * However the \c data is a buffer having dimensions to be multiples of eight.
  */
-struct transform_t {
+struct frame_t {
 	size_t width;  /**< number of columns, range [17; 1<<20] */
 	size_t height; /**< number of rows, range [17; infty) */
 	size_t bpp;    /**< pixel bit depth (valid in image domain, not in transform domain) */
@@ -52,18 +52,18 @@ struct parameters_t {
 	unsigned S;
 };
 
-int transform_write_pgm_header(const struct transform_t *transform, FILE *stream)
+int transform_write_pgm_header(const struct frame_t *frame, FILE *stream)
 {
 	size_t width, height;
 	size_t bpp;
 
 	/* write header */
 
-	assert( transform );
+	assert( frame );
 
-	height = transform->height;
-	width = transform->width;
-	bpp = transform->bpp;
+	height = frame->height;
+	width = frame->width;
+	bpp = frame->bpp;
 
 	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, convert_bpp_to_maxval(bpp)) < 0) {
 		return RET_FAILURE_FILE_IO;
@@ -72,7 +72,7 @@ int transform_write_pgm_header(const struct transform_t *transform, FILE *stream
 	return RET_SUCCESS;
 }
 
-int transform_save_pgm(const struct transform_t *transform, const char *path)
+int transform_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
 	int err;
@@ -95,21 +95,21 @@ int transform_save_pgm(const struct transform_t *transform, const char *path)
 	}
 
 	/* write header */
-	err = transform_write_pgm_header(transform, stream);
+	err = transform_write_pgm_header(frame, stream);
 
 	if (err) {
 		return err;
 	}
 
-	assert( transform );
+	assert( frame );
 
-	width_ = transform->width;
-	height_ = transform->height;
-	depth_ = convert_bpp_to_depth(transform->bpp);
+	width_ = frame->width;
+	height_ = frame->height;
+	depth_ = convert_bpp_to_depth(frame->bpp);
 
-	maxval = (int) convert_bpp_to_maxval(transform->bpp);
+	maxval = (int) convert_bpp_to_maxval(frame->bpp);
 
-	width = ceil_multiple8(transform->width);
+	width = ceil_multiple8(frame->width);
 
 	/* allocate a line */
 	line = malloc( width_ * depth_ );
@@ -117,7 +117,7 @@ int transform_save_pgm(const struct transform_t *transform, const char *path)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	data = transform->data;
+	data = frame->data;
 
 	assert( data );
 
@@ -183,7 +183,7 @@ int stream_skip_comment(FILE *stream)
 	return RET_SUCCESS;
 }
 
-int transform_read_pgm_header(struct transform_t *transform, FILE *stream)
+int transform_read_pgm_header(struct frame_t *frame, FILE *stream)
 {
 	char magic[2];
 	unsigned long maxval;
@@ -256,17 +256,17 @@ int transform_read_pgm_header(struct transform_t *transform, FILE *stream)
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
-	/* fill the frame struct */
-	assert( transform );
+	/* fill the struct */
+	assert( frame );
 
-	transform->width = width;
-	transform->height = height;
-	transform->bpp = bpp;
+	frame->width = width;
+	frame->height = height;
+	frame->bpp = bpp;
 
 	return RET_SUCCESS;
 }
 
-int transform_load_pgm(struct transform_t *transform, const char *path)
+int transform_load_pgm(struct frame_t *frame, const char *path)
 {
 	FILE *stream;
 	int err;
@@ -289,20 +289,20 @@ int transform_load_pgm(struct transform_t *transform, const char *path)
 	}
 
 	/* (1.2) read header */
-	err = transform_read_pgm_header(transform, stream);
+	err = transform_read_pgm_header(frame, stream);
 
 	if (err) {
 		return err;
 	}
 
-	assert( transform );
+	assert( frame );
 
-	width_ = transform->width;
-	height_ = transform->height;
-	depth_ = convert_bpp_to_depth(transform->bpp);
+	width_ = frame->width;
+	height_ = frame->height;
+	depth_ = convert_bpp_to_depth(frame->bpp);
 
-	width = ceil_multiple8(transform->width);
-	height = ceil_multiple8(transform->height);
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	/* allocate a line */
 	line = malloc( width_ * depth_ );
@@ -371,13 +371,13 @@ int transform_load_pgm(struct transform_t *transform, const char *path)
 	}
 
 	/* fill the struct */
-	transform->data = data;
+	frame->data = data;
 
 	/* return */
 	return RET_SUCCESS;
 }
 
-int dwt_dump(const struct transform_t *transform, const char *path, int factor)
+int dwt_dump(const struct frame_t *frame, const char *path, int factor)
 {
 	FILE *stream;
 	size_t width, height, depth;
@@ -394,21 +394,21 @@ int dwt_dump(const struct transform_t *transform, const char *path, int factor)
 		return RET_FAILURE_FILE_OPEN;
 	}
 
-	assert( transform );
+	assert( frame );
 
-	bpp = transform->bpp;
+	bpp = frame->bpp;
 
 	maxval = (int) convert_bpp_to_maxval(bpp);
 
-	width = ceil_multiple8(transform->width);
-	height = ceil_multiple8(transform->height);
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	/* NOTE casting from size_t to unsigned long due to missing 'z' modifier */
 	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, (unsigned long) maxval) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
 
-	data = transform->data;
+	data = frame->data;
 
 	assert( data );
 	assert( factor );
@@ -713,7 +713,7 @@ int dwt_slim_line(int *line, size_t size, size_t stride, int weight)
 	return RET_SUCCESS;
 }
 
-int dwt_encode(struct transform_t *transform)
+int dwt_encode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
@@ -721,10 +721,10 @@ int dwt_encode(struct transform_t *transform)
 	size_t y, x;
 	int *data;
 
-	assert( transform );
+	assert( frame );
 
-	width = ceil_multiple8(transform->width);
-	height = ceil_multiple8(transform->height);
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	width_s = width >> 3;
 	height_s = height >> 3;
@@ -732,7 +732,7 @@ int dwt_encode(struct transform_t *transform)
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
 
-	data = transform->data;
+	data = frame->data;
 
 	assert( data );
 
@@ -783,22 +783,22 @@ int dwt_encode(struct transform_t *transform)
  * the Float DWT, it would not be necessary for coefficients in these subbands to be rounded to
  * integer values, and so presumably the binary word size is irrelevant for these subbands.
  */
-int dwt_encode_float(struct transform_t *transform)
+int dwt_encode_float(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
 	size_t y, x;
 	int *data;
 
-	assert( transform );
+	assert( frame );
 
-	width = ceil_multiple8(transform->width);
-	height = ceil_multiple8(transform->height);
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
 
-	data = transform->data;
+	data = frame->data;
 
 	assert( data );
 
@@ -823,7 +823,7 @@ int dwt_encode_float(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
-int dwt_decode(struct transform_t *transform)
+int dwt_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
@@ -831,10 +831,10 @@ int dwt_decode(struct transform_t *transform)
 	size_t y, x;
 	int *data;
 
-	assert( transform );
+	assert( frame );
 
-	width = ceil_multiple8(transform->width);
-	height = ceil_multiple8(transform->height);
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	width_s = width >> 3;
 	height_s = height >> 3;
@@ -842,7 +842,7 @@ int dwt_decode(struct transform_t *transform)
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
 
-	data = transform->data;
+	data = frame->data;
 
 	assert( data );
 
@@ -886,22 +886,22 @@ int dwt_decode(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
-int dwt_decode_float(struct transform_t *transform)
+int dwt_decode_float(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
 	size_t y, x;
 	int *data;
 
-	assert( transform );
+	assert( frame );
 
-	width = ceil_multiple8(transform->width);
-	height = ceil_multiple8(transform->height);
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
 
-	data = transform->data;
+	data = frame->data;
 
 	assert( data );
 
@@ -925,23 +925,23 @@ int dwt_decode_float(struct transform_t *transform)
 	return RET_SUCCESS;
 }
 
-int dwt_destroy(struct transform_t *transform)
+int dwt_destroy(struct frame_t *frame)
 {
-	assert( transform );
+	assert( frame );
 
-	free(transform->data);
+	free(frame->data);
 
-	transform->data = NULL;
+	frame->data = NULL;
 
 	return RET_SUCCESS;
 }
 
 #if 0
-int bpe_encode(const struct transform_t *transform, const struct parameters_t *parameters)
+int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameters)
 {
 	/* LL band size */
-	size_t width_s = transform->width >> 3;
-	size_t height_s = transform->height >> 3;
+	size_t width_s = frame->width >> 3;
+	size_t height_s = frame->height >> 3;
 
 	/* start of the current segment (in LL band) */
 	size_t segment_y = 0, segment_x = 0;
@@ -974,7 +974,7 @@ int bpe_encode(const struct transform_t *transform, const struct parameters_t *p
 
 int main(int argc, char *argv[])
 {
-	struct transform_t transform;
+	struct frame_t frame;
 	struct parameters_t parameters;
 
 	/* NOTE Since we implement the floor function for negative numbers using
@@ -998,24 +998,24 @@ int main(int argc, char *argv[])
 
 	/** (1) load input image */
 
-	if ( transform_load_pgm(&transform, argv[1]) ) {
+	if ( transform_load_pgm(&frame, argv[1]) ) {
 		fprintf(stderr, "[ERROR] unable to load image\n");
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", transform.width, transform.height, transform.bpp);
+	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
 
-	if ( transform.width > (1<<20) || transform.width < 17 ) {
+	if ( frame.width > (1<<20) || frame.width < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image width\n");
 		return EXIT_FAILURE;
 	}
 
-	if ( transform.height < 17 ) {
+	if ( frame.height < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image height\n");
 		return EXIT_FAILURE;
 	}
 
-	dwt_dump(&transform, "input.pgm", 1);
+	dwt_dump(&frame, "input.pgm", 1);
 
 	parameters.DWTtype = 0;
 	parameters.S = 16;
@@ -1027,36 +1027,36 @@ int main(int argc, char *argv[])
 	/** (2) DWT */
 
 	if (parameters.DWTtype == 1)
-		dwt_encode(&transform);
+		dwt_encode(&frame);
 	else
-		dwt_encode_float(&transform);
+		dwt_encode_float(&frame);
 
 	fprintf(stderr, "[DEBUG] transform done\n");
 
-	dwt_dump(&transform, "dwt3.pgm", 8);
+	dwt_dump(&frame, "dwt3.pgm", 8);
 
 	/** (3) BPE */
 #if 0
-	bpe_encode(&transform, &parameters);
+	bpe_encode(&frame, &parameters);
 #endif
 	/* ***** decoding ***** */
 
 	if (parameters.DWTtype == 1)
-		dwt_decode(&transform);
+		dwt_decode(&frame);
 	else
-		dwt_decode_float(&transform);
+		dwt_decode_float(&frame);
 
-	dwt_dump(&transform, "decoded.pgm", 1);
+	dwt_dump(&frame, "decoded.pgm", 1);
 
 	/* convert data from transform into frame */
-	if ( transform_save_pgm(&transform, "output.pgm") ) {
+	if ( transform_save_pgm(&frame, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
 		return EXIT_FAILURE;
 	}
 
 	/** (1) release resources */
 
-	dwt_destroy(&transform);
+	dwt_destroy(&frame);
 
 	return EXIT_SUCCESS;
 }
