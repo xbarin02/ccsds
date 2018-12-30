@@ -52,7 +52,7 @@ struct parameters_t {
 	unsigned S;
 };
 
-int transform_write_pgm_header(const struct frame_t *frame, FILE *stream)
+int frame_write_pgm_header(const struct frame_t *frame, FILE *stream)
 {
 	size_t width, height;
 	size_t bpp;
@@ -72,7 +72,7 @@ int transform_write_pgm_header(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int transform_save_pgm(const struct frame_t *frame, const char *path)
+int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
 	int err;
@@ -95,7 +95,7 @@ int transform_save_pgm(const struct frame_t *frame, const char *path)
 	}
 
 	/* write header */
-	err = transform_write_pgm_header(frame, stream);
+	err = frame_write_pgm_header(frame, stream);
 
 	if (err) {
 		return err;
@@ -183,7 +183,7 @@ int stream_skip_comment(FILE *stream)
 	return RET_SUCCESS;
 }
 
-int transform_read_pgm_header(struct frame_t *frame, FILE *stream)
+int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 {
 	char magic[2];
 	unsigned long maxval;
@@ -266,7 +266,7 @@ int transform_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int transform_load_pgm(struct frame_t *frame, const char *path)
+int frame_load_pgm(struct frame_t *frame, const char *path)
 {
 	FILE *stream;
 	int err;
@@ -289,7 +289,7 @@ int transform_load_pgm(struct frame_t *frame, const char *path)
 	}
 
 	/* (1.2) read header */
-	err = transform_read_pgm_header(frame, stream);
+	err = frame_read_pgm_header(frame, stream);
 
 	if (err) {
 		return err;
@@ -998,7 +998,7 @@ int main(int argc, char *argv[])
 
 	/** (1) load input image */
 
-	if ( transform_load_pgm(&frame, argv[1]) ) {
+	if ( frame_load_pgm(&frame, argv[1]) ) {
 		fprintf(stderr, "[ERROR] unable to load image\n");
 		return EXIT_FAILURE;
 	}
@@ -1049,7 +1049,7 @@ int main(int argc, char *argv[])
 	dwt_dump(&frame, "decoded.pgm", 1);
 
 	/* convert data from transform into frame */
-	if ( transform_save_pgm(&frame, "output.pgm") ) {
+	if ( frame_save_pgm(&frame, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
 		return EXIT_FAILURE;
 	}
