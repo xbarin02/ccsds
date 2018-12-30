@@ -252,6 +252,90 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
+/* TODO */
+int transform_read_pgm_header(struct transform_t *transform, FILE *stream)
+{
+	char magic[2];
+	unsigned long maxval;
+	size_t width, height;
+	size_t bpp;
+
+	/* (1.2) read header */
+
+	if (fscanf(stream, "%c%c ", magic, magic+1) != 2) {
+		fprintf(stderr, "[ERROR] cannot read a magic number\n");
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (magic[0] != 'P') {
+		fprintf(stderr, "[ERROR] invalid magic number\n");
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	switch (magic[1]) {
+		case '5':
+			/* P5 is supported */
+			break;
+		default:
+			fprintf(stderr, "[ERROR] invalid magic number\n");
+			return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	/* NOTE: C89 does not support 'z' length modifier */
+	if (fscanf(stream, " %lu ", &width) != 1) {
+		fprintf(stderr, "[ERROR] cannot read a width\n");
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (fscanf(stream, " %lu ", &height) != 1) {
+		fprintf(stderr, "[ERROR] cannot read a height\n");
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	if (fscanf(stream, " %lu", &maxval) != 1) {
+		fprintf(stderr, "[ERROR] cannot read a maximum gray value\n");
+		return RET_FAILURE_FILE_IO;
+	}
+
+	bpp = convert_maxval_to_bpp(maxval);
+
+	if (bpp > 16) {
+		fprintf(stderr, "[ERROR] unsupported pixel depth\n");
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	if (stream_skip_comment(stream)) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	/* consume a single whitespace character */
+	if ( !isspace(fgetc(stream)) ) {
+		fprintf(stderr, "[ERROR] unexpected input\n");
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	/* fill the frame struct */
+	assert( transform );
+
+	transform->width = width;
+	transform->height = height;
+	transform->bpp = bpp;
+
+	return RET_SUCCESS;
+}
+
 int frame_load_pgm(struct frame_t *frame, const char *path)
 {
 	FILE *stream;
@@ -317,6 +401,117 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 			return RET_FAILURE_FILE_IO;
 	}
 
+	return RET_SUCCESS;
+}
+
+int transform_load_pgm(struct transform_t *transform, const char *path)
+{
+	FILE *stream;
+	int err;
+	size_t width_, height_, depth_;
+	size_t width, height;
+	void *line;
+	int *data;
+	size_t y, x;
+
+	/* (1.1) open file */
+
+	if (0 == strcmp(path, "-"))
+		stream = stdin;
+	else
+		stream = fopen(path, "r");
+
+	if (NULL == stream) {
+		fprintf(stderr, "[ERROR] fopen fails\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	/* (1.2) read header */
+	err = transform_read_pgm_header(transform, stream);
+
+	if (err) {
+		return err;
+	}
+
+	assert( transform );
+
+	width_ = transform->width;
+	height_ = transform->height;
+	depth_ = convert_bpp_to_depth(transform->bpp);
+
+	width = ceil_multiple8(transform->width);
+	height = ceil_multiple8(transform->height);
+
+	/* allocate a line */
+	line = malloc( width_ * depth_ );
+	if (NULL == line) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	/* allocate a raster */
+	data = malloc( height * width * sizeof *data );
+	if (NULL == data) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	/* (1.3) load data */
+
+	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
+	for (y = 0; y < height_; ++y) {
+		/* read line */
+		if ( fread(line, depth_, width_, stream) < width_ ) {
+			fprintf(stderr, "[ERROR] end-of-file or error while reading a row\n");
+			return RET_FAILURE_FILE_IO;
+		}
+		/* TODO */
+		switch (depth_) {
+			case sizeof(char): {
+				const unsigned char *line_ = line;
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					data [y*width + x] = line_ [x];
+				}
+				/* padding */
+				for (; x < width; ++x) {
+					data [y*width + x] = line_ [width_-1];
+				}
+				break;
+			}
+			case sizeof(short): {
+				const unsigned short *line_ = line;
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					data [y*width + x] = be_to_native_s( line_ [x] );
+				}
+				/* padding */
+				for (; x < width; ++x) {
+					data [y*width + x] = be_to_native_s( line_ [width_-1] );
+				}
+				break;
+			}
+			default:
+				return RET_FAILURE_LOGIC_ERROR;
+		}
+	}
+	/* padding */
+	for (; y < height; ++y) {
+		/* copy (y-1)-th row to y-th one */
+		memcpy(data + y*width, data + (y-1)*width, width * sizeof *data);
+	}
+
+	free(line);
+
+	/* (1.4) close file */
+
+	if (stream != stdin) {
+		if (EOF == fclose(stream))
+			return RET_FAILURE_FILE_IO;
+	}
+
+	/* fill the struct */
+	transform->data = data;
+
+	/* return */
 	return RET_SUCCESS;
 }
 
