@@ -93,8 +93,7 @@ int frame_save_pgm_write_header(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-/* TODO */
-int transform_save_pgm_write_header(const struct transform_t *transform, FILE *stream)
+int transform_write_pgm_header(const struct transform_t *transform, FILE *stream)
 {
 	size_t width, height;
 	size_t bpp;
@@ -170,7 +169,6 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
-/* TODO */
 int transform_save_pgm(const struct transform_t *transform, const char *path)
 {
 	FILE *stream;
@@ -194,7 +192,7 @@ int transform_save_pgm(const struct transform_t *transform, const char *path)
 	}
 
 	/* write header */
-	err = transform_save_pgm_write_header(transform, stream);
+	err = transform_write_pgm_header(transform, stream);
 
 	if (err) {
 		return err;
