@@ -34,6 +34,7 @@ enum return_t {
 /**
  * \brief Largest integral value not greater than argument
  *
+ * The result of this function is similar to casting the result of floor() to \c int.
  * Unlike floor(), this function does not require linking with \c -lm.
  */
 static int floor_(double x)
@@ -59,6 +60,7 @@ static int floor_(double x)
 /**
  * \brief Round to nearest integer
  *
+ * The result of this macro is similar to casting the result of round() to \c int.
  * The round() function is not present in C89.
  */
 #define round_(x) floor_( (x) + 0.5 )
