@@ -1020,11 +1020,9 @@ int main(int argc, char *argv[])
 	parameters.DWTtype = 0;
 	parameters.S = 16;
 
-	/* ***** encoding ***** */
-
 	fprintf(stderr, "[DEBUG] transform...\n");
 
-	/** (2) DWT */
+	/** (2) forward DWT */
 
 	if (parameters.DWTtype == 1)
 		dwt_encode(&frame);
@@ -1039,7 +1037,7 @@ int main(int argc, char *argv[])
 #if 0
 	bpe_encode(&frame, &parameters);
 #endif
-	/* ***** decoding ***** */
+	/** (2) inverse DWT */
 
 	if (parameters.DWTtype == 1)
 		dwt_decode(&frame);
@@ -1048,7 +1046,8 @@ int main(int argc, char *argv[])
 
 	dwt_dump(&frame, "decoded.pgm", 1);
 
-	/* convert data from transform into frame */
+	/** (1) save output image */
+
 	if ( frame_save_pgm(&frame, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
 		return EXIT_FAILURE;
