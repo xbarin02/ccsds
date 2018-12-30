@@ -20,9 +20,10 @@
 #include "utils.h"
 
 /**
- * framebuffer holding either image or wavelet coefficients
+ * \brief Framebuffer holding either image or wavelet coefficients
  *
- * NOTE the width, height are exact image dimensions, i.e. not rounded to next multiple of eight
+ * The \c width and \c height are exact image dimensions, i.e. not rounded to next multiple of eight.
+ * However the \c data is a buffer having dimensions to be multiples of eight.
  */
 struct transform_t {
 	size_t width;  /**< number of columns, range [17; 1<<20] */
@@ -33,7 +34,7 @@ struct transform_t {
 };
 
 /**
- * compression parameters
+ * \brief Compression parameters
  */
 struct parameters_t {
 	/**
@@ -46,7 +47,7 @@ struct parameters_t {
 	 /**
 	  * segment size in blocks
 	  * A segment is defined as a group of S consecutive blocks.
-	  * @f$ 16 \le S \le 2^20 @f$
+	  * \f$ 16 \le S \le 2^20 \f$
 	  */
 	unsigned S;
 };
