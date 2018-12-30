@@ -252,7 +252,6 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-/* TODO */
 int transform_read_pgm_header(struct transform_t *transform, FILE *stream)
 {
 	char magic[2];
@@ -463,7 +462,7 @@ int transform_load_pgm(struct transform_t *transform, const char *path)
 			fprintf(stderr, "[ERROR] end-of-file or error while reading a row\n");
 			return RET_FAILURE_FILE_IO;
 		}
-		/* TODO */
+		/* copy pixels from line into framebuffer */
 		switch (depth_) {
 			case sizeof(char): {
 				const unsigned char *line_ = line;
@@ -587,12 +586,6 @@ int dwt_create(const struct frame_t *frame, struct transform_t *transform)
 
 	return RET_SUCCESS;
 }
-
-#if 0
-int dwt_import(const struct frame_t *frame, struct transform_t *transform)
-{
-}
-#endif
 
 /**
  * export the transform into frame
