@@ -1295,13 +1295,19 @@ int main(int argc, char *argv[])
 	}
 
 	/** (2) DWT */
-
+#if 0
 	/* FIXME split create and import */
 	if ( dwt_create(&frame, &transform) ) {
 		fprintf(stderr, "[ERROR] unable to initialize a transform struct\n");
 		return EXIT_FAILURE;
 	}
-
+#else
+	/* TODO */
+	if ( transform_load_pgm(&transform, argv[1]) ) {
+		fprintf(stderr, "[ERROR] unable to load image\n");
+		return EXIT_FAILURE;
+	}
+#endif
 	dwt_dump(&transform, "input.pgm", 1);
 
 	parameters.DWTtype = 0;
