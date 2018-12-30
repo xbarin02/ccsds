@@ -93,6 +93,27 @@ int frame_save_pgm_write_header(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
+/* TODO */
+int transform_save_pgm_write_header(const struct transform_t *transform, FILE *stream)
+{
+	size_t width, height;
+	size_t bpp;
+
+	/* write header */
+
+	assert( transform );
+
+	height = transform->height;
+	width = transform->width;
+	bpp = transform->bpp;
+
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, convert_bpp_to_maxval(bpp)) < 0) {
+		return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
 int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
@@ -141,6 +162,98 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 		}
 	}
 
+	if (stream != stdout) {
+		if (EOF == fclose(stream))
+			return RET_FAILURE_FILE_IO;
+	}
+
+	return RET_SUCCESS;
+}
+
+/* TODO */
+int transform_save_pgm(const struct transform_t *transform, const char *path)
+{
+	FILE *stream;
+	int err;
+	size_t width_, height_, depth_;
+	size_t width;
+	size_t y, x;
+	int maxval;
+	void *line;
+	const int *data;
+
+	/* open file */
+	if (0 == strcmp(path, "-"))
+		stream = stdout;
+	else
+		stream = fopen(path, "w");
+
+	if (NULL == stream) {
+		fprintf(stderr, "[ERROR] cannot open output file\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	/* write header */
+	err = transform_save_pgm_write_header(transform, stream);
+
+	if (err) {
+		return err;
+	}
+
+	assert( transform );
+
+	width_ = transform->width;
+	height_ = transform->height;
+	depth_ = convert_bpp_to_depth(transform->bpp);
+
+	maxval = (int) convert_bpp_to_maxval(transform->bpp);
+
+	width = ceil_multiple8(transform->width);
+
+	/* allocate a line */
+	line = malloc( width_ * depth_ );
+	if (NULL == line) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	data = transform->data;
+
+	assert( data );
+
+	/* write data */
+	for (y = 0; y < height_; ++y) {
+		/* copy data into line */
+		switch (depth_) {
+			case sizeof(char): {
+				unsigned char *line_ = line;
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					int sample = data [y*width + x];
+					line_ [x] = (unsigned char) clamp(sample, 0, maxval);
+				}
+				break;
+			}
+			case sizeof(short): {
+				unsigned short *line_ = line;
+				/* input data */
+				for (x = 0; x < width_; ++x) {
+					int sample = data [y*width + x];
+					line_ [x] = native_to_be_s( (unsigned short) clamp(sample, 0, maxval) );
+				}
+				break;
+			}
+			default:
+				return RET_FAILURE_LOGIC_ERROR;
+		}
+		/* write line */
+		if ( fwrite(line, depth_, width_, stream) < width_ ) {
+			return RET_FAILURE_FILE_IO;
+		}
+	}
+
+	free(line);
+
+	/* close file */
 	if (stream != stdout) {
 		if (EOF == fclose(stream))
 			return RET_FAILURE_FILE_IO;
@@ -1333,13 +1446,19 @@ int main(int argc, char *argv[])
 	dwt_dump(&transform, "decoded.pgm", 1);
 
 	/* convert data from transform into frame */
+#if 0
 	dwt_export(&transform, &frame);
 
 	if ( frame_save_pgm(&frame, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
 		return EXIT_FAILURE;
 	}
-
+#else
+	if ( transform_save_pgm(&transform, "output.pgm") ) {
+		fprintf(stderr, "[ERROR] unable to save an output raster\n");
+		return EXIT_FAILURE;
+	}
+#endif
 	/** (2) release resources */
 	dwt_destroy(&transform);
 
