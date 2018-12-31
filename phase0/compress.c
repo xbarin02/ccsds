@@ -175,7 +175,7 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 }
 
 /*
- * consume a line comment
+ * helper function that consumes multiple line comments
  */
 int stream_skip_comment(FILE *stream)
 {
@@ -414,6 +414,11 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
+/**
+ * \brief Debugging dump
+ *
+ * Writes the content of \p frame into PGM format.
+ */
 int frame_dump(const struct frame_t *frame, const char *path, int factor)
 {
 	FILE *stream;
