@@ -220,7 +220,7 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 		return RET_FAILURE_FILE_IO;
 	}
 
-	/* NOTE: C89 does not support 'z' length modifier */
+	/* C89 does not support 'z' length modifier */
 	if (fscanf(stream, " %lu ", &width_l) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a width\n");
 		return RET_FAILURE_FILE_IO;
@@ -236,7 +236,7 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 		return RET_FAILURE_FILE_IO;
 	}
 
-	/* NOTE: C89 does not support 'z' length modifier */
+	/* C89 does not support 'z' length modifier */
 	if (fscanf(stream, " %lu ", &height_l) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a height\n");
 		return RET_FAILURE_FILE_IO;
