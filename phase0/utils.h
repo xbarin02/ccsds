@@ -28,6 +28,7 @@ enum return_t {
 	RET_FAILURE_MEMORY_ALLOCATION = 0x2000, /**< unable to allocate dynamic memory */
 	/* 0x3xxx general exceptions */
 	RET_FAILURE_LOGIC_ERROR       = 0x3000, /**< faulty logic within the program */
+	RET_FAILURE_OVERFLOW_ERROR    = 0x3001, /**< result is too large for the destination type */
 	RET_LAST
 };
 

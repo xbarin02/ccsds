@@ -65,6 +65,10 @@ int frame_write_pgm_header(const struct frame_t *frame, FILE *stream)
 	width = frame->width;
 	bpp = frame->bpp;
 
+	if ( width > ULONG_MAX || height > ULONG_MAX ) {
+		return RET_FAILURE_OVERFLOW_ERROR;
+	}
+
 	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, convert_bpp_to_maxval(bpp)) < 0) {
 		return RET_FAILURE_FILE_IO;
 	}
@@ -225,6 +229,7 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 		return RET_FAILURE_FILE_IO;
 	}
 
+	/* NOTE: C89 does not support 'z' length modifier */
 	if (fscanf(stream, " %lu ", &height) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a height\n");
 		return RET_FAILURE_FILE_IO;
@@ -403,7 +408,10 @@ int dwt_dump(const struct frame_t *frame, const char *path, int factor)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
-	/* NOTE casting from size_t to unsigned long due to missing 'z' modifier */
+	if ( width > ULONG_MAX || height > ULONG_MAX ) {
+		return RET_FAILURE_OVERFLOW_ERROR;
+	}
+
 	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, (unsigned long) maxval) < 0 ) {
 		return RET_FAILURE_FILE_IO;
 	}
@@ -1003,7 +1011,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", frame.width, frame.height, frame.bpp);
+	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", (unsigned long) frame.width, (unsigned long) frame.height, (unsigned long) frame.bpp);
 
 	if ( frame.width > (1<<20) || frame.width < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image width\n");
