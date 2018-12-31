@@ -183,17 +183,15 @@ int stream_skip_comment(FILE *stream)
 	int c;
 
 	/* look ahead for a comment, ungetc */
-	retry:
-	if ( (c = getc(stream)) == '#' ) {
+	while ( (c = getc(stream)) == '#' ) {
 		char com[4096];
 		if (NULL == fgets(com, 4096, stream))
 			return RET_FAILURE_FILE_IO;
 		/* fprintf(stderr, "[DEBUG] comment: %s", com); */
-		goto retry;
-	} else {
-		if (EOF == ungetc(c, stream))
-			return RET_FAILURE_FILE_IO;
 	}
+
+	if (EOF == ungetc(c, stream))
+		return RET_FAILURE_FILE_IO;
 
 	return RET_SUCCESS;
 }
