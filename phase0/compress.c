@@ -124,6 +124,7 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 
 	/* allocate a line */
 	line = malloc( width_ * depth_ );
+
 	if (NULL == line) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
@@ -343,12 +344,14 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	/* allocate a line */
 	line = malloc( width_ * depth_ );
+
 	if (NULL == line) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
 	/* allocate a raster */
 	data = malloc( height * width * sizeof *data );
+
 	if (NULL == data) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
@@ -462,8 +465,9 @@ int frame_dump(const struct frame_t *frame, const char *path, int factor)
 	stride = width * depth;
 	line = malloc( stride );
 
-	if (NULL == line)
+	if (NULL == line) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
 
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
