@@ -30,7 +30,7 @@ struct frame_t {
 	size_t height; /**< number of rows, range [17; infty) */
 	size_t bpp;    /**< pixel bit depth (valid in image domain, not in transform domain) */
 
-	int *data;
+	int *data;     /**< framebuffer */
 };
 
 /**
@@ -76,6 +76,13 @@ int frame_write_pgm_header(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
+/**
+ * \brief Save an image in PGM format
+ *
+ * The function writes the image in \p frame to the file specified by \c path.
+ * Currently, only binary PGM (P5) is supported.
+ * If \p path is \c "-", the output is written to the \c stdout.
+ */
 int frame_save_pgm(const struct frame_t *frame, const char *path)
 {
 	FILE *stream;
@@ -226,6 +233,9 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 		return RET_FAILURE_FILE_IO;
 	}
 
+	/*
+	 * (size_t)-1 is well defined in C89 under section 6.2.1.2 Signed and unsigned integers
+	 */
 	if (width_l > (size_t)-1) {
 		return RET_FAILURE_OVERFLOW_ERROR;
 	}
