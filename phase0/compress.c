@@ -506,7 +506,7 @@ int dwt_decode_float(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int dwt_destroy(struct frame_t *frame)
+int frame_destroy(struct frame_t *frame)
 {
 	assert( frame );
 
@@ -636,7 +636,7 @@ int main(int argc, char *argv[])
 
 	/** (1) release resources */
 
-	dwt_destroy(&frame);
+	frame_destroy(&frame);
 
 	return EXIT_SUCCESS;
 }
