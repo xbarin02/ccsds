@@ -9,6 +9,9 @@
 #include <limits.h>
 #include <stdlib.h>
 
+/* FIXME */
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 /**
  * \brief Error codes
  *
@@ -170,7 +173,7 @@ static size_t convert_bpp_to_depth(size_t bpp)
 /**
  * \brief Returns the value of \p v constrained to the range \p lo to \p hi
  */
-int clamp(int v, int lo, int hi)
+static int clamp(int v, int lo, int hi)
 {
 	return v < lo ? lo : ( hi < v ? hi : v );
 }
@@ -180,7 +183,7 @@ int clamp(int v, int lo, int hi)
  *
  * Unlike abs(), the absolute value of the most negative integer is defined to be \c INT_MAX.
  */
-int abs_(int j)
+static int abs_(int j)
 {
 	int r = abs(j);
 

@@ -5,4 +5,8 @@ LDLIBS=
 
 all: compress
 
+compress: compress.o frame.o
+
 compress.o: compress.c utils.h
+
+frame.o: frame.c frame.h utils.h
