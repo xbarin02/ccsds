@@ -192,6 +192,7 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	char magic[2];
 	unsigned long maxval;
 	size_t width, height;
+	unsigned long width_l, height_l;
 	size_t bpp;
 
 	/* (1.2) read header */
@@ -220,20 +221,32 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	}
 
 	/* NOTE: C89 does not support 'z' length modifier */
-	if (fscanf(stream, " %lu ", &width) != 1) {
+	if (fscanf(stream, " %lu ", &width_l) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a width\n");
 		return RET_FAILURE_FILE_IO;
 	}
+
+	if (width_l > (size_t)-1) {
+		return RET_FAILURE_OVERFLOW_ERROR;
+	}
+
+	width = (size_t) width_l;
 
 	if (stream_skip_comment(stream)) {
 		return RET_FAILURE_FILE_IO;
 	}
 
 	/* NOTE: C89 does not support 'z' length modifier */
-	if (fscanf(stream, " %lu ", &height) != 1) {
+	if (fscanf(stream, " %lu ", &height_l) != 1) {
 		fprintf(stderr, "[ERROR] cannot read a height\n");
 		return RET_FAILURE_FILE_IO;
 	}
+
+	if (height_l > (size_t)-1) {
+		return RET_FAILURE_OVERFLOW_ERROR;
+	}
+
+	height = (size_t) height_l;
 
 	if (stream_skip_comment(stream)) {
 		return RET_FAILURE_FILE_IO;
