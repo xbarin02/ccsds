@@ -297,6 +297,12 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
+/**
+ * \brief Load image from PGM file
+ *
+ * The function loads an image from the file specified by \c path.
+ * Currently, only binary PGM (P5) is supported.
+ */
 int frame_load_pgm(struct frame_t *frame, const char *path)
 {
 	FILE *stream;
@@ -408,7 +414,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
-int dwt_dump(const struct frame_t *frame, const char *path, int factor)
+int frame_dump(const struct frame_t *frame, const char *path, int factor)
 {
 	FILE *stream;
 	size_t width, height, depth;
@@ -1049,7 +1055,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	dwt_dump(&frame, "input.pgm", 1);
+	frame_dump(&frame, "input.pgm", 1);
 
 	parameters.DWTtype = 0;
 	parameters.S = 16;
@@ -1065,7 +1071,7 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "[DEBUG] transform done\n");
 
-	dwt_dump(&frame, "dwt3.pgm", 8);
+	frame_dump(&frame, "dwt3.pgm", 8);
 
 	/** (3) BPE */
 #if 0
@@ -1078,7 +1084,7 @@ int main(int argc, char *argv[])
 	else
 		dwt_decode_float(&frame);
 
-	dwt_dump(&frame, "decoded.pgm", 1);
+	frame_dump(&frame, "decoded.pgm", 1);
 
 	/** (1) save output image */
 
