@@ -506,17 +506,6 @@ int dwt_decode_float(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int frame_destroy(struct frame_t *frame)
-{
-	assert( frame );
-
-	free(frame->data);
-
-	frame->data = NULL;
-
-	return RET_SUCCESS;
-}
-
 #if 0
 int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameters)
 {

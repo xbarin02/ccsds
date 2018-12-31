@@ -440,3 +440,14 @@ int frame_dump(const struct frame_t *frame, const char *path, int factor)
 
 	return RET_SUCCESS;
 }
+
+int frame_destroy(struct frame_t *frame)
+{
+	assert( frame );
+
+	free(frame->data);
+
+	frame->data = NULL;
+
+	return RET_SUCCESS;
+}

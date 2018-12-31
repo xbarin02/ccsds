@@ -46,4 +46,9 @@ int frame_load_pgm(struct frame_t *frame, const char *path);
  */
 int frame_dump(const struct frame_t *frame, const char *path, int factor);
 
+/**
+ * \brief Release resources
+ */
+int frame_destroy(struct frame_t *frame);
+
 #endif /* FRAME_H_ */
