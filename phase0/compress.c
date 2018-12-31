@@ -187,7 +187,6 @@ int stream_skip_comment(FILE *stream)
 		char com[4096];
 		if (NULL == fgets(com, 4096, stream))
 			return RET_FAILURE_FILE_IO;
-		/* fprintf(stderr, "[DEBUG] comment: %s", com); */
 	}
 
 	if (EOF == ungetc(c, stream))
