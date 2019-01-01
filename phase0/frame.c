@@ -358,8 +358,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	FILE *stream;
 	int err;
 
-	/* (1.1) open file */
-
+	/* open file */
 	if (0 == strcmp(path, "-"))
 		stream = stdin;
 	else
@@ -370,7 +369,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		return RET_FAILURE_FILE_OPEN;
 	}
 
-	/* (1.2) read header */
+	/* read header */
 	err = frame_read_pgm_header(frame, stream);
 
 	if (err) {
@@ -384,15 +383,14 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		return err;
 	}
 
-	/* (1.3) read data */
+	/* read data */
 	err = frame_read_pgm_data(frame, stream);
 
 	if (err) {
 		return err;
 	}
 
-	/* (1.4) close file */
-
+	/* close file */
 	if (stream != stdin) {
 		if (EOF == fclose(stream))
 			return RET_FAILURE_FILE_IO;
