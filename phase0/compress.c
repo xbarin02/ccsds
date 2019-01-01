@@ -157,21 +157,21 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 
 	/* inverse lifting */
 
-	line[stride*0] = C[0] + ( ( -D[0] + 1 ) >> 1 );
+	line[stride*0] = C[0] + round_div_pow2(-D[0], 1);
 
 	for (n = 1; n <= size/2-1; ++n) {
-		line[stride*(2*n)] = C[n] + ( ( -(D[n-1]+D[n]) + 2 ) >> 2 );
+		line[stride*(2*n)] = C[n] + round_div_pow2(-(D[n-1]+D[n]), 2);
 	}
 
-	line[stride*1] = D[0] + ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 );
+	line[stride*1] = D[0] + round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
 
 	for (n = 1; n <= size/2-3; ++n) {
-		line[stride*(2*n+1)] = D[n] + ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 );
+		line[stride*(2*n+1)] = D[n] + round_div_pow2(9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]), 4);
 	}
 
-	line[stride*(size-3)] = D[size/2-2] + ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
+	line[stride*(size-3)] = D[size/2-2] + round_div_pow2(9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]), 4);
 
-	line[stride*(size-1)] = D[size/2-1] + ( ( 9*line[stride*(size-2)] - 1*line[stride*(size-4)] + 4 ) >> 3 );
+	line[stride*(size-1)] = D[size/2-1] + round_div_pow2(9*line[stride*(size-2)] - 1*line[stride*(size-4)], 3);
 
 	free(line_);
 
