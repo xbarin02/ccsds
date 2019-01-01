@@ -256,6 +256,27 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
+int frame_alloc_data(struct frame_t *frame)
+{
+	size_t width, height;
+	int *data;
+
+	assert( frame );
+
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
+
+	data = malloc( height * width * sizeof *data );
+
+	if (NULL == data) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	frame->data = data;
+
+	return RET_SUCCESS;
+}
+
 int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
 {
 	size_t width_, height_, depth_;
@@ -280,14 +301,9 @@ int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	/* allocate a raster */
-	data = malloc( height * width * sizeof *data );
+	data = frame->data;
 
-	if (NULL == data) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	/* (1.3) load data */
+	assert( data );
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
 	for (y = 0; y < height_; ++y) {
@@ -332,9 +348,6 @@ int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
 		memcpy(data + y*width, data + (y-1)*width, width * sizeof *data);
 	}
 
-	/* fill the struct */
-	frame->data = data;
-
 	free(line);
 
 	return RET_SUCCESS;
@@ -359,6 +372,13 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 
 	/* (1.2) read header */
 	err = frame_read_pgm_header(frame, stream);
+
+	if (err) {
+		return err;
+	}
+
+	/* allocate framebuffer */
+	err = frame_alloc_data(frame);
 
 	if (err) {
 		return err;
