@@ -256,34 +256,13 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_load_pgm(struct frame_t *frame, const char *path)
+int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
 {
-	FILE *stream;
-	int err;
 	size_t width_, height_, depth_;
 	size_t width, height;
 	void *line;
 	int *data;
 	size_t y, x;
-
-	/* (1.1) open file */
-
-	if (0 == strcmp(path, "-"))
-		stream = stdin;
-	else
-		stream = fopen(path, "r");
-
-	if (NULL == stream) {
-		fprintf(stderr, "[ERROR] fopen fails\n");
-		return RET_FAILURE_FILE_OPEN;
-	}
-
-	/* (1.2) read header */
-	err = frame_read_pgm_header(frame, stream);
-
-	if (err) {
-		return err;
-	}
 
 	assert( frame );
 
@@ -353,7 +332,44 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		memcpy(data + y*width, data + (y-1)*width, width * sizeof *data);
 	}
 
+	/* fill the struct */
+	frame->data = data;
+
 	free(line);
+
+	return RET_SUCCESS;
+}
+
+int frame_load_pgm(struct frame_t *frame, const char *path)
+{
+	FILE *stream;
+	int err;
+
+	/* (1.1) open file */
+
+	if (0 == strcmp(path, "-"))
+		stream = stdin;
+	else
+		stream = fopen(path, "r");
+
+	if (NULL == stream) {
+		fprintf(stderr, "[ERROR] fopen fails\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	/* (1.2) read header */
+	err = frame_read_pgm_header(frame, stream);
+
+	if (err) {
+		return err;
+	}
+
+	/* (1.3) read data */
+	err = frame_read_pgm_data(frame, stream);
+
+	if (err) {
+		return err;
+	}
 
 	/* (1.4) close file */
 
@@ -361,9 +377,6 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 		if (EOF == fclose(stream))
 			return RET_FAILURE_FILE_IO;
 	}
-
-	/* fill the struct */
-	frame->data = data;
 
 	/* return */
 	return RET_SUCCESS;
