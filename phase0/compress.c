@@ -528,7 +528,7 @@ int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameter
  * \brief Forward wavelet transform
  *
  * The transform is computed <em>in situ</em> using the \p frame buffer.
- * Either Float or Int DWT is used, according to the \p parameters.
+ * Either Float or Integer DWT is used, according to the \p parameters.
  */
 int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters)
 {
@@ -548,7 +548,7 @@ int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters)
  * \brief Inverse wavelet transform
  *
  * The transform is computed <em>in situ</em> using the \p frame buffer.
- * Either Float or Int DWT is used, according to the \p parameters.
+ * Either Float or Integer DWT is used, according to the \p parameters.
  */
 int dwt_decode(struct frame_t *frame, const struct parameters_t *parameters)
 {
