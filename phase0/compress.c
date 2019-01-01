@@ -44,8 +44,6 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
-
 	D[0] = line[stride*1] - round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
 
 	for (n = 1; n <= size/2-3; ++n) {
