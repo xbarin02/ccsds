@@ -31,34 +31,14 @@ int frame_write_pgm_header(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_save_pgm(const struct frame_t *frame, const char *path)
+int frame_write_pgm_data(const struct frame_t *frame, FILE *stream)
 {
-	FILE *stream;
-	int err;
 	size_t width_, height_, depth_;
 	size_t width;
 	size_t y, x;
 	int maxval;
 	void *line;
 	const int *data;
-
-	/* open file */
-	if (0 == strcmp(path, "-"))
-		stream = stdout;
-	else
-		stream = fopen(path, "w");
-
-	if (NULL == stream) {
-		fprintf(stderr, "[ERROR] cannot open output file\n");
-		return RET_FAILURE_FILE_OPEN;
-	}
-
-	/* write header */
-	err = frame_write_pgm_header(frame, stream);
-
-	if (err) {
-		return err;
-	}
 
 	assert( frame );
 
@@ -113,6 +93,39 @@ int frame_save_pgm(const struct frame_t *frame, const char *path)
 	}
 
 	free(line);
+
+	return RET_SUCCESS;
+}
+
+int frame_save_pgm(const struct frame_t *frame, const char *path)
+{
+	FILE *stream;
+	int err;
+
+	/* open file */
+	if (0 == strcmp(path, "-"))
+		stream = stdout;
+	else
+		stream = fopen(path, "w");
+
+	if (NULL == stream) {
+		fprintf(stderr, "[ERROR] cannot open output file\n");
+		return RET_FAILURE_FILE_OPEN;
+	}
+
+	/* write header */
+	err = frame_write_pgm_header(frame, stream);
+
+	if (err) {
+		return err;
+	}
+
+	/* write data */
+	err = frame_write_pgm_data(frame, stream);
+
+	if (err) {
+		return err;
+	}
 
 	/* close file */
 	if (stream != stdout) {
