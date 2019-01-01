@@ -542,6 +542,20 @@ int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameter
 }
 #endif
 
+int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters)
+{
+	assert( parameters );
+
+	switch (parameters->DWTtype) {
+		case 0:
+			return dwtfloat_encode(frame);
+		case 1:
+			return dwtint_encode(frame);
+		default:
+			return RET_FAILURE_LOGIC_ERROR;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	struct frame_t frame;
@@ -593,11 +607,10 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "[DEBUG] transform...\n");
 
 	/** (2) forward DWT */
-
-	if (parameters.DWTtype == 1)
-		dwtint_encode(&frame);
-	else
-		dwtfloat_encode(&frame);
+	if (dwt_encode(&frame, &parameters)) {
+		fprintf(stderr, "[ERROR] transform failed\n");
+		return EXIT_FAILURE;
+	}
 
 	fprintf(stderr, "[DEBUG] transform done\n");
 
