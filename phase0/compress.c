@@ -19,25 +19,7 @@
 
 #include "utils.h"
 #include "frame.h"
-
-/**
- * \brief Compression parameters
- */
-struct parameters_t {
-	/**
-	 * Specifies DWT type:
-	 * 0: Float DWT
-	 * 1: Integer DWT
-	 */
-	int DWTtype;
-
-	 /**
-	  * segment size in blocks
-	  * A segment is defined as a group of S consecutive blocks.
-	  * \f$ 16 \le S \le 2^20 \f$
-	  */
-	unsigned S;
-};
+#include "common.h"
 
 int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
