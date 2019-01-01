@@ -556,6 +556,20 @@ int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters)
 	}
 }
 
+int dwt_decode(struct frame_t *frame, const struct parameters_t *parameters)
+{
+	assert( parameters );
+
+	switch (parameters->DWTtype) {
+		case 0:
+			return dwtfloat_decode(frame);
+		case 1:
+			return dwtint_decode(frame);
+		default:
+			return RET_FAILURE_LOGIC_ERROR;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	struct frame_t frame;
@@ -621,11 +635,10 @@ int main(int argc, char *argv[])
 	bpe_encode(&frame, &parameters);
 #endif
 	/** (2) inverse DWT */
-
-	if (parameters.DWTtype == 1)
-		dwtint_decode(&frame);
-	else
-		dwtfloat_decode(&frame);
+	if (dwt_decode(&frame, &parameters)) {
+		fprintf(stderr, "[ERROR] inverse transform failed\n");
+		return EXIT_FAILURE;
+	}
 
 	frame_dump(&frame, "decoded.pgm", 1);
 
