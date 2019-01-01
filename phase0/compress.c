@@ -39,7 +39,7 @@ struct parameters_t {
 	unsigned S;
 };
 
-int dwt_encode_line(int *line, size_t size, size_t stride)
+int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
@@ -90,7 +90,7 @@ int dwt_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-int dwt_encode_line_float(int *line, size_t size, size_t stride)
+int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
@@ -151,7 +151,7 @@ int dwt_encode_line_float(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-int dwt_decode_line(int *line, size_t size, size_t stride)
+int dwtint_decode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
@@ -198,7 +198,7 @@ int dwt_decode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-int dwt_decode_line_float(int *line, size_t size, size_t stride)
+int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
@@ -265,7 +265,7 @@ int dwt_decode_line_float(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-int dwt_weight_line(int *line, size_t size, size_t stride, int weight)
+int dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
 {
 	size_t n;
 
@@ -281,7 +281,7 @@ int dwt_weight_line(int *line, size_t size, size_t stride, int weight)
 /**
  * inverse function to dwt_weight_line
  */
-int dwt_slim_line(int *line, size_t size, size_t stride, int weight)
+int dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
 {
 	size_t n;
 
@@ -294,7 +294,7 @@ int dwt_slim_line(int *line, size_t size, size_t stride, int weight)
 	return RET_SUCCESS;
 }
 
-int dwt_encode(struct frame_t *frame)
+int dwtint_encode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
@@ -326,12 +326,12 @@ int dwt_encode(struct frame_t *frame)
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwt_encode_line(data + y*width, width_j, 1);
+			dwtint_encode_line(data + y*width, width_j, 1);
 		}
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwt_encode_line(data + x, height_j, width);
+			dwtint_encode_line(data + x, height_j, width);
 		}
 	}
 
@@ -341,18 +341,18 @@ int dwt_encode(struct frame_t *frame)
 		size_t width_j = width>>j, height_j = height>>j;
 		/* HL (width_j, 0), LH (0, height_j) */
 		for (y = 0; y < height_j; ++y) {
-			dwt_weight_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
-			dwt_weight_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
+			dwtint_weight_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
+			dwtint_weight_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
 		}
 		/* HH (width_j, height_j) */
 		for (y = 0; y < height_j; ++y) {
-			dwt_weight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
+			dwtint_weight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
 		}
 	}
 
 	/* LL (0,0) */
 	for (y = 0; y < height_s; ++y) {
-		dwt_weight_line(data + (0+y)*width + 0, width_s, 1, 3);
+		dwtint_weight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
 
 	return RET_SUCCESS;
@@ -364,7 +364,7 @@ int dwt_encode(struct frame_t *frame)
  * the Float DWT, it would not be necessary for coefficients in these subbands to be rounded to
  * integer values, and so presumably the binary word size is irrelevant for these subbands.
  */
-int dwt_encode_float(struct frame_t *frame)
+int dwtfloat_encode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
@@ -392,19 +392,19 @@ int dwt_encode_float(struct frame_t *frame)
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwt_encode_line_float(data + y*width, width_j, 1);
+			dwtfloat_encode_line(data + y*width, width_j, 1);
 		}
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwt_encode_line_float(data + x, height_j, width);
+			dwtfloat_encode_line(data + x, height_j, width);
 		}
 	}
 
 	return RET_SUCCESS;
 }
 
-int dwt_decode(struct frame_t *frame)
+int dwtint_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
@@ -433,18 +433,18 @@ int dwt_decode(struct frame_t *frame)
 		size_t width_j = width>>j, height_j = height>>j;
 		/* HL (width_j, 0), LH (0, height_j) */
 		for (y = 0; y < height_j; ++y) {
-			dwt_slim_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
-			dwt_slim_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
+			dwtint_unweight_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
+			dwtint_unweight_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
 		}
 		/* HH (width_j, height_j) */
 		for (y = 0; y < height_j; ++y) {
-			dwt_slim_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
+			dwtint_unweight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
 		}
 	}
 
 	/* LL (0,0) */
 	for (y = 0; y < height_s; ++y) {
-		dwt_slim_line(data + (0+y)*width + 0, width_s, 1, 3);
+		dwtint_unweight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
 
 	/* inverse two-dimensional transform */
@@ -455,19 +455,19 @@ int dwt_decode(struct frame_t *frame)
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwt_decode_line(data + x, height_j, width);
+			dwtint_decode_line(data + x, height_j, width);
 		}
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwt_decode_line(data + y*width, width_j, 1);
+			dwtint_decode_line(data + y*width, width_j, 1);
 		}
 	}
 
 	return RET_SUCCESS;
 }
 
-int dwt_decode_float(struct frame_t *frame)
+int dwtfloat_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
@@ -494,12 +494,12 @@ int dwt_decode_float(struct frame_t *frame)
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwt_decode_line_float(data + x, height_j, width);
+			dwtfloat_decode_line(data + x, height_j, width);
 		}
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwt_decode_line_float(data + y*width, width_j, 1);
+			dwtfloat_decode_line(data + y*width, width_j, 1);
 		}
 	}
 
@@ -595,9 +595,9 @@ int main(int argc, char *argv[])
 	/** (2) forward DWT */
 
 	if (parameters.DWTtype == 1)
-		dwt_encode(&frame);
+		dwtint_encode(&frame);
 	else
-		dwt_encode_float(&frame);
+		dwtfloat_encode(&frame);
 
 	fprintf(stderr, "[DEBUG] transform done\n");
 
@@ -610,9 +610,9 @@ int main(int argc, char *argv[])
 	/** (2) inverse DWT */
 
 	if (parameters.DWTtype == 1)
-		dwt_decode(&frame);
+		dwtint_decode(&frame);
 	else
-		dwt_decode_float(&frame);
+		dwtfloat_decode(&frame);
 
 	frame_dump(&frame, "decoded.pgm", 1);
 
