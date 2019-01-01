@@ -9,15 +9,10 @@
  * @author David Barina <ibarina@fit.vutbr.cz>
  */
 
-#include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
-#include <limits.h>
 
-#include "utils.h"
 #include "frame.h"
 #include "common.h"
 #include "dwt.h"
