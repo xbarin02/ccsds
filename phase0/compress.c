@@ -46,20 +46,20 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
 
-	D[0] = line[stride*1] - ( ( 9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]) + 8 ) >> 4 );
+	D[0] = line[stride*1] - round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
 
 	for (n = 1; n <= size/2-3; ++n) {
-		D[n] = line[stride*(2*n+1)] - ( ( 9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]) + 8 ) >> 4 );
+		D[n] = line[stride*(2*n+1)] - round_div_pow2(9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]), 4);
 	}
 
-	D[size/2-2] = line[stride*(size-3)] - ( ( 9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]) + 8 ) >> 4 );
+	D[size/2-2] = line[stride*(size-3)] - round_div_pow2(9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]), 4);
 
-	D[size/2-1] = line[stride*(size-1)] - ( ( 9*line[stride*(size-2)] - 1*line[stride*(size-4)] + 4 ) >> 3 );
+	D[size/2-1] = line[stride*(size-1)] - round_div_pow2(9*line[stride*(size-2)] - 1*line[stride*(size-4)], 3);
 
-	C[0] = line[stride*0] - ( ( -D[0] + 1 ) >> 1 );
+	C[0] = line[stride*0] - round_div_pow2(-D[0], 1);
 
 	for (n = 1; n <= size/2-1; ++n) {
-		C[n] = line[stride*(2*n)] - ( ( -(D[n-1]+D[n]) + 2 ) >> 2 );
+		C[n] = line[stride*(2*n)] - round_div_pow2(-(D[n-1]+D[n]), 2);
 	}
 
 	/* unpack */
@@ -609,7 +609,7 @@ int main(int argc, char *argv[])
 
 	frame_dump(&frame, "input.pgm", 1);
 
-	parameters.DWTtype = 0;
+	parameters.DWTtype = 1;
 	parameters.S = 16;
 
 	fprintf(stderr, "[DEBUG] transform...\n");

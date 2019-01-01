@@ -194,4 +194,16 @@ static int abs_(int j)
 	return r;
 }
 
+/**
+ * \brief Round integer the fraction \f$ a/2^b \f$ to nearest integer
+ *
+ * Returns \f$ \mathrm{round} ( \mathrm{numerator} / 2^\mathrm{log2\_denominator} ) \f$.
+ * The result is undefined for \p log2_denominator smaller than 1.
+ */
+static int round_div_pow2(int numerator, int log2_denominator)
+{
+	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
+	return (numerator + (1 << (log2_denominator - 1)) ) >> log2_denominator;
+}
+
 #endif /* UTILS_H_ */
