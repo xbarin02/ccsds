@@ -10,11 +10,11 @@
  */
 struct parameters_t {
 	/**
-	 * \brief DWT type
+	 * \brief Wavelet transform type
 	 *
 	 * Specifies DWT type:
-	 * 0: Float DWT
-	 * 1: Integer DWT
+	 * - 0: Float DWT
+	 * - 1: Integer DWT
 	 */
 	int DWTtype;
 
@@ -23,7 +23,7 @@ struct parameters_t {
 	  *
 	  * segment size in blocks
 	  * A segment is defined as a group of S consecutive blocks.
-	  * \f$ 16 \le S \le 2^20 \f$
+	  * \f$ 16 \le S \le 2^{20} \f$
 	  */
 	unsigned S;
 };
