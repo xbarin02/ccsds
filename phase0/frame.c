@@ -281,9 +281,9 @@ int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
 {
 	size_t width_, height_, depth_;
 	size_t width, height;
+	size_t y, x;
 	void *line;
 	int *data;
-	size_t y, x;
 
 	assert( frame );
 
