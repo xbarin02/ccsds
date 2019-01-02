@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+/* #define DWT_LAYOUT_INTERLEAVED */
+
 int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
@@ -19,8 +21,8 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	D = line_ + size/2;
 	C = line_;
+	D = line_ + size/2;
 
 	/* lifting */
 
@@ -43,12 +45,18 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 	for (n = 1; n <= size/2-1; ++n) {
 		C[n] = line[stride*(2*n)] - round_div_pow2(-(D[n-1]+D[n]), 2);
 	}
-
+#ifndef DWT_LAYOUT_INTERLEAVED
 	/* unpack */
 	for (n = 0; n < size; ++n) {
 		line[stride*n] = line_[n];
 	}
-
+#else
+	/* keep interleaved */
+	for (n = 0; n < size/2; ++n) {
+		line[stride*(2*n+0)] = C[n];
+		line[stride*(2*n+1)] = D[n];
+	}
+#endif
 	free(line_);
 
 	return RET_SUCCESS;
@@ -129,16 +137,23 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	D = line_ + size/2;
 	C = line_;
+	D = line_ + size/2;
 
 	assert( line );
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	/* pack */
 	for (n = 0; n < size; ++n) {
 		line_[n] = line[stride*n];
 	}
-
+#else
+	/* line[] is interleaved */
+	for (n = 0; n < size/2; ++n) {
+		C[n] = line[stride*(2*n+0)];
+		D[n] = line[stride*(2*n+1)];
+	}
+#endif
 	/* inverse lifting */
 
 	line[stride*0] = C[0] + round_div_pow2(-D[0], 1);
@@ -300,7 +315,7 @@ int dwtint_encode(struct frame_t *frame)
 	}
 
 	/* (2.3) apply Subband Weights */
-
+#ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
 		/* HL (width_j, 0), LH (0, height_j) */
@@ -318,6 +333,9 @@ int dwtint_encode(struct frame_t *frame)
 	for (y = 0; y < height_s; ++y) {
 		dwtint_weight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
+#else
+	/* TODO */
+#endif
 
 	return RET_SUCCESS;
 }
@@ -392,7 +410,7 @@ int dwtint_decode(struct frame_t *frame)
 	assert( data );
 
 	/* undo Subband Weights */
-
+#ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
 		/* HL (width_j, 0), LH (0, height_j) */
@@ -410,6 +428,9 @@ int dwtint_decode(struct frame_t *frame)
 	for (y = 0; y < height_s; ++y) {
 		dwtint_unweight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
+#else
+	/* TODO */
+#endif
 
 	/* inverse two-dimensional transform */
 
