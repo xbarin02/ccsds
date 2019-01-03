@@ -55,7 +55,7 @@ int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameter
 
 int main(int argc, char *argv[])
 {
-	struct frame_t frame;
+	struct frame_t frame, input_frame;
 	struct parameters_t parameters;
 
 	/* NOTE Since we implement the floor function for negative numbers using
@@ -98,7 +98,12 @@ int main(int argc, char *argv[])
 
 	frame_dump(&frame, "input.pgm", 1);
 
-	parameters.DWTtype = 1;
+	if (frame_clone(&frame, &input_frame)) {
+		fprintf(stderr, "[ERROR] unable to clone the frame\n");
+		return EXIT_FAILURE;
+	}
+
+	parameters.DWTtype = 0;
 	parameters.S = 16;
 
 	fprintf(stderr, "[DEBUG] transform...\n");
@@ -128,6 +133,11 @@ int main(int argc, char *argv[])
 	}
 
 	frame_dump(&frame, "decoded.pgm", 1);
+
+	if (frame_dump_mse(&frame, &input_frame)) {
+		fprintf(stderr, "[DEBUG] unable to compute MSE\n");
+		return EXIT_FAILURE;
+	}
 
 	/** (1) save output image */
 
