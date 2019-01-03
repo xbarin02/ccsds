@@ -86,4 +86,10 @@ int frame_chunked_to_semiplanar(struct frame_t *frame);
  * convert the layout into the semiplanar layout first. Only then the
  * transform is meaningful for human observers.
  */
+
+/**
+ * \brief Duplicate the frame buffer
+ */
+int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame);
+
 #endif /* FRAME_H_ */

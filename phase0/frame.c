@@ -572,3 +572,27 @@ int frame_chunked_to_semiplanar(struct frame_t *frame)
 
 	return RET_SUCCESS;
 }
+
+int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame)
+{
+	int err;
+	size_t width, height;
+
+	assert( frame );
+	assert( cloned_frame );
+
+	*cloned_frame = *frame;
+
+	err = frame_alloc_data(cloned_frame);
+
+	if (err) {
+		return err;
+	}
+
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
+
+	memcpy(cloned_frame->data, frame->data, height * width * sizeof(int));
+
+	return RET_SUCCESS;
+}
