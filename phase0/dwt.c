@@ -436,9 +436,6 @@ int dwtint_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
-#ifndef DWT_LAYOUT_INTERLEAVED
-	size_t width_s, height_s;
-#endif
 	size_t y, x;
 	int *data;
 
@@ -446,11 +443,6 @@ int dwtint_decode(struct frame_t *frame)
 
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
-
-#ifndef DWT_LAYOUT_INTERLEAVED
-	width_s = width >> 3;
-	height_s = height >> 3;
-#endif
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -464,20 +456,21 @@ int dwtint_decode(struct frame_t *frame)
 #ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
-		/* HL (width_j, 0), LH (0, height_j) */
+
 		for (y = 0; y < height_j; ++y) {
+			/* HL (width_j, 0), LH (0, height_j) */
 			dwtint_unweight_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
 			dwtint_unweight_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
+			/* HH (width_j, height_j) */
+			dwtint_unweight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1); /* HH */
 		}
-		/* HH (width_j, height_j) */
-		for (y = 0; y < height_j; ++y) {
-			dwtint_unweight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1);
-		}
-	}
 
-	/* LL (0,0) */
-	for (y = 0; y < height_s; ++y) {
-		dwtint_unweight_line(data + (0+y)*width + 0, width_s, 1, 3);
+		if (j == 3) {
+			for (y = 0; y < height_j; ++y) {
+				/* LL (0,0) */
+				dwtint_unweight_line(data + (0+y)*width + 0, width_j, 1, 3); /* LL */
+			}
+		}
 	}
 #else
 	for (j = 1; j < 4; ++j) {
