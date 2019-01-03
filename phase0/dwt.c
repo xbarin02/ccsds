@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-/* #define DWT_LAYOUT_INTERLEAVED */
+#define DWT_LAYOUT_INTERLEAVED
 
 int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
@@ -115,10 +115,18 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 #	undef x
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	/* unpack */
 	for (n = 0; n < size; ++n) {
 		line[stride*n] = line_[n];
 	}
+#else
+	/* keep interleaved */
+	for (n = 0; n < size/2; ++n) {
+		line[stride*(2*n+0)] = C[n];
+		line[stride*(2*n+1)] = D[n];
+	}
+#endif
 
 	free(line_);
 
@@ -198,10 +206,18 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	/* pack */
 	for (n = 0; n < size; ++n) {
 		line_[n] = line[stride*n];
 	}
+#else
+	/* line[] is interleaved */
+	for (n = 0; n < size/2; ++n) {
+		C[n] = line[stride*(2*n+0)];
+		D[n] = line[stride*(2*n+1)];
+	}
+#endif
 
 	/* inverse convolution */
 
@@ -413,6 +429,7 @@ int dwtfloat_encode(struct frame_t *frame)
 
 	/* (2.2) forward two-dimensional transform */
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
@@ -428,6 +445,29 @@ int dwtfloat_encode(struct frame_t *frame)
 			dwtfloat_encode_line(data + x, height_j, width);
 		}
 	}
+#else
+	/* for each level */
+	for (j = 0; j < 3; ++j) {
+		/* stride of input data (for level j) */
+		size_t stride_j = 1U << j;
+
+		/* number of elements for input */
+		size_t width_j = width>>j, height_j = height>>j;
+
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwtfloat_encode_line(
+				data + y*stride_j*width, width_j, stride_j);
+		}
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwtfloat_encode_line(
+				data + x*stride_j, height_j, width*stride_j);
+		}
+	}
+#endif
 
 	return RET_SUCCESS;
 }
@@ -560,6 +600,7 @@ int dwtfloat_decode(struct frame_t *frame)
 
 	/* inverse two-dimensional transform */
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 2; j >= 0; --j) {
 		size_t width_j = width>>j, height_j = height>>j;
 
@@ -574,6 +615,26 @@ int dwtfloat_decode(struct frame_t *frame)
 			dwtfloat_decode_line(data + y*width, width_j, 1);
 		}
 	}
+#else
+	for (j = 2; j >= 0; --j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		size_t stride_j = 1U << j;
+
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwtfloat_decode_line(
+				data + x*stride_j, height_j, width*stride_j);
+		}
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwtfloat_decode_line(
+				data + y*width*stride_j, width_j, stride_j);
+		}
+	}
+#endif
 
 	return RET_SUCCESS;
 }
