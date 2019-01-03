@@ -111,7 +111,11 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "[DEBUG] transform done\n");
 
+#ifdef DWT_LAYOUT_INTERLEAVED
+	frame_dump_chunked_as_semiplanar(&frame, "dwt3.pgm", 8);
+#else
 	frame_dump(&frame, "dwt3.pgm", 8);
+#endif
 
 	/** (3) BPE */
 #if 0
