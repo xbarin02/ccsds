@@ -45,6 +45,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 	for (n = 1; n <= size/2-1; ++n) {
 		C[n] = line[stride*(2*n)] - round_div_pow2(-(D[n-1]+D[n]), 2);
 	}
+
 #ifndef DWT_LAYOUT_INTERLEAVED
 	/* unpack */
 	for (n = 0; n < size; ++n) {
@@ -57,6 +58,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 		line[stride*(2*n+1)] = D[n];
 	}
 #endif
+
 	free(line_);
 
 	return RET_SUCCESS;
@@ -277,7 +279,9 @@ int dwtint_encode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
+#ifndef DWT_LAYOUT_INTERLEAVED
 	size_t width_s, height_s;
+#endif
 	size_t y, x;
 	int *data;
 
@@ -286,8 +290,10 @@ int dwtint_encode(struct frame_t *frame)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	width_s = width >> 3;
 	height_s = height >> 3;
+#endif
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -298,6 +304,7 @@ int dwtint_encode(struct frame_t *frame)
 
 	/* (2.2) forward two-dimensional transform */
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
@@ -313,8 +320,32 @@ int dwtint_encode(struct frame_t *frame)
 			dwtint_encode_line(data + x, height_j, width);
 		}
 	}
+#else
+	/* for each level */
+	for (j = 0; j < 3; ++j) {
+		/* stride of input data (for level j) */
+		size_t stride_j = 1U << j;
+
+		/* number of elements for input */
+		size_t width_j = width>>j, height_j = height>>j;
+
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwtint_encode_line(
+				data + y*stride_j*width, width_j, stride_j);
+		}
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwtint_encode_line(
+				data + x*stride_j, height_j, width*stride_j);
+		}
+	}
+#endif
 
 	/* (2.3) apply Subband Weights */
+
 #ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
@@ -334,7 +365,29 @@ int dwtint_encode(struct frame_t *frame)
 		dwtint_weight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
 #else
-	/* TODO */
+	for (j = 1; j < 4; ++j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		size_t stride_chunked_x = (1U << j);
+		size_t stride_chunked_y = (1U << j) * width;
+
+		int *band_chunked_ll = data + 0 + 0;
+		int *band_chunked_hl = data + 0 + stride_chunked_x/2;
+		int *band_chunked_lh = data + stride_chunked_y/2 + 0;
+		int *band_chunked_hh = data + stride_chunked_y/2 + stride_chunked_x/2;
+
+		for (y = 0; y < height_j; ++y) {
+			dwtint_weight_line(band_chunked_hl + y*stride_chunked_y, width_j, stride_chunked_x, j); /* HL */
+			dwtint_weight_line(band_chunked_lh + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LH */
+			dwtint_weight_line(band_chunked_hh + y*stride_chunked_y, width_j, stride_chunked_x, j-1); /* HH */
+		}
+
+		if (j == 3) {
+			for (y = 0; y < height_j; ++y) {
+				dwtint_weight_line(band_chunked_ll + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LL */
+			}
+		}
+	}
 #endif
 
 	return RET_SUCCESS;
@@ -390,7 +443,9 @@ int dwtint_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
+#ifndef DWT_LAYOUT_INTERLEAVED
 	size_t width_s, height_s;
+#endif
 	size_t y, x;
 	int *data;
 
@@ -399,8 +454,10 @@ int dwtint_decode(struct frame_t *frame)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	width_s = width >> 3;
 	height_s = height >> 3;
+#endif
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -410,6 +467,7 @@ int dwtint_decode(struct frame_t *frame)
 	assert( data );
 
 	/* undo Subband Weights */
+
 #ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
@@ -429,11 +487,34 @@ int dwtint_decode(struct frame_t *frame)
 		dwtint_unweight_line(data + (0+y)*width + 0, width_s, 1, 3);
 	}
 #else
-	/* TODO */
+	for (j = 1; j < 4; ++j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		size_t stride_chunked_x = (1U << j);
+		size_t stride_chunked_y = (1U << j) * width;
+
+		int *band_chunked_ll = data + 0 + 0;
+		int *band_chunked_hl = data + 0 + stride_chunked_x/2;
+		int *band_chunked_lh = data + stride_chunked_y/2 + 0;
+		int *band_chunked_hh = data + stride_chunked_y/2 + stride_chunked_x/2;
+
+		for (y = 0; y < height_j; ++y) {
+			dwtint_unweight_line(band_chunked_hl + y*stride_chunked_y, width_j, stride_chunked_x, j); /* HL */
+			dwtint_unweight_line(band_chunked_lh + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LH */
+			dwtint_unweight_line(band_chunked_hh + y*stride_chunked_y, width_j, stride_chunked_x, j-1); /* HH */
+		}
+
+		if (j == 3) {
+			for (y = 0; y < height_j; ++y) {
+				dwtint_unweight_line(band_chunked_ll + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LL */
+			}
+		}
+	}
 #endif
 
 	/* inverse two-dimensional transform */
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 2; j >= 0; --j) {
 		size_t width_j = width>>j, height_j = height>>j;
 
@@ -448,6 +529,26 @@ int dwtint_decode(struct frame_t *frame)
 			dwtint_decode_line(data + y*width, width_j, 1);
 		}
 	}
+#else
+	for (j = 2; j >= 0; --j) {
+		size_t width_j = width>>j, height_j = height>>j;
+
+		size_t stride_j = 1U << j;
+
+		/* for each column */
+		for (x = 0; x < width_j; ++x) {
+			/* invoke one-dimensional transform */
+			dwtint_decode_line(
+				data + x*stride_j, height_j, width*stride_j);
+		}
+		/* for each row */
+		for (y = 0; y < height_j; ++y) {
+			/* invoke one-dimensional transform */
+			dwtint_decode_line(
+				data + y*width*stride_j, width_j, stride_j);
+		}
+	}
+#endif
 
 	return RET_SUCCESS;
 }
