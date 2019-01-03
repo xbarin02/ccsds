@@ -675,6 +675,7 @@ int frame_dump_mse(const struct frame_t *frameA, const struct frame_t *frameB)
 		}
 	}
 
+	/* compute mean */
 	mse /= (double)height;
 	mse /= (double)width;
 
