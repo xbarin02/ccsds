@@ -495,3 +495,80 @@ int frame_destroy(struct frame_t *frame)
 
 	return RET_SUCCESS;
 }
+
+static void copy_band(int *dst, int *src, size_t height, size_t width, size_t stride_dst_x, size_t stride_dst_y, size_t stride_src_x, size_t stride_src_y)
+{
+	size_t y, x;
+
+	assert( dst );
+	assert( src );
+
+	/* for each row */
+	for (y = 0; y < height; ++y) {
+		/* for each coefficient */
+		for (x = 0; x < width; ++x) {
+			dst[y*stride_dst_y + x*stride_dst_x] = src[y*stride_src_y + x*stride_src_x];
+		}
+	}
+}
+
+int frame_chunked_to_semiplanar(struct frame_t *frame)
+{
+	size_t height, width;
+	int *semiplanar_data, *chunked_data;
+	int j;
+	int err;
+
+	assert( frame );
+
+	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
+
+	chunked_data = frame->data;
+
+	err = frame_alloc_data(frame);
+
+	if (err) {
+		return err;
+	}
+
+	semiplanar_data = frame->data;
+
+	/* for each level */
+	for (j = 1; j < 4; ++j) {
+		/* shared for both the layouts */
+		size_t width_j = width>>j, height_j = height>>j;
+
+		/* semiplanar layout */
+		size_t stride_semiplanar_x = 1;
+		size_t stride_semiplanar_y = width;
+
+		int *band_semiplanar_ll = semiplanar_data +        0*stride_semiplanar_y +       0*stride_semiplanar_x;
+		int *band_semiplanar_hl = semiplanar_data +        0*stride_semiplanar_y + width_j*stride_semiplanar_x;
+		int *band_semiplanar_lh = semiplanar_data + height_j*stride_semiplanar_y +       0*stride_semiplanar_x;
+		int *band_semiplanar_hh = semiplanar_data + height_j*stride_semiplanar_y + width_j*stride_semiplanar_x;
+
+		/* chunked layout */
+		size_t stride_chunked_x = (1U << j);
+		size_t stride_chunked_y = (1U << j) * width;
+
+		int *band_chunked_ll = chunked_data + 0 + 0;
+		int *band_chunked_hl = chunked_data + 0 + stride_chunked_x/2;
+		int *band_chunked_lh = chunked_data + stride_chunked_y/2 + 0;
+		int *band_chunked_hh = chunked_data + stride_chunked_y/2 + stride_chunked_x/2;
+
+		/* for each subband (HL, LH, HH) */
+		copy_band(band_semiplanar_hl, band_chunked_hl, height_j, width_j, stride_semiplanar_x, stride_semiplanar_y, stride_chunked_x, stride_chunked_y);
+		copy_band(band_semiplanar_lh, band_chunked_lh, height_j, width_j, stride_semiplanar_x, stride_semiplanar_y, stride_chunked_x, stride_chunked_y);
+		copy_band(band_semiplanar_hh, band_chunked_hh, height_j, width_j, stride_semiplanar_x, stride_semiplanar_y, stride_chunked_x, stride_chunked_y);
+
+		/* LL */
+		if (j == 3) {
+			copy_band(band_semiplanar_ll, band_chunked_ll, height_j, width_j, stride_semiplanar_x, stride_semiplanar_y, stride_chunked_x, stride_chunked_y);
+		}
+	}
+
+	free(chunked_data);
+
+	return RET_SUCCESS;
+}
