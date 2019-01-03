@@ -622,3 +622,75 @@ int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *pa
 
 	return RET_SUCCESS;
 }
+
+int frame_dump_mse(const struct frame_t *frameA, const struct frame_t *frameB)
+{
+	size_t height, width;
+	size_t y, x;
+	int *dataA, *dataB;
+	double mse;
+
+	assert( frameA );
+	assert( frameB );
+
+	if ( frameA->width != frameB->width
+	  || frameA->height != frameB->height
+	  || frameA->bpp != frameB->bpp ) {
+		fprintf(stderr, "[DEBUG] frame dimensions must be identical\n");
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	height = frameA->height;
+	width = frameA->width;
+
+	dataA = frameA->data;
+	dataB = frameB->data;
+
+	assert( dataA );
+	assert( dataB );
+
+	mse = 0.;
+
+	for (y = 0; y < height; ++y) {
+		for (x = 0; x < width; ++x) {
+			int pixA = dataA[y*width + x];
+			int pixB = dataB[y*width + x];
+			int e;
+
+			if ( (pixA < 0 && pixB > INT_MAX + pixA)
+			  || (pixA > 0 && pixB < INT_MIN + pixA) ) {
+				return RET_FAILURE_OVERFLOW_ERROR;
+			}
+
+			/* error */
+			e = pixB - pixA;
+
+			if ( (e > 0 && e > INT_MAX / e)
+			  || (e < 0 && e < INT_MAX / e) ) {
+				return RET_FAILURE_OVERFLOW_ERROR;
+			}
+
+			/* add squared error */
+			mse += (unsigned)(e*e);
+		}
+	}
+
+	mse /= (double)height;
+	mse /= (double)width;
+
+	fprintf(stderr, "[DEBUG] mse = %f\n", mse);
+
+	/*
+	 * The following code computes the PSNR which seems to be a bit
+	 * unnecessary for a quick comparison. Moreover, it requires linking
+	 * against -lm.
+	 */
+#if 0
+	maxval = convert_bpp_to_maxval(frameA->bpp);
+
+	psnr = 10. * log10( (double)maxval * (double)maxval / mse );
+
+	fprintf(stderr, "[DEBUG] psnr = %f dB\n", psnr);
+#endif
+	return RET_SUCCESS;
+}

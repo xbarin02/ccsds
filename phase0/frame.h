@@ -101,4 +101,6 @@ int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame);
  */
 int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *path, int factor);
 
+int frame_dump_mse(const struct frame_t *frameA, const struct frame_t *frameB);
+
 #endif /* FRAME_H_ */
