@@ -485,15 +485,13 @@ int frame_dump(const struct frame_t *frame, const char *path, int factor)
 	return RET_SUCCESS;
 }
 
-int frame_destroy(struct frame_t *frame)
+void frame_destroy(struct frame_t *frame)
 {
 	assert( frame );
 
 	free(frame->data);
 
 	frame->data = NULL;
-
-	return RET_SUCCESS;
 }
 
 static void copy_band(int *dst, int *src, size_t height, size_t width, size_t stride_dst_x, size_t stride_dst_y, size_t stride_src_x, size_t stride_src_y)
@@ -512,7 +510,7 @@ static void copy_band(int *dst, int *src, size_t height, size_t width, size_t st
 	}
 }
 
-int frame_chunked_to_semiplanar(struct frame_t *frame)
+int frame_convert_chunked_to_semiplanar(struct frame_t *frame)
 {
 	size_t height, width;
 	int *semiplanar_data, *chunked_data;
@@ -593,6 +591,34 @@ int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame)
 	height = ceil_multiple8(frame->height);
 
 	memcpy(cloned_frame->data, frame->data, height * width * sizeof(int));
+
+	return RET_SUCCESS;
+}
+
+int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *path, int factor)
+{
+	struct frame_t clone;
+	int err;
+
+	err = frame_clone(frame, &clone);
+
+	if (err) {
+		return err;
+	}
+
+	err = frame_convert_chunked_to_semiplanar(&clone);
+
+	if (err) {
+		return err;
+	}
+
+	err = frame_dump(&clone, path, factor);
+
+	if (err) {
+		return err;
+	}
+
+	frame_destroy(&clone);
 
 	return RET_SUCCESS;
 }

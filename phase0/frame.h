@@ -49,13 +49,13 @@ int frame_dump(const struct frame_t *frame, const char *path, int factor);
 /**
  * \brief Release resources
  */
-int frame_destroy(struct frame_t *frame);
+void frame_destroy(struct frame_t *frame);
 
 /**
  * \brief Convert DWT from chunked layout to semiplanar layout
  * \sa \ref memoryLayouts
  */
-int frame_chunked_to_semiplanar(struct frame_t *frame);
+int frame_convert_chunked_to_semiplanar(struct frame_t *frame);
 
 /*! \page memoryLayouts Memory layouts
  *
@@ -91,5 +91,14 @@ int frame_chunked_to_semiplanar(struct frame_t *frame);
  * \brief Duplicate the frame buffer
  */
 int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame);
+
+/**
+ * \brief Debugging dump for frames in chunked memory layout
+ *
+ * Writes the content of \p frame into PGM file.
+ *
+ * \sa \ref memoryLayouts
+ */
+int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *path, int factor);
 
 #endif /* FRAME_H_ */
