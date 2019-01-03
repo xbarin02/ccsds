@@ -361,23 +361,23 @@ int dwtint_encode(struct frame_t *frame)
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
 
-		size_t stride_chunked_x = (1U << j);
-		size_t stride_chunked_y = (1U << j) * width;
+		size_t stride_x = (1U << j);
+		size_t stride_y = (1U << j) * width;
 
-		int *band_chunked_ll = data + 0 + 0;
-		int *band_chunked_hl = data + 0 + stride_chunked_x/2;
-		int *band_chunked_lh = data + stride_chunked_y/2 + 0;
-		int *band_chunked_hh = data + stride_chunked_y/2 + stride_chunked_x/2;
+		int *band_ll = data + 0 + 0;
+		int *band_hl = data + 0 + stride_x/2;
+		int *band_lh = data + stride_y/2 + 0;
+		int *band_hh = data + stride_y/2 + stride_x/2;
 
 		for (y = 0; y < height_j; ++y) {
-			dwtint_weight_line(band_chunked_hl + y*stride_chunked_y, width_j, stride_chunked_x, j); /* HL */
-			dwtint_weight_line(band_chunked_lh + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LH */
-			dwtint_weight_line(band_chunked_hh + y*stride_chunked_y, width_j, stride_chunked_x, j-1); /* HH */
+			dwtint_weight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
+			dwtint_weight_line(band_lh + y*stride_y, width_j, stride_x, j); /* LH */
+			dwtint_weight_line(band_hh + y*stride_y, width_j, stride_x, j-1); /* HH */
 		}
 
 		if (j == 3) {
 			for (y = 0; y < height_j; ++y) {
-				dwtint_weight_line(band_chunked_ll + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LL */
+				dwtint_weight_line(band_ll + y*stride_y, width_j, stride_x, j); /* LL */
 			}
 		}
 	}
@@ -476,23 +476,23 @@ int dwtint_decode(struct frame_t *frame)
 	for (j = 1; j < 4; ++j) {
 		size_t width_j = width>>j, height_j = height>>j;
 
-		size_t stride_chunked_x = (1U << j);
-		size_t stride_chunked_y = (1U << j) * width;
+		size_t stride_x = (1U << j);
+		size_t stride_y = (1U << j) * width;
 
-		int *band_chunked_ll = data + 0 + 0;
-		int *band_chunked_hl = data + 0 + stride_chunked_x/2;
-		int *band_chunked_lh = data + stride_chunked_y/2 + 0;
-		int *band_chunked_hh = data + stride_chunked_y/2 + stride_chunked_x/2;
+		int *band_ll = data + 0 + 0;
+		int *band_hl = data + 0 + stride_x/2;
+		int *band_lh = data + stride_y/2 + 0;
+		int *band_hh = data + stride_y/2 + stride_x/2;
 
 		for (y = 0; y < height_j; ++y) {
-			dwtint_unweight_line(band_chunked_hl + y*stride_chunked_y, width_j, stride_chunked_x, j); /* HL */
-			dwtint_unweight_line(band_chunked_lh + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LH */
-			dwtint_unweight_line(band_chunked_hh + y*stride_chunked_y, width_j, stride_chunked_x, j-1); /* HH */
+			dwtint_unweight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
+			dwtint_unweight_line(band_lh + y*stride_y, width_j, stride_x, j); /* LH */
+			dwtint_unweight_line(band_hh + y*stride_y, width_j, stride_x, j-1); /* HH */
 		}
 
 		if (j == 3) {
 			for (y = 0; y < height_j; ++y) {
-				dwtint_unweight_line(band_chunked_ll + y*stride_chunked_y, width_j, stride_chunked_x, j); /* LL */
+				dwtint_unweight_line(band_ll + y*stride_y, width_j, stride_x, j); /* LL */
 			}
 		}
 	}
