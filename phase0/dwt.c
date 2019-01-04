@@ -335,7 +335,6 @@ int dwtint_encode(struct frame_t *frame)
 
 	/* (2.2) forward two-dimensional transform */
 
-
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
 		/* number of elements for input */
