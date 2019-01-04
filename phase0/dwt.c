@@ -158,9 +158,11 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
-	size_t n;
+	size_t n, N;
 
 	assert( (size&1) == 0 );
+
+	N = size/2;
 
 	line_ = malloc( size * sizeof(int) );
 
@@ -169,7 +171,10 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 	}
 
 	C = line_;
-	D = line_ + size/2;
+	D = line_ + N;
+
+#define c(n) line[stride*(2*(n)+0)]
+#define d(n) line[stride*(2*(n)+1)]
 
 	assert( line );
 
@@ -180,28 +185,46 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 	}
 #else
 	/* line[] is interleaved */
-	for (n = 0; n < size/2; ++n) {
-		C[n] = line[stride*(2*n+0)];
-		D[n] = line[stride*(2*n+1)];
+	for (n = 0; n < N; ++n) {
+		C[n] = c(n);
+		D[n] = d(n);
 	}
 #endif
 	/* inverse lifting */
 
-	line[stride*0] = C[0] + round_div_pow2(-D[0], 1);
+	c(0) = C[0] + round_div_pow2(-D[0], 1);
 
-	for (n = 1; n <= size/2-1; ++n) {
-		line[stride*(2*n)] = C[n] + round_div_pow2(-(D[n-1]+D[n]), 2);
+	for (n = 1; n <= N-1; ++n) {
+		c(n) = C[n] + round_div_pow2(
+			-1*D[n-1] -1*D[n],
+			2
+		);
 	}
 
-	line[stride*1] = D[0] + round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
+	d(0) = D[0] + round_div_pow2(
+		-1*c(1) +9*c(0) +9*c(1) -1*c(2),
+		4
+	);
 
-	for (n = 1; n <= size/2-3; ++n) {
-		line[stride*(2*n+1)] = D[n] + round_div_pow2(9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]), 4);
+	for (n = 1; n <= N-3; ++n) {
+		d(n) = D[n] + round_div_pow2(
+			-1*c(n-1) +9*c(n) +9*c(n+1) -1*c(n+2),
+			4
+		);
 	}
 
-	line[stride*(size-3)] = D[size/2-2] + round_div_pow2(9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]), 4);
+	d(N-2) = D[N-2] + round_div_pow2(
+		-1*c(N-3) +9*c(N-2) +9*c(N-1) -1*c(N-1),
+		4
+	);
 
-	line[stride*(size-1)] = D[size/2-1] + round_div_pow2(9*line[stride*(size-2)] - 1*line[stride*(size-4)], 3);
+	d(N-1) = D[N-1] + round_div_pow2(
+		-1*c(N-2) +9*c(N-1),
+		3
+	);
+
+#undef c
+#undef d
 
 	free(line_);
 
