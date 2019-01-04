@@ -63,9 +63,11 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
-	size_t n;
+	size_t n, N;
 
 	assert( (size&1) == 0 );
+
+	N = size/2;
 
 	line_ = malloc( size * sizeof(int) );
 
@@ -74,7 +76,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	}
 
 	C = line_;
-	D = line_ + size/2;
+	D = line_ + N;
 
 	/* convolution */
 
@@ -84,7 +86,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 		( (m) > (size-1) ? line[stride*(2*(size-1)-(m))] : \
 		line[stride*(m)] ) )
 
-	for (n = 0; n < size/2; ++n) {
+	for (n = 0; n < N; ++n) {
 		C[n] = (int) round_ (
 			+0.037828455507 * x(2*n-4)
 			-0.023849465020 * x(2*n-3)
@@ -111,7 +113,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 #	undef x
 
 	/* keep interleaved */
-	for (n = 0; n < size/2; ++n) {
+	for (n = 0; n < N; ++n) {
 		line[stride*(2*n+0)] = C[n];
 		line[stride*(2*n+1)] = D[n];
 	}
@@ -177,9 +179,11 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
-	size_t n;
+	size_t n, N;
 
 	assert( (size&1) == 0 );
+
+	N = size/2;
 
 	line_ = malloc( size * sizeof(int) );
 
@@ -188,12 +192,12 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 	}
 
 	C = line_;
-	D = line_ + size/2;
+	D = line_ + N;
 
 	assert( line );
 
 	/* line[] is interleaved */
-	for (n = 0; n < size/2; ++n) {
+	for (n = 0; n < N; ++n) {
 		C[n] = line[stride*(2*n+0)];
 		D[n] = line[stride*(2*n+1)];
 	}
@@ -201,13 +205,13 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 	/* inverse convolution */
 
 #	define c(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? C[-(m)] : \
-		( (m) > (size/2-1) ? C[((size/2-1)-(m)+(size/2))] : \
+		( (m) > (N-1) ? C[((N-1)-(m)+(N))] : \
 		C[(m)] ) )
 #	define d(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? D[-(m)-1] : \
-		( (m) > (size/2-1) ? D[(2*(size/2-1)-(m))] : \
+		( (m) > (N-1) ? D[(2*(N-1)-(m))] : \
 		D[(m)] ) )
 
-	for (n = 0; n < size/2; ++n) {
+	for (n = 0; n < N; ++n) {
 		line[stride*(2*n)] = (int) round_ (
 			-0.040689417609 * c(n-1)
 			+0.788485616406 * c(n+0)
