@@ -308,11 +308,19 @@ int dwtint_encode_band(int *band, size_t stride_y, size_t stride_x, size_t heigh
 	return RET_SUCCESS;
 }
 
+void dwtint_weight_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width, int weight)
+{
+	size_t y;
+
+	for (y = 0; y < height; ++y) {
+		dwtint_weight_line(band + y*stride_y, width, stride_x, weight);
+	}
+}
+
 int dwtint_encode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
-	size_t y, x;
 	int *data;
 
 	assert( frame );
@@ -366,16 +374,12 @@ int dwtint_encode(struct frame_t *frame)
 		int *band_hh = data + stride_y/2 + stride_x/2;
 #endif
 
-		for (y = 0; y < height_j; ++y) {
-			dwtint_weight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
-			dwtint_weight_line(band_lh + y*stride_y, width_j, stride_x, j); /* LH */
-			dwtint_weight_line(band_hh + y*stride_y, width_j, stride_x, j-1); /* HH */
-		}
+		dwtint_weight_band(band_hl, stride_y, stride_x, height_j, width_j, j); /* HL */
+		dwtint_weight_band(band_lh, stride_y, stride_x, height_j, width_j, j); /* HL */
+		dwtint_weight_band(band_hh, stride_y, stride_x, height_j, width_j, j-1); /* HL */
 
 		if (j == 3) {
-			for (y = 0; y < height_j; ++y) {
-				dwtint_weight_line(band_ll + y*stride_y, width_j, stride_x, j); /* LL */
-			}
+			dwtint_weight_band(band_ll, stride_y, stride_x, height_j, width_j, j); /* LL */
 		}
 	}
 
