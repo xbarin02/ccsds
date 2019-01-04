@@ -261,7 +261,7 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-int dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
+void dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
 {
 	size_t n;
 
@@ -270,8 +270,6 @@ int dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
 	for (n = 0; n < size; ++n) {
 		line[stride*n] <<= weight;
 	}
-
-	return RET_SUCCESS;
 }
 
 /**
