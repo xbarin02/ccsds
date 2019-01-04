@@ -84,7 +84,8 @@ int frame_convert_chunked_to_semiplanar(struct frame_t *frame);
  * since it only uses three decomposition levels. Another drawback is that
  * the transform cannot be easily visuallized. To visuallize it, one needs to
  * convert the layout into the semiplanar layout first. Only then the
- * transform is meaningful for human observers.
+ * transform is meaningful for human observers. The Open122 library
+ * internally uses the chunked layout.
  */
 
 /**

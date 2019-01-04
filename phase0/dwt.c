@@ -53,12 +53,6 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 		);
 	}
 
-	/* keep interleaved */
-	for (n = 0; n < N; ++n) {
-		c(n) = c(n);
-		d(n) = d(n);
-	}
-
 #undef c
 #undef d
 
@@ -129,71 +123,52 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 int dwtint_decode_line(int *line, size_t size, size_t stride)
 {
-	int *line_;
-	int *D, *C;
 	size_t n, N;
 
 	assert( (size&1) == 0 );
 
 	N = size/2;
 
-	line_ = malloc( size * sizeof(int) );
-
-	if (NULL == line_) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	C = line_;
-	D = line_ + N;
-
 #define c(n) line[stride*(2*(n)+0)]
 #define d(n) line[stride*(2*(n)+1)]
 
 	assert( line );
 
-	/* line[] is interleaved */
-	for (n = 0; n < N; ++n) {
-		C[n] = c(n);
-		D[n] = d(n);
-	}
-
 	/* inverse lifting */
 
-	c(0) = C[0] + round_div_pow2(-D[0], 1);
+	c(0) = c(0) + round_div_pow2(-d(0), 1);
 
 	for (n = 1; n <= N-1; ++n) {
-		c(n) = C[n] + round_div_pow2(
-			-1*D[n-1] -1*D[n],
+		c(n) = c(n) + round_div_pow2(
+			-1*d(n-1) -1*d(n),
 			2
 		);
 	}
 
-	d(0) = D[0] + round_div_pow2(
+	d(0) = d(0) + round_div_pow2(
 		-1*c(1) +9*c(0) +9*c(1) -1*c(2),
 		4
 	);
 
 	for (n = 1; n <= N-3; ++n) {
-		d(n) = D[n] + round_div_pow2(
+		d(n) = d(n) + round_div_pow2(
 			-1*c(n-1) +9*c(n) +9*c(n+1) -1*c(n+2),
 			4
 		);
 	}
 
-	d(N-2) = D[N-2] + round_div_pow2(
+	d(N-2) = d(N-2) + round_div_pow2(
 		-1*c(N-3) +9*c(N-2) +9*c(N-1) -1*c(N-1),
 		4
 	);
 
-	d(N-1) = D[N-1] + round_div_pow2(
+	d(N-1) = d(N-1) + round_div_pow2(
 		-1*c(N-2) +9*c(N-1),
 		3
 	);
 
 #undef c
 #undef d
-
-	free(line_);
 
 	return RET_SUCCESS;
 }
