@@ -272,10 +272,10 @@ void dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
 	}
 }
 
-/**
+/*
  * inverse function to dwt_weight_line
  */
-int dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
+void dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
 {
 	size_t n;
 
@@ -284,8 +284,6 @@ int dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
 	for (n = 0; n < size; ++n) {
 		line[stride*n] >>= weight;
 	}
-
-	return RET_SUCCESS;
 }
 
 int dwtint_encode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
@@ -447,12 +445,6 @@ int dwtint_encode(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-/*
- * NOTE
- * When applying
- * the Float DWT, it would not be necessary for coefficients in these subbands to be rounded to
- * integer values, and so presumably the binary word size is irrelevant for these subbands.
- */
 int dwtfloat_encode(struct frame_t *frame)
 {
 	int j;
