@@ -200,8 +200,6 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 
 	/* inverse convolution */
 
-	line[stride*0] = C[0] + ( ( -D[0] + 1 ) >> 1 );
-
 #	define c(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? C[-(m)] : \
 		( (m) > (size/2-1) ? C[((size/2-1)-(m)+(size/2))] : \
 		C[(m)] ) )
