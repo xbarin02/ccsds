@@ -77,8 +77,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	D = line_ + size/2;
 	C = line_;
+	D = line_ + size/2;
 
 	/* convolution */
 
@@ -200,8 +200,8 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	D = line_ + size/2;
 	C = line_;
+	D = line_ + size/2;
 
 	assert( line );
 
