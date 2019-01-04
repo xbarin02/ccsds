@@ -14,8 +14,8 @@
  * However the \c data is a buffer having dimensions to be multiples of eight.
  */
 struct frame_t {
-	size_t width;  /**< \brief number of columns, range [17; 1<<20] */
 	size_t height; /**< \brief number of rows, range [17; infty) */
+	size_t width;  /**< \brief number of columns, range [17; 1<<20] */
 	size_t bpp;    /**< \brief pixel bit depth (valid in image domain, not in transform domain) */
 
 	int *data;     /**< \brief framebuffer */

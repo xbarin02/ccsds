@@ -359,13 +359,13 @@ void dwtint_unweight_band(int *band, size_t stride_y, size_t stride_x, size_t he
 int dwtint_encode(struct frame_t *frame)
 {
 	int j;
-	size_t width, height;
+	size_t height, width;
 	int *data;
 
 	assert( frame );
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -415,13 +415,13 @@ int dwtint_encode(struct frame_t *frame)
 int dwtfloat_encode(struct frame_t *frame)
 {
 	int j;
-	size_t width, height;
+	size_t height, width;
 	int *data;
 
 	assert( frame );
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -449,13 +449,13 @@ int dwtfloat_encode(struct frame_t *frame)
 int dwtint_decode(struct frame_t *frame)
 {
 	int j;
-	size_t width, height;
+	size_t height, width;
 	int *data;
 
 	assert( frame );
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
@@ -502,13 +502,13 @@ int dwtint_decode(struct frame_t *frame)
 int dwtfloat_decode(struct frame_t *frame)
 {
 	int j;
-	size_t width, height;
+	size_t height, width;
 	int *data;
 
 	assert( frame );
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	/* size_t is unsigned integer type */
 	assert( 0 == (width & 7) && 0 == (height & 7) );
