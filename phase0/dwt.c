@@ -366,7 +366,7 @@ int dwtint_encode(struct frame_t *frame)
 
 		if (j == 3) {
 			for (y = 0; y < height_j; ++y) {
-				dwtint_weight_line(band_ll + y*width, width_j, stride_x, 3);
+				dwtint_weight_line(band_ll + y*stride_y, width_j, stride_x, j); /* LL */
 			}
 		}
 	}
