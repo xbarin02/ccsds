@@ -339,7 +339,7 @@ int dwtint_encode(struct frame_t *frame)
 #ifndef DWT_LAYOUT_INTERLEAVED
 		size_t stride_y = width, stride_x = 1;
 #else
-		size_t stride_y = (1U << j)*width, stride_x = (1U << j)*1;
+		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 #endif
 
 		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
@@ -349,26 +349,22 @@ int dwtint_encode(struct frame_t *frame)
 
 #ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
 
-		size_t stride_y = width;
-		size_t stride_x = 1;
+		size_t stride_y = width, stride_x = 1;
 
-		int *band_ll = data +        0*stride_y +       0;
-		int *band_hl = data +        0*stride_y + width_j;
-		int *band_lh = data + height_j*stride_y +       0;
-		int *band_hh = data + height_j*stride_y + width_j;
+		int *band_ll = data +        0*stride_y +       0; /* LL (0,0) */
+		int *band_hl = data +        0*stride_y + width_j; /* HL (width_j, 0) */
+		int *band_lh = data + height_j*stride_y +       0; /* LH (0, height_j) */
+		int *band_hh = data + height_j*stride_y + width_j; /* HH (width_j, height_j) */
 
 		for (y = 0; y < height_j; ++y) {
-			/* HL (width_j, 0), LH (0, height_j) */
 			dwtint_weight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
 			dwtint_weight_line(band_lh + y*stride_y, width_j, stride_x, j); /* LH */
-			/* HH (width_j, height_j) */
 			dwtint_weight_line(band_hh + y*stride_y, width_j, stride_x, j-1); /* HH */
 		}
 
 		if (j == 3) {
-			/* LL (0,0) */
 			for (y = 0; y < height_j; ++y) {
 				dwtint_weight_line(band_ll + y*width, width_j, stride_x, 3);
 			}
@@ -376,10 +372,9 @@ int dwtint_encode(struct frame_t *frame)
 	}
 #else
 	for (j = 1; j < 4; ++j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
 
-		size_t stride_x = (1U << j);
-		size_t stride_y = (1U << j) * width;
+		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
 		int *band_ll = data +          0 +          0;
 		int *band_hl = data +          0 + stride_x/2;
