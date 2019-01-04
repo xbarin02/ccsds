@@ -329,29 +329,21 @@ int dwtint_encode(struct frame_t *frame)
 
 	/* (2.2) forward two-dimensional transform */
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-	/* for each level */
-	for (j = 0; j < 3; ++j) {
-		/* number of elements for input */
-		size_t width_j = width>>j, height_j = height>>j;
 
-		/* stride of input data (for level j) */
-		size_t stride_y = width, stride_x = 1;
-
-		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
-	}
-#else
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
 		/* number of elements for input */
 		size_t height_j = height>>j, width_j = width>>j;
 
 		/* stride of input data (for level j) */
-		size_t stride_y = (1U << j)*width, stride_x = (1U << j);
+#ifndef DWT_LAYOUT_INTERLEAVED
+		size_t stride_y = width, stride_x = 1;
+#else
+		size_t stride_y = (1U << j)*width, stride_x = (1U << j)*1;
+#endif
 
 		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
-#endif
 
 	/* (2.3) apply Subband Weights */
 
