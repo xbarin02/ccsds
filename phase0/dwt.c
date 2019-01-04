@@ -8,22 +8,11 @@
 
 int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
-	int *line_;
-	int *D, *C;
 	size_t n, N;
 
 	assert( (size&1) == 0 );
 
 	N = size/2;
-
-	line_ = malloc( size * sizeof(int) );
-
-	if (NULL == line_) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	C = line_;
-	D = line_ + N;
 
 	/* lifting */
 
@@ -33,54 +22,45 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-	D[0] = d(0) - round_div_pow2(
+	d(0) = d(0) - round_div_pow2(
 		-1*c(1) +9*c(0) +9*c(1) -1*c(2),
 		4
 	);
 
 	for (n = 1; n <= N-3; ++n) {
-		D[n] = d(n) - round_div_pow2(
+		d(n) = d(n) - round_div_pow2(
 			-1*c(n-1) +9*c(n) +9*c(n+1) -1*c(n+2),
 			4
 		);
 	}
 
-	D[N-2] = d(N-2) - round_div_pow2(
+	d(N-2) = d(N-2) - round_div_pow2(
 		-1*c(N-3) +9*c(N-2) +9*c(N-1) -1*c(N-1),
 		4
 	);
 
-	D[N-1] = d(N-1) - round_div_pow2(
+	d(N-1) = d(N-1) - round_div_pow2(
 		-1*c(N-2) +9*c(N-1),
 		3
 	);
 
-	C[0] = c(0) - round_div_pow2(-D[0], 1);
+	c(0) = c(0) - round_div_pow2(-d(0), 1);
 
 	for (n = 1; n <= N-1; ++n) {
-		C[n] = c(n) - round_div_pow2(
-			-1*D[n-1] -1*D[n],
+		c(n) = c(n) - round_div_pow2(
+			-1*d(n-1) -1*d(n),
 			2
 		);
 	}
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-	/* unpack */
-	for (n = 0; n < size; ++n) {
-		line[stride*n] = line_[n];
-	}
-#else
 	/* keep interleaved */
 	for (n = 0; n < N; ++n) {
-		c(n) = C[n];
-		d(n) = D[n];
+		c(n) = c(n);
+		d(n) = d(n);
 	}
-#endif
 
 #undef c
 #undef d
-
-	free(line_);
 
 	return RET_SUCCESS;
 }
@@ -136,18 +116,11 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 #	undef x
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-	/* unpack */
-	for (n = 0; n < size; ++n) {
-		line[stride*n] = line_[n];
-	}
-#else
 	/* keep interleaved */
 	for (n = 0; n < size/2; ++n) {
 		line[stride*(2*n+0)] = C[n];
 		line[stride*(2*n+1)] = D[n];
 	}
-#endif
 
 	free(line_);
 
@@ -178,18 +151,12 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-	/* pack */
-	for (n = 0; n < size; ++n) {
-		line_[n] = line[stride*n];
-	}
-#else
 	/* line[] is interleaved */
 	for (n = 0; n < N; ++n) {
 		C[n] = c(n);
 		D[n] = d(n);
 	}
-#endif
+
 	/* inverse lifting */
 
 	c(0) = C[0] + round_div_pow2(-D[0], 1);
@@ -250,18 +217,11 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-	/* pack */
-	for (n = 0; n < size; ++n) {
-		line_[n] = line[stride*n];
-	}
-#else
 	/* line[] is interleaved */
 	for (n = 0; n < size/2; ++n) {
 		C[n] = line[stride*(2*n+0)];
 		D[n] = line[stride*(2*n+1)];
 	}
-#endif
 
 	/* inverse convolution */
 
@@ -447,11 +407,7 @@ int dwtint_encode(struct frame_t *frame)
 		size_t height_j = height>>j, width_j = width>>j;
 
 		/* stride of input data (for level j) */
-#ifndef DWT_LAYOUT_INTERLEAVED
-		size_t stride_y = width, stride_x = 1;
-#else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
-#endif
 
 		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
@@ -461,21 +417,12 @@ int dwtint_encode(struct frame_t *frame)
 	for (j = 1; j < 4; ++j) {
 		size_t height_j = height>>j, width_j = width>>j;
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-		size_t stride_y = width, stride_x = 1;
-
-		int *band_ll = data +        0*stride_y +       0*stride_x; /* LL (0,0) */
-		int *band_hl = data +        0*stride_y + width_j*stride_x; /* HL (width_j, 0) */
-		int *band_lh = data + height_j*stride_y +       0*stride_x; /* LH (0, height_j) */
-		int *band_hh = data + height_j*stride_y + width_j*stride_x; /* HH (width_j, height_j) */
-#else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
 		int *band_ll = data +          0 +          0;
 		int *band_hl = data +          0 + stride_x/2;
 		int *band_lh = data + stride_y/2 +          0;
 		int *band_hh = data + stride_y/2 + stride_x/2;
-#endif
 
 		dwtint_weight_band(band_hl, stride_y, stride_x, height_j, width_j, j); /* HL */
 		dwtint_weight_band(band_lh, stride_y, stride_x, height_j, width_j, j); /* LH */
@@ -516,11 +463,7 @@ int dwtfloat_encode(struct frame_t *frame)
 		size_t height_j = height>>j, width_j = width>>j;
 
 		/* stride of input data (for level j) */
-#ifndef DWT_LAYOUT_INTERLEAVED
-		size_t stride_y = width, stride_x = 1;
-#else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
-#endif
 
 		dwtfloat_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
@@ -551,21 +494,12 @@ int dwtint_decode(struct frame_t *frame)
 	for (j = 1; j < 4; ++j) {
 		size_t height_j = height>>j, width_j = width>>j;
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-		size_t stride_y = width, stride_x = 1;
-
-		int *band_ll = data +        0*stride_y +       0*stride_x; /* LL (0,0) */
-		int *band_hl = data +        0*stride_y + width_j*stride_x; /* HL (width_j, 0) */
-		int *band_lh = data + height_j*stride_y +       0*stride_x; /* LH (0, height_j) */
-		int *band_hh = data + height_j*stride_y + width_j*stride_x; /* HH (width_j, height_j) */
-#else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
 		int *band_ll = data +          0 +          0;
 		int *band_hl = data +          0 + stride_x/2;
 		int *band_lh = data + stride_y/2 +          0;
 		int *band_hh = data + stride_y/2 + stride_x/2;
-#endif
 
 		dwtint_unweight_band(band_hl, stride_y, stride_x, height_j, width_j, j); /* HL */
 		dwtint_unweight_band(band_lh, stride_y, stride_x, height_j, width_j, j); /* LH */
@@ -582,11 +516,7 @@ int dwtint_decode(struct frame_t *frame)
 	for (j = 2; j >= 0; --j) {
 		size_t height_j = height>>j, width_j = width>>j;
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-		size_t stride_y = width, stride_x = 1;
-#else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
-#endif
 
 		dwtint_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
@@ -617,11 +547,7 @@ int dwtfloat_decode(struct frame_t *frame)
 	for (j = 2; j >= 0; --j) {
 		size_t height_j = height>>j, width_j = width>>j;
 
-#ifndef DWT_LAYOUT_INTERLEAVED
-		size_t stride_y = width, stride_x = 1;
-#else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
-#endif
 
 		dwtfloat_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
