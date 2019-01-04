@@ -10,9 +10,11 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
 	int *D, *C;
-	size_t n;
+	size_t n, N;
 
 	assert( (size&1) == 0 );
+
+	N = size/2;
 
 	line_ = malloc( size * sizeof(int) );
 
@@ -21,29 +23,34 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 	}
 
 	C = line_;
-	D = line_ + size/2;
+	D = line_ + N;
 
 	/* lifting */
 
 	/* subbands: D (H) at odd indices, C (L) at even indices */
+#define c(n) line[stride*(2*(n)+0)]
+#define d(n) line[stride*(2*(n)+1)]
 
 	assert( line );
 
-	D[0] = line[stride*1] - round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
+	D[0] = d(0) - round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
 
-	for (n = 1; n <= size/2-3; ++n) {
-		D[n] = line[stride*(2*n+1)] - round_div_pow2(9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]), 4);
+	for (n = 1; n <= N-3; ++n) {
+		D[n] = d(n) - round_div_pow2(9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]), 4);
 	}
 
-	D[size/2-2] = line[stride*(size-3)] - round_div_pow2(9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]), 4);
+	D[N-2] = d(N-2) - round_div_pow2(9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]), 4);
 
-	D[size/2-1] = line[stride*(size-1)] - round_div_pow2(9*line[stride*(size-2)] - 1*line[stride*(size-4)], 3);
+	D[N-1] = d(N-1) - round_div_pow2(9*line[stride*(size-2)] - 1*line[stride*(size-4)], 3);
 
-	C[0] = line[stride*0] - round_div_pow2(-D[0], 1);
+	C[0] = c(0) - round_div_pow2(-D[0], 1);
 
-	for (n = 1; n <= size/2-1; ++n) {
-		C[n] = line[stride*(2*n)] - round_div_pow2(-(D[n-1]+D[n]), 2);
+	for (n = 1; n <= N-1; ++n) {
+		C[n] = c(n) - round_div_pow2(-(D[n-1]+D[n]), 2);
 	}
+
+#undef c
+#undef d
 
 #ifndef DWT_LAYOUT_INTERLEAVED
 	/* unpack */
