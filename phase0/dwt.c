@@ -358,10 +358,10 @@ int dwtint_encode(struct frame_t *frame)
 #ifndef DWT_LAYOUT_INTERLEAVED
 		size_t stride_y = width, stride_x = 1;
 
-		int *band_ll = data +        0*stride_y +       0; /* LL (0,0) */
-		int *band_hl = data +        0*stride_y + width_j; /* HL (width_j, 0) */
-		int *band_lh = data + height_j*stride_y +       0; /* LH (0, height_j) */
-		int *band_hh = data + height_j*stride_y + width_j; /* HH (width_j, height_j) */
+		int *band_ll = data +        0*stride_y +       0*stride_x; /* LL (0,0) */
+		int *band_hl = data +        0*stride_y + width_j*stride_x; /* HL (width_j, 0) */
+		int *band_lh = data + height_j*stride_y +       0*stride_x; /* LH (0, height_j) */
+		int *band_hh = data + height_j*stride_y + width_j*stride_x; /* HH (width_j, height_j) */
 #else
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
@@ -477,33 +477,36 @@ int dwtint_decode(struct frame_t *frame)
 
 #ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
+
+		size_t stride_y = width, stride_x = 1;
+
+		int *band_ll = data +        0*stride_y +       0*stride_x; /* LL (0,0) */
+		int *band_hl = data +        0*stride_y + width_j*stride_x; /* HL (width_j, 0) */
+		int *band_lh = data + height_j*stride_y +       0*stride_x; /* LH (0, height_j) */
+		int *band_hh = data + height_j*stride_y + width_j*stride_x; /* HH (width_j, height_j) */
 
 		for (y = 0; y < height_j; ++y) {
-			/* HL (width_j, 0), LH (0, height_j) */
-			dwtint_unweight_line(data + (0+y)*width + width_j, width_j, 1, j); /* HL */
-			dwtint_unweight_line(data + (height_j+y)*width + 0, width_j, 1, j); /* LH */
-			/* HH (width_j, height_j) */
-			dwtint_unweight_line(data + (height_j+y)*width + width_j, width_j, 1, j-1); /* HH */
+			dwtint_unweight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
+			dwtint_unweight_line(band_lh + y*stride_y, width_j, stride_x, j); /* LH */
+			dwtint_unweight_line(band_hh + y*stride_y, width_j, stride_x, j-1); /* HH */
 		}
 
 		if (j == 3) {
 			for (y = 0; y < height_j; ++y) {
-				/* LL (0,0) */
-				dwtint_unweight_line(data + (0+y)*width + 0, width_j, 1, 3); /* LL */
+				dwtint_unweight_line(band_ll + y*stride_y, width_j, stride_x, j); /* LL */
 			}
 		}
 	}
 #else
 	for (j = 1; j < 4; ++j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
 
-		size_t stride_x = (1U << j);
-		size_t stride_y = (1U << j) * width;
+		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
-		int *band_ll = data + 0 + 0;
-		int *band_hl = data + 0 + stride_x/2;
-		int *band_lh = data + stride_y/2 + 0;
+		int *band_ll = data +          0 +          0;
+		int *band_hl = data +          0 + stride_x/2;
+		int *band_lh = data + stride_y/2 +          0;
 		int *band_hh = data + stride_y/2 + stride_x/2;
 
 		for (y = 0; y < height_j; ++y) {
