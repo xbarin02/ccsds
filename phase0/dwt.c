@@ -306,6 +306,24 @@ int dwtint_encode_band(int *band, size_t stride_y, size_t stride_x, size_t heigh
 	return RET_SUCCESS;
 }
 
+int dwtint_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+{
+	size_t y, x;
+
+	/* for each column */
+	for (x = 0; x < width; ++x) {
+		/* invoke one-dimensional transform */
+		dwtint_decode_line(band + x*stride_x, height, stride_y);
+	}
+	/* for each row */
+	for (y = 0; y < height; ++y) {
+		/* invoke one-dimensional transform */
+		dwtint_decode_line(band + y*stride_y, width, stride_x);
+	}
+
+	return RET_SUCCESS;
+}
+
 void dwtint_weight_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width, int weight)
 {
 	size_t y;
@@ -467,7 +485,6 @@ int dwtint_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
-	size_t y, x;
 	int *data;
 
 	assert( frame );
@@ -524,16 +541,7 @@ int dwtint_decode(struct frame_t *frame)
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 #endif
 
-		/* for each column */
-		for (x = 0; x < width_j; ++x) {
-			/* invoke one-dimensional transform */
-			dwtint_decode_line(data + x*stride_x, height_j, stride_y);
-		}
-		/* for each row */
-		for (y = 0; y < height_j; ++y) {
-			/* invoke one-dimensional transform */
-			dwtint_decode_line(data + y*stride_y, width_j, stride_x);
-		}
+		dwtint_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
 
 	return RET_SUCCESS;
