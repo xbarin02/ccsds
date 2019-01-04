@@ -324,6 +324,24 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 	return RET_SUCCESS;
 }
 
+int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+{
+	size_t y, x;
+
+	/* for each column */
+	for (x = 0; x < width; ++x) {
+		/* invoke one-dimensional transform */
+		dwtfloat_decode_line(band + x*stride_x, height, stride_y);
+	}
+	/* for each row */
+	for (y = 0; y < height; ++y) {
+		/* invoke one-dimensional transform */
+		dwtfloat_decode_line(band + y*stride_y, width, stride_x);
+	}
+
+	return RET_SUCCESS;
+}
+
 int dwtint_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
 {
 	size_t y, x;
@@ -439,7 +457,6 @@ int dwtfloat_encode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
-	size_t y, x;
 	int *data;
 
 	assert( frame );
@@ -544,7 +561,6 @@ int dwtfloat_decode(struct frame_t *frame)
 {
 	int j;
 	size_t width, height;
-	size_t y, x;
 	int *data;
 
 	assert( frame );
@@ -561,41 +577,17 @@ int dwtfloat_decode(struct frame_t *frame)
 
 	/* inverse two-dimensional transform */
 
+	for (j = 2; j >= 0; --j) {
+		size_t height_j = height>>j, width_j = width>>j;
+
 #ifndef DWT_LAYOUT_INTERLEAVED
-	for (j = 2; j >= 0; --j) {
-		size_t width_j = width>>j, height_j = height>>j;
-
-		/* for each column */
-		for (x = 0; x < width_j; ++x) {
-			/* invoke one-dimensional transform */
-			dwtfloat_decode_line(data + x, height_j, width);
-		}
-		/* for each row */
-		for (y = 0; y < height_j; ++y) {
-			/* invoke one-dimensional transform */
-			dwtfloat_decode_line(data + y*width, width_j, 1);
-		}
-	}
+		size_t stride_y = width, stride_x = 1;
 #else
-	for (j = 2; j >= 0; --j) {
-		size_t width_j = width>>j, height_j = height>>j;
-
-		size_t stride_j = 1U << j;
-
-		/* for each column */
-		for (x = 0; x < width_j; ++x) {
-			/* invoke one-dimensional transform */
-			dwtfloat_decode_line(
-				data + x*stride_j, height_j, width*stride_j);
-		}
-		/* for each row */
-		for (y = 0; y < height_j; ++y) {
-			/* invoke one-dimensional transform */
-			dwtfloat_decode_line(
-				data + y*width*stride_j, width_j, stride_j);
-		}
-	}
+		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 #endif
+
+		dwtfloat_decode_band(data, stride_y, stride_x, height_j, width_j);
+	}
 
 	return RET_SUCCESS;
 }
