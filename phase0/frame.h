@@ -74,7 +74,7 @@ int frame_convert_chunked_to_semiplanar(struct frame_t *frame);
  * and semiplanar layouts, the subband coefficients are adjacent in memory.
  * In other words, the subband coefficients lies close together even on
  * coarse resolutions. The disadvantage is that the transform cannot be
- * computed in place in a single loop. The is huge performance bottleneck.
+ * computed in place in a single loop. This is huge performance bottleneck.
  * Thus, the third layout leaves the coefficients in place of their original
  * spatial location. The four subbands become interleaved in memory.
  * This is called the chunked (interleaved) memory layout. Using this layout,
