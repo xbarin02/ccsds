@@ -1,11 +1,10 @@
+#include "config.h"
 #include "dwt.h"
 #include "utils.h"
 
 #include <stddef.h>
 #include <assert.h>
 #include <stdlib.h>
-
-#define DWT_LAYOUT_INTERLEAVED
 
 int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
@@ -291,6 +290,24 @@ int dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
 	return RET_SUCCESS;
 }
 
+int dwtint_encode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+{
+	size_t y, x;
+
+	/* for each row */
+	for (y = 0; y < height; ++y) {
+		/* invoke one-dimensional transform */
+		dwtint_encode_line(band + y*stride_y, width, stride_x);
+	}
+	/* for each column */
+	for (x = 0; x < width; ++x) {
+		/* invoke one-dimensional transform */
+		dwtint_encode_line(band + x*stride_x, height, stride_y);
+	}
+
+	return RET_SUCCESS;
+}
+
 int dwtint_encode(struct frame_t *frame)
 {
 	int j;
@@ -315,40 +332,24 @@ int dwtint_encode(struct frame_t *frame)
 #ifndef DWT_LAYOUT_INTERLEAVED
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
+		/* number of elements for input */
 		size_t width_j = width>>j, height_j = height>>j;
 
-		/* for each row */
-		for (y = 0; y < height_j; ++y) {
-			/* invoke one-dimensional transform */
-			dwtint_encode_line(data + y*width, width_j, 1);
-		}
-		/* for each column */
-		for (x = 0; x < width_j; ++x) {
-			/* invoke one-dimensional transform */
-			dwtint_encode_line(data + x, height_j, width);
-		}
+		/* stride of input data (for level j) */
+		size_t stride_y = width, stride_x = 1;
+
+		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
 #else
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
-		/* stride of input data (for level j) */
-		size_t stride_j = 1U << j;
-
 		/* number of elements for input */
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
 
-		/* for each row */
-		for (y = 0; y < height_j; ++y) {
-			/* invoke one-dimensional transform */
-			dwtint_encode_line(
-				data + y*stride_j*width, width_j, stride_j);
-		}
-		/* for each column */
-		for (x = 0; x < width_j; ++x) {
-			/* invoke one-dimensional transform */
-			dwtint_encode_line(
-				data + x*stride_j, height_j, width*stride_j);
-		}
+		/* stride of input data (for level j) */
+		size_t stride_y = (1U << j)*width, stride_x = (1U << j);
+
+		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
 #endif
 

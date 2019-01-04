@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "frame.h"
 #include "common.h"
 #include "dwt.h"
@@ -115,8 +116,6 @@ int main(int argc, char *argv[])
 	}
 
 	fprintf(stderr, "[DEBUG] transform done\n");
-
-#define DWT_LAYOUT_INTERLEAVED
 
 #ifdef DWT_LAYOUT_INTERLEAVED
 	fprintf(stderr, "[DEBUG] converting chunked to semiplanar...\n");
