@@ -64,9 +64,6 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 		);
 	}
 
-#undef c
-#undef d
-
 #ifndef DWT_LAYOUT_INTERLEAVED
 	/* unpack */
 	for (n = 0; n < size; ++n) {
@@ -74,11 +71,14 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 	}
 #else
 	/* keep interleaved */
-	for (n = 0; n < size/2; ++n) {
-		line[stride*(2*n+0)] = C[n];
-		line[stride*(2*n+1)] = D[n];
+	for (n = 0; n < N; ++n) {
+		c(n) = C[n];
+		d(n) = D[n];
 	}
 #endif
+
+#undef c
+#undef d
 
 	free(line_);
 
