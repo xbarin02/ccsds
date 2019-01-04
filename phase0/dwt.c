@@ -378,9 +378,10 @@ int dwtint_encode(struct frame_t *frame)
 		dwtint_weight_band(band_lh, stride_y, stride_x, height_j, width_j, j); /* LH */
 		dwtint_weight_band(band_hh, stride_y, stride_x, height_j, width_j, j-1); /* HH */
 
-		if (j == 3) {
-			dwtint_weight_band(band_ll, stride_y, stride_x, height_j, width_j, j); /* LL */
-		}
+		if (j < 3)
+			continue;
+
+		dwtint_weight_band(band_ll, stride_y, stride_x, height_j, width_j, j); /* LL */
 	}
 
 	return RET_SUCCESS;
