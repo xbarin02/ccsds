@@ -441,39 +441,41 @@ int dwtfloat_encode(struct frame_t *frame)
 #ifndef DWT_LAYOUT_INTERLEAVED
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		/* number of elements for input */
+		size_t height_j = height>>j, width_j = width>>j;
+
+		/* stride of input data (for level j) */
+		size_t stride_y = width, stride_x = 1;
 
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwtfloat_encode_line(data + y*width, width_j, 1);
+			dwtfloat_encode_line(data + y*stride_y, width_j, stride_x);
 		}
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwtfloat_encode_line(data + x, height_j, width);
+			dwtfloat_encode_line(data + x*stride_x, height_j, stride_y);
 		}
 	}
 #else
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
-		/* stride of input data (for level j) */
-		size_t stride_j = 1U << j;
-
 		/* number of elements for input */
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
+
+		/* stride of input data (for level j) */
+		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwtfloat_encode_line(
-				data + y*stride_j*width, width_j, stride_j);
+			dwtfloat_encode_line(data + y*stride_y, width_j, stride_x);
 		}
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwtfloat_encode_line(
-				data + x*stride_j, height_j, width*stride_j);
+			dwtfloat_encode_line(data + x*stride_x, height_j, stride_y);
 		}
 	}
 #endif
