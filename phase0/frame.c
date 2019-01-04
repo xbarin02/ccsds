@@ -7,7 +7,7 @@
 #include <ctype.h>
 #include <assert.h>
 
-int frame_write_pgm_header(const struct frame_t *frame, FILE *stream)
+int frame_write_pgm_header(const struct frame *frame, FILE *stream)
 {
 	size_t width, height;
 	size_t bpp;
@@ -31,7 +31,7 @@ int frame_write_pgm_header(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_write_pgm_data(const struct frame_t *frame, FILE *stream)
+int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 {
 	size_t width_, height_, depth_;
 	size_t width;
@@ -97,7 +97,7 @@ int frame_write_pgm_data(const struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_save_pgm(const struct frame_t *frame, const char *path)
+int frame_save_pgm(const struct frame *frame, const char *path)
 {
 	FILE *stream;
 	int err;
@@ -156,7 +156,7 @@ int stream_skip_comment(FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
+int frame_read_pgm_header(struct frame *frame, FILE *stream)
 {
 	char magic[2];
 	unsigned long maxval;
@@ -256,7 +256,7 @@ int frame_read_pgm_header(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_alloc_data(struct frame_t *frame)
+int frame_alloc_data(struct frame *frame)
 {
 	size_t width, height;
 	int *data;
@@ -277,7 +277,7 @@ int frame_alloc_data(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
+int frame_read_pgm_data(struct frame *frame, FILE *stream)
 {
 	size_t width_, height_, depth_;
 	size_t width, height;
@@ -353,7 +353,7 @@ int frame_read_pgm_data(struct frame_t *frame, FILE *stream)
 	return RET_SUCCESS;
 }
 
-int frame_load_pgm(struct frame_t *frame, const char *path)
+int frame_load_pgm(struct frame *frame, const char *path)
 {
 	FILE *stream;
 	int err;
@@ -400,7 +400,7 @@ int frame_load_pgm(struct frame_t *frame, const char *path)
 	return RET_SUCCESS;
 }
 
-int frame_dump(const struct frame_t *frame, const char *path, int factor)
+int frame_dump(const struct frame *frame, const char *path, int factor)
 {
 	FILE *stream;
 	size_t width, height, depth;
@@ -485,7 +485,7 @@ int frame_dump(const struct frame_t *frame, const char *path, int factor)
 	return RET_SUCCESS;
 }
 
-void frame_destroy(struct frame_t *frame)
+void frame_destroy(struct frame *frame)
 {
 	assert( frame );
 
@@ -510,7 +510,7 @@ static void copy_band(int *dst, int *src, size_t height, size_t width, size_t st
 	}
 }
 
-int frame_convert_chunked_to_semiplanar(struct frame_t *frame)
+int frame_convert_chunked_to_semiplanar(struct frame *frame)
 {
 	size_t height, width;
 	int *semiplanar_data, *chunked_data;
@@ -571,7 +571,7 @@ int frame_convert_chunked_to_semiplanar(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame)
+int frame_clone(const struct frame *frame, struct frame *cloned_frame)
 {
 	int err;
 	size_t width, height;
@@ -595,9 +595,9 @@ int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame)
 	return RET_SUCCESS;
 }
 
-int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *path, int factor)
+int frame_dump_chunked_as_semiplanar(const struct frame *frame, const char *path, int factor)
 {
-	struct frame_t clone;
+	struct frame clone;
 	int err;
 
 	err = frame_clone(frame, &clone);
@@ -623,7 +623,7 @@ int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *pa
 	return RET_SUCCESS;
 }
 
-int frame_dump_mse(const struct frame_t *frameA, const struct frame_t *frameB)
+int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 {
 	size_t height, width;
 	size_t y, x;

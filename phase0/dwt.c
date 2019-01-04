@@ -356,7 +356,7 @@ void dwtint_unweight_band(int *band, size_t stride_y, size_t stride_x, size_t he
 	}
 }
 
-int dwtint_encode(struct frame_t *frame)
+int dwtint_encode(struct frame *frame)
 {
 	int j;
 	size_t height, width;
@@ -412,7 +412,7 @@ int dwtint_encode(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int dwtfloat_encode(struct frame_t *frame)
+int dwtfloat_encode(struct frame *frame)
 {
 	int j;
 	size_t height, width;
@@ -446,7 +446,7 @@ int dwtfloat_encode(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int dwtint_decode(struct frame_t *frame)
+int dwtint_decode(struct frame *frame)
 {
 	int j;
 	size_t height, width;
@@ -499,7 +499,7 @@ int dwtint_decode(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int dwtfloat_decode(struct frame_t *frame)
+int dwtfloat_decode(struct frame *frame)
 {
 	int j;
 	size_t height, width;
@@ -530,7 +530,7 @@ int dwtfloat_decode(struct frame_t *frame)
 	return RET_SUCCESS;
 }
 
-int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters)
+int dwt_encode(struct frame *frame, const struct parameters *parameters)
 {
 	assert( parameters );
 
@@ -544,7 +544,7 @@ int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters)
 	}
 }
 
-int dwt_decode(struct frame_t *frame, const struct parameters_t *parameters)
+int dwt_decode(struct frame *frame, const struct parameters *parameters)
 {
 	assert( parameters );
 

@@ -14,7 +14,7 @@
  * The transform is computed <em>in situ</em> using the \p frame buffer.
  * Either Float or Integer DWT is used, according to the \p parameters.
  */
-int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters);
+int dwt_encode(struct frame *frame, const struct parameters *parameters);
 
 /**
  * \brief Inverse wavelet transform
@@ -22,6 +22,6 @@ int dwt_encode(struct frame_t *frame, const struct parameters_t *parameters);
  * The transform is computed <em>in situ</em> using the \p frame buffer.
  * Either Float or Integer DWT is used, according to the \p parameters.
  */
-int dwt_decode(struct frame_t *frame, const struct parameters_t *parameters);
+int dwt_decode(struct frame *frame, const struct parameters *parameters);
 
 #endif /* DWT_H_ */

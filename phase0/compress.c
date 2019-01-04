@@ -19,7 +19,7 @@
 #include "dwt.h"
 
 #if 0
-int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameters)
+int bpe_encode(const struct frame *frame, const struct parameters *parameters)
 {
 	/* LL band size */
 	size_t width_s = frame->width >> 3;
@@ -56,8 +56,8 @@ int bpe_encode(const struct frame_t *frame, const struct parameters_t *parameter
 
 int main(int argc, char *argv[])
 {
-	struct frame_t frame, input_frame;
-	struct parameters_t parameters;
+	struct frame frame, input_frame;
+	struct parameters parameters;
 
 	/* NOTE Since we implement the floor function for negative numbers using
 	 * an arithmetic right shift, we must check whether the underlying

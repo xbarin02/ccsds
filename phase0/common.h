@@ -8,7 +8,7 @@
 /**
  * \brief Compression parameters
  */
-struct parameters_t {
+struct parameters {
 	/**
 	 * \brief Wavelet transform type
 	 *

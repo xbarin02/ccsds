@@ -13,7 +13,7 @@
  * The \c width and \c height are exact image dimensions, i.e. not rounded to next multiple of eight.
  * However the \c data is a buffer having dimensions to be multiples of eight.
  */
-struct frame_t {
+struct frame {
 	size_t height; /**< \brief number of rows, range [17; infty) */
 	size_t width;  /**< \brief number of columns, range [17; 1<<20] */
 	size_t bpp;    /**< \brief pixel bit depth (valid in image domain, not in transform domain) */
@@ -28,7 +28,7 @@ struct frame_t {
  * Currently, only binary PGM (P5) is supported.
  * If \p path is \c "-", the output is written to the \c stdout.
  */
-int frame_save_pgm(const struct frame_t *frame, const char *path);
+int frame_save_pgm(const struct frame *frame, const char *path);
 
 /**
  * \brief Load image from PGM file
@@ -37,25 +37,25 @@ int frame_save_pgm(const struct frame_t *frame, const char *path);
  * Currently, only binary PGM (P5) is supported.
  * If \p path is \c "-", the input is read from the \c stdin.
  */
-int frame_load_pgm(struct frame_t *frame, const char *path);
+int frame_load_pgm(struct frame *frame, const char *path);
 
 /**
  * \brief Debugging dump
  *
  * Writes the content of \p frame into PGM format.
  */
-int frame_dump(const struct frame_t *frame, const char *path, int factor);
+int frame_dump(const struct frame *frame, const char *path, int factor);
 
 /**
  * \brief Release resources
  */
-void frame_destroy(struct frame_t *frame);
+void frame_destroy(struct frame *frame);
 
 /**
  * \brief Convert DWT from chunked layout to semiplanar layout
  * \sa \ref memoryLayouts
  */
-int frame_convert_chunked_to_semiplanar(struct frame_t *frame);
+int frame_convert_chunked_to_semiplanar(struct frame *frame);
 
 /*! \page memoryLayouts Memory layouts
  *
@@ -91,7 +91,7 @@ int frame_convert_chunked_to_semiplanar(struct frame_t *frame);
 /**
  * \brief Duplicate the frame buffer
  */
-int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame);
+int frame_clone(const struct frame *frame, struct frame *cloned_frame);
 
 /**
  * \brief Debugging dump for frames in chunked memory layout
@@ -100,11 +100,11 @@ int frame_clone(const struct frame_t *frame, struct frame_t *cloned_frame);
  *
  * \sa \ref memoryLayouts
  */
-int frame_dump_chunked_as_semiplanar(const struct frame_t *frame, const char *path, int factor);
+int frame_dump_chunked_as_semiplanar(const struct frame *frame, const char *path, int factor);
 
 /**
  * \brief Compute and dump the mean squared error (MSE)
  */
-int frame_dump_mse(const struct frame_t *frameA, const struct frame_t *frameB);
+int frame_dump_mse(const struct frame *frameA, const struct frame *frameB);
 
 #endif /* FRAME_H_ */

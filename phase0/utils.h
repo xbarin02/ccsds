@@ -20,7 +20,7 @@
  * Therefore, it is fine if the function returning these constants
  * has return type \c int.
  */
-enum return_t {
+enum {
 	/* 0x0000 successful completion */
 	RET_SUCCESS                   = 0x0000, /**< success */
 	/* 0x1xxx input/output errors */
