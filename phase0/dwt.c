@@ -33,20 +33,35 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-	D[0] = d(0) - round_div_pow2(9*(c(0) + c(1)) - 1*(c(1) + c(2)), 4);
+	D[0] = d(0) - round_div_pow2(
+		-1*c(1) +9*c(0) +9*c(1) -1*c(2),
+		4
+	);
 
 	for (n = 1; n <= N-3; ++n) {
-		D[n] = d(n) - round_div_pow2(9*(c(n) + c(n+1)) - 1*(c(n-1) + c(n+2)), 4);
+		D[n] = d(n) - round_div_pow2(
+			-1*c(n-1) +9*c(n) +9*c(n+1) -1*c(n+2),
+			4
+		);
 	}
 
-	D[N-2] = d(N-2) - round_div_pow2(9*(c(N-2) + c(N-1)) - 1*(c(N-3) + c(N-1)), 4);
+	D[N-2] = d(N-2) - round_div_pow2(
+		-1*c(N-3) +9*c(N-2) +9*c(N-1) -1*c(N-1),
+		4
+	);
 
-	D[N-1] = d(N-1) - round_div_pow2(9*c(N-1) - 1*c(N-2), 3);
+	D[N-1] = d(N-1) - round_div_pow2(
+		-1*c(N-2) +9*c(N-1),
+		3
+	);
 
 	C[0] = c(0) - round_div_pow2(-D[0], 1);
 
 	for (n = 1; n <= N-1; ++n) {
-		C[n] = c(n) - round_div_pow2(-(D[n-1]+D[n]), 2);
+		C[n] = c(n) - round_div_pow2(
+			-1*D[n-1] -1*D[n],
+			2
+		);
 	}
 
 #undef c
