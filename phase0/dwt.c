@@ -33,10 +33,10 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-	D[0] = d(0) - round_div_pow2(9*(line[stride*0] + line[stride*2]) - 1*(line[stride*2] + line[stride*4]), 4);
+	D[0] = d(0) - round_div_pow2(9*(c(0) + c(1)) - 1*(c(1) + c(2)), 4);
 
 	for (n = 1; n <= N-3; ++n) {
-		D[n] = d(n) - round_div_pow2(9*(line[stride*(2*n)] + line[stride*(2*n+2)]) - 1*(line[stride*(2*n-2)] + line[stride*(2*n+4)]), 4);
+		D[n] = d(n) - round_div_pow2(9*(c(n) + c(n+1)) - 1*(c(n-1) + c(n+2)), 4);
 	}
 
 	D[N-2] = d(N-2) - round_div_pow2(9*(line[stride*(size-4)] + line[stride*(size-2)]) - 1*(line[stride*(size-6)] + line[stride*(size-2)]), 4);
