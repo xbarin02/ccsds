@@ -517,36 +517,36 @@ int dwtint_decode(struct frame_t *frame)
 
 #ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 2; j >= 0; --j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
+
+		size_t stride_y = width, stride_x = 1;
 
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwtint_decode_line(data + x, height_j, width);
+			dwtint_decode_line(data + x*stride_x, height_j, stride_y);
 		}
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwtint_decode_line(data + y*width, width_j, 1);
+			dwtint_decode_line(data + y*stride_y, width_j, stride_x);
 		}
 	}
 #else
 	for (j = 2; j >= 0; --j) {
-		size_t width_j = width>>j, height_j = height>>j;
+		size_t height_j = height>>j, width_j = width>>j;
 
-		size_t stride_j = 1U << j;
+		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
 		/* for each column */
 		for (x = 0; x < width_j; ++x) {
 			/* invoke one-dimensional transform */
-			dwtint_decode_line(
-				data + x*stride_j, height_j, width*stride_j);
+			dwtint_decode_line(data + x*stride_x, height_j, stride_y);
 		}
 		/* for each row */
 		for (y = 0; y < height_j; ++y) {
 			/* invoke one-dimensional transform */
-			dwtint_decode_line(
-				data + y*width*stride_j, width_j, stride_j);
+			dwtint_decode_line(data + y*stride_y, width_j, stride_x);
 		}
 	}
 #endif
