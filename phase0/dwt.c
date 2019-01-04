@@ -347,39 +347,24 @@ int dwtint_encode(struct frame_t *frame)
 
 	/* (2.3) apply Subband Weights */
 
-#ifndef DWT_LAYOUT_INTERLEAVED
 	for (j = 1; j < 4; ++j) {
 		size_t height_j = height>>j, width_j = width>>j;
 
+#ifndef DWT_LAYOUT_INTERLEAVED
 		size_t stride_y = width, stride_x = 1;
 
 		int *band_ll = data +        0*stride_y +       0; /* LL (0,0) */
 		int *band_hl = data +        0*stride_y + width_j; /* HL (width_j, 0) */
 		int *band_lh = data + height_j*stride_y +       0; /* LH (0, height_j) */
 		int *band_hh = data + height_j*stride_y + width_j; /* HH (width_j, height_j) */
-
-		for (y = 0; y < height_j; ++y) {
-			dwtint_weight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
-			dwtint_weight_line(band_lh + y*stride_y, width_j, stride_x, j); /* LH */
-			dwtint_weight_line(band_hh + y*stride_y, width_j, stride_x, j-1); /* HH */
-		}
-
-		if (j == 3) {
-			for (y = 0; y < height_j; ++y) {
-				dwtint_weight_line(band_ll + y*stride_y, width_j, stride_x, j); /* LL */
-			}
-		}
-	}
 #else
-	for (j = 1; j < 4; ++j) {
-		size_t height_j = height>>j, width_j = width>>j;
-
 		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
 
 		int *band_ll = data +          0 +          0;
 		int *band_hl = data +          0 + stride_x/2;
 		int *band_lh = data + stride_y/2 +          0;
 		int *band_hh = data + stride_y/2 + stride_x/2;
+#endif
 
 		for (y = 0; y < height_j; ++y) {
 			dwtint_weight_line(band_hl + y*stride_y, width_j, stride_x, j); /* HL */
@@ -393,7 +378,6 @@ int dwtint_encode(struct frame_t *frame)
 			}
 		}
 	}
-#endif
 
 	return RET_SUCCESS;
 }
