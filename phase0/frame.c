@@ -663,6 +663,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 
 			if ( (pixA < 0 && pixB > INT_MAX + pixA)
 			  || (pixA > 0 && pixB < INT_MIN + pixA) ) {
+				dprint (("[ERROR] error overflow\n"));
 				return RET_FAILURE_OVERFLOW_ERROR;
 			}
 
@@ -671,6 +672,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 
 			if ( (e > 0 && e > INT_MAX / e)
 			  || (e < 0 && e < INT_MAX / e) ) {
+				dprint (("[ERROR] squared error overflow (error was %i)\n", e));
 				return RET_FAILURE_OVERFLOW_ERROR;
 			}
 
