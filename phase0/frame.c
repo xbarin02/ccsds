@@ -396,6 +396,10 @@ int frame_load_pgm(struct frame *frame, const char *path)
 			return RET_FAILURE_FILE_IO;
 	}
 
+	assert( frame );
+
+	dprint (("[DEBUG] frame %lu %lu %lu\n", (unsigned long) frame->width, (unsigned long) frame->height, (unsigned long) frame->bpp));
+
 	/* return */
 	return RET_SUCCESS;
 }

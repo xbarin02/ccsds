@@ -85,8 +85,6 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stderr, "[DEBUG] frame %lu %lu %lu\n", (unsigned long) frame.width, (unsigned long) frame.height, (unsigned long) frame.bpp);
-
 	if ( frame.width > (1<<20) || frame.width < 17 ) {
 		fprintf(stderr, "[ERROR] unsupported image width\n");
 		return EXIT_FAILURE;
