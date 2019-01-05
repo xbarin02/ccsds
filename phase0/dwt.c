@@ -61,8 +61,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
-	int *line_;
-	int *D, *C;
+	void *line_;
 	size_t n, N;
 
 	assert( is_even(size) );
@@ -75,19 +74,19 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	C = line_;
-	D = line_ + N;
-
-	/* convolution */
-
 	assert( line );
 
+#if 1
+	/* convolution */
+
+#	define c(n) ((int *)line_)[2*(n)+0]
+#	define d(n) ((int *)line_)[2*(n)+1]
 #	define x(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? line[stride*-(m)] : \
 		( (m) > (size-1) ? line[stride*(2*(size-1)-(m))] : \
 		line[stride*(m)] ) )
 
 	for (n = 0; n < N; ++n) {
-		C[n] = (int) round_ (
+		c(n) = (int) round_ (
 			+0.037828455507 * x(2*n-4)
 			-0.023849465020 * x(2*n-3)
 			-0.110624404418 * x(2*n-2)
@@ -99,7 +98,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 			+0.037828455507 * x(2*n+4)
 		);
 
-		D[n] = (int) round_ (
+		d(n) = (int) round_ (
 			-0.064538882629 * x(2*n+1-3)
 			+0.040689417609 * x(2*n+1-2)
 			+0.418092273222 * x(2*n+1-1)
@@ -110,13 +109,65 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 		);
 	}
 
-#	undef x
-
 	/* keep interleaved */
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = C[n];
-		line[stride*(2*n+1)] = D[n];
+		line[stride*(2*n+0)] = c(n);
+		line[stride*(2*n+1)] = d(n);
 	}
+
+#	undef c
+#	undef d
+#	undef x
+#else
+	/* lifting */
+#	define alpha -1.586134342019f
+#	define beta  -0.052980118576f
+#	define gamma +0.882911075493f
+#	define delta +0.443506852049f
+#	define zeta  +1.149604398859f
+
+#	define c(n) ((float *)line_)[1*(2*(n)+0)]
+#	define d(n) ((float *)line_)[1*(2*(n)+1)]
+
+	for (n = 0; n < N; ++n) {
+		c(n) = (float) line[stride*(2*n+0)];
+		d(n) = (float) line[stride*(2*n+1)];
+	}
+
+	/* alpha: predict D from C */
+	for (n = 0; n < N-1; ++n) {
+		d(n) += alpha * (c(n) + c(n+1));
+	}
+		d(N-1) += alpha * (c(N-1) + c(N-2));
+	/* beta: update C from D */
+	for (n = 1; n < N; ++n) {
+		c(n) += beta  * (d(n) + d(n-1));
+	}
+		c(0) += beta  * (d(0) + d(1));
+	/* gamma: predict D from C */
+	for (n = 0; n < N-1; ++n) {
+		d(n) += gamma * (c(n) + c(n+1));
+	}
+		d(N-1) += gamma * (c(N-1) + c(N-2));
+	/* delta: update C from D */
+	for (n = 1; n < N; ++n) {
+		c(n) += delta * (d(n) + d(n-1));
+	}
+		c(0) += delta * (d(0) + d(1));
+	/* zeta: scaling */
+	for (n = 0; n < N; ++n) {
+		c(n) *= zeta;
+		d(n) /= zeta;
+	}
+
+	for (n = 0; n < N; ++n) {
+		line[stride*(2*n+0)] = +round_( c(n) );
+		line[stride*(2*n+1)] = -round_( d(n) );
+	}
+
+#	undef c
+#	undef d
+#endif
 
 	free(line_);
 
