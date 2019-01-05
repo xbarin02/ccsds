@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "utils.h"
 #include "frame.h"
 #include "common.h"
 #include "dwt.h"
@@ -80,6 +81,8 @@ int main(int argc, char *argv[])
 
 	/** (1) load input image */
 
+	dprint (("[DEBUG] loading...\n"));
+
 	if ( frame_load_pgm(&frame, argv[1]) ) {
 		fprintf(stderr, "[ERROR] unable to load image\n");
 		return EXIT_FAILURE;
@@ -105,7 +108,7 @@ int main(int argc, char *argv[])
 	parameters.DWTtype = 1;
 	parameters.S = 16;
 
-	fprintf(stderr, "[DEBUG] transform...\n");
+	dprint (("[DEBUG] transform...\n"));
 
 	/** (2) forward DWT */
 	if (dwt_encode(&frame, &parameters)) {
@@ -113,7 +116,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stderr, "[DEBUG] transform done\n");
+	dprint (("[DEBUG] dump...\n"));
 
 	frame_dump_chunked_as_semiplanar(&frame, "dwt3.pgm", 8);
 
@@ -121,6 +124,9 @@ int main(int argc, char *argv[])
 #if 0
 	bpe_encode(&frame, &parameters);
 #endif
+
+	dprint (("[DEBUG] inverse transform...\n"));
+
 	/** (2) inverse DWT */
 	if (dwt_decode(&frame, &parameters)) {
 		fprintf(stderr, "[ERROR] inverse transform failed\n");

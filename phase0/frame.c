@@ -398,7 +398,7 @@ int frame_load_pgm(struct frame *frame, const char *path)
 
 	assert( frame );
 
-	dprint (("[DEBUG] frame %lu %lu %lu\n", (unsigned long) frame->width, (unsigned long) frame->height, (unsigned long) frame->bpp));
+	dprint (("[INFO] frame %lu %lu %lu\n", (unsigned long) frame->width, (unsigned long) frame->height, (unsigned long) frame->bpp));
 
 	/* return */
 	return RET_SUCCESS;
