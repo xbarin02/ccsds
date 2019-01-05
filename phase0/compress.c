@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	parameters.DWTtype = 1;
+	parameters.DWTtype = 0;
 	parameters.S = 16;
 
 	dprint (("[DEBUG] transform...\n"));
@@ -141,6 +141,8 @@ int main(int argc, char *argv[])
 	}
 
 	/** (1) save output image */
+
+	dprint (("[DEBUG] saving...\n"));
 
 	if ( frame_save_pgm(&frame, "output.pgm") ) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
