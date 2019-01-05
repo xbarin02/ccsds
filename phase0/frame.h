@@ -86,6 +86,14 @@ int frame_convert_chunked_to_semiplanar(struct frame *frame);
  * convert the layout into the semiplanar layout first. Only then the
  * transform is meaningful for human observers. The Open122 library
  * internally uses the chunked layout.
+ *
+ * The one-dimensional discrete wavelet transform consists of two subbands --
+ * the low-pass (L) and high-pass (H) band. Since the chunked layout keeps
+ * the coefficients interleaved in memory, there are two ways to do this.
+ * The Open122 library uses the following convention. The H coefficients are
+ * located at odd indices and L coefficients at even indices. In the CCSDS
+ * standard, the low-pass band is referred to as the C (coarse) and high-pass
+ * band to as D (detail).
  */
 
 /**

@@ -208,23 +208,38 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return (numerator + (1 << (log2_denominator - 1)) ) >> log2_denominator;
 }
 
+/**
+ * \brief Is the number \p n even predicate
+ */
 static int is_even(size_t n)
 {
 	/* size_t is unsigned integer type */
 	return !(n & 1);
 }
 
+/**
+ * \brief Is the number \p n multiple of 8 predicate
+ */
 static int is_multiple8(size_t n)
 {
 	return !(n & 7);
 }
 
+/**
+ * \brief Debugging \c printf
+ *
+ * If the macro \c NDEBUG is defined, this macro generates no code, and hence
+ * does nothing at all.
+ */
 #ifdef NDEBUG
 #	define dprint(arg)
 #else
 #	define dprint(arg) eprintf arg
 #endif
 
+/**
+ * \brief Formatted output, write output to \c stderr
+ */
 static int eprintf(const char *format, ...)
 {
 	va_list ap;
