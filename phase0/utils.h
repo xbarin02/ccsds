@@ -206,4 +206,9 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return (numerator + (1 << (log2_denominator - 1)) ) >> log2_denominator;
 }
 
+static int is_even(size_t n)
+{
+	return !(n & 1);
+}
+
 #endif /* UTILS_H_ */

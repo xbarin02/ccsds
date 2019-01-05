@@ -10,7 +10,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 {
 	size_t n, N;
 
-	assert( (size&1) == 0 );
+	assert( is_even(size) );
 
 	N = size/2;
 
@@ -65,7 +65,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	int *D, *C;
 	size_t n, N;
 
-	assert( (size&1) == 0 );
+	assert( is_even(size) );
 
 	N = size/2;
 
@@ -127,7 +127,7 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 {
 	size_t n, N;
 
-	assert( (size&1) == 0 );
+	assert( is_even(size) );
 
 	N = size/2;
 
@@ -181,7 +181,7 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 	int *D, *C;
 	size_t n, N;
 
-	assert( (size&1) == 0 );
+	assert( is_even(size) );
 
 	N = size/2;
 
