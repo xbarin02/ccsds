@@ -8,6 +8,8 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /* FIXME */
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -215,6 +217,24 @@ static int is_even(size_t n)
 static int is_multiple8(size_t n)
 {
 	return !(n & 7);
+}
+
+#ifdef NDEBUG
+#	define dprint(arg)
+#else
+#	define dprint(arg) eprintf arg
+#endif
+
+static int eprintf(const char *format, ...)
+{
+	va_list ap;
+	int n;
+
+	va_start(ap, format);
+	n = vfprintf(stderr, format, ap);
+	va_end(ap);
+
+	return n;
 }
 
 #endif /* UTILS_H_ */

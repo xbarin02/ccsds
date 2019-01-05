@@ -109,7 +109,7 @@ int frame_save_pgm(const struct frame *frame, const char *path)
 		stream = fopen(path, "w");
 
 	if (NULL == stream) {
-		fprintf(stderr, "[ERROR] cannot open output file\n");
+		dprint (("[ERROR] cannot open output file\n"));
 		return RET_FAILURE_FILE_OPEN;
 	}
 
@@ -167,12 +167,12 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 	/* (1.2) read header */
 
 	if (fscanf(stream, "%c%c ", magic, magic+1) != 2) {
-		fprintf(stderr, "[ERROR] cannot read a magic number\n");
+		dprint (("[ERROR] cannot read a magic number\n"));
 		return RET_FAILURE_FILE_IO;
 	}
 
 	if (magic[0] != 'P') {
-		fprintf(stderr, "[ERROR] invalid magic number\n");
+		dprint (("[ERROR] invalid magic number\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
@@ -181,7 +181,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 			/* P5 is supported */
 			break;
 		default:
-			fprintf(stderr, "[ERROR] invalid magic number\n");
+			dprint (("[ERROR] invalid magic number\n"));
 			return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
@@ -191,7 +191,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 
 	/* C89 does not support 'z' length modifier */
 	if (fscanf(stream, " %lu ", &width_l) != 1) {
-		fprintf(stderr, "[ERROR] cannot read a width\n");
+		dprint (("[ERROR] cannot read a width\n"));
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -210,7 +210,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 
 	/* C89 does not support 'z' length modifier */
 	if (fscanf(stream, " %lu ", &height_l) != 1) {
-		fprintf(stderr, "[ERROR] cannot read a height\n");
+		dprint (("[ERROR] cannot read a height\n"));
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -225,14 +225,14 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 	}
 
 	if (fscanf(stream, " %lu", &maxval) != 1) {
-		fprintf(stderr, "[ERROR] cannot read a maximum gray value\n");
+		dprint (("[ERROR] cannot read a maximum gray value\n"));
 		return RET_FAILURE_FILE_IO;
 	}
 
 	bpp = convert_maxval_to_bpp(maxval);
 
 	if (bpp > 16) {
-		fprintf(stderr, "[ERROR] unsupported pixel depth\n");
+		dprint (("[ERROR] unsupported pixel depth\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
@@ -242,7 +242,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 
 	/* consume a single whitespace character */
 	if ( !isspace(fgetc(stream)) ) {
-		fprintf(stderr, "[ERROR] unexpected input\n");
+		dprint (("[ERROR] unexpected input\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
@@ -309,7 +309,7 @@ int frame_read_pgm_data(struct frame *frame, FILE *stream)
 	for (y = 0; y < height_; ++y) {
 		/* read line */
 		if ( fread(line, depth_, width_, stream) < width_ ) {
-			fprintf(stderr, "[ERROR] end-of-file or error while reading a row\n");
+			dprint (("[ERROR] end-of-file or error while reading a row\n"));
 			return RET_FAILURE_FILE_IO;
 		}
 		/* copy pixels from line into framebuffer */
@@ -365,7 +365,7 @@ int frame_load_pgm(struct frame *frame, const char *path)
 		stream = fopen(path, "r");
 
 	if (NULL == stream) {
-		fprintf(stderr, "[ERROR] fopen fails\n");
+		dprint (("[ERROR] unable to open input file\n"));
 		return RET_FAILURE_FILE_OPEN;
 	}
 
@@ -636,7 +636,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	if ( frameA->width != frameB->width
 	  || frameA->height != frameB->height
 	  || frameA->bpp != frameB->bpp ) {
-		fprintf(stderr, "[DEBUG] frame dimensions must be identical\n");
+		dprint (("[ERROR] frame dimensions must be identical\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
@@ -679,7 +679,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	mse /= (double)height;
 	mse /= (double)width;
 
-	fprintf(stderr, "[DEBUG] mse = %f\n", mse);
+	dprint (("[INFO] mse = %f\n", mse));
 
 	/*
 	 * The following code computes the PSNR which seems to be a bit
@@ -691,7 +691,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 
 	psnr = 10. * log10( (double)maxval * (double)maxval / mse );
 
-	fprintf(stderr, "[DEBUG] psnr = %f dB\n", psnr);
+	dprint (("[INFO] psnr = %f dB\n", psnr));
 #endif
 	return RET_SUCCESS;
 }
