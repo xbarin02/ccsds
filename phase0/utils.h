@@ -208,7 +208,13 @@ static int round_div_pow2(int numerator, int log2_denominator)
 
 static int is_even(size_t n)
 {
+	/* size_t is unsigned integer type */
 	return !(n & 1);
+}
+
+static int is_multiple8(size_t n)
+{
+	return !(n & 7);
 }
 
 #endif /* UTILS_H_ */

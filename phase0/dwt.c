@@ -369,8 +369,7 @@ int dwtint_encode(struct frame *frame)
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
 
-	/* size_t is unsigned integer type */
-	assert( 0 == (width & 7) && 0 == (height & 7) );
+	assert( is_multiple8(width) && is_multiple8(height) );
 
 	data = frame->data;
 
@@ -425,8 +424,7 @@ int dwtfloat_encode(struct frame *frame)
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
 
-	/* size_t is unsigned integer type */
-	assert( 0 == (width & 7) && 0 == (height & 7) );
+	assert( is_multiple8(width) && is_multiple8(height) );
 
 	data = frame->data;
 
@@ -459,8 +457,7 @@ int dwtint_decode(struct frame *frame)
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
 
-	/* size_t is unsigned integer type */
-	assert( 0 == (width & 7) && 0 == (height & 7) );
+	assert( is_multiple8(width) && is_multiple8(height) );
 
 	data = frame->data;
 
@@ -512,8 +509,7 @@ int dwtfloat_decode(struct frame *frame)
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
 
-	/* size_t is unsigned integer type */
-	assert( 0 == (width & 7) && 0 == (height & 7) );
+	assert( is_multiple8(width) && is_multiple8(height) );
 
 	data = frame->data;
 
