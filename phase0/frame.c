@@ -670,14 +670,8 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 			/* error */
 			e = pixB - pixA;
 
-			if ( (e > 0 && e > INT_MAX / e)
-			  || (e < 0 && e < INT_MAX / e) ) {
-				dprint (("[ERROR] squared error overflow (error was %i)\n", e));
-				return RET_FAILURE_OVERFLOW_ERROR;
-			}
-
 			/* add squared error */
-			mse += (unsigned)(e*e);
+			mse += (double)e * (double)e;
 		}
 	}
 
