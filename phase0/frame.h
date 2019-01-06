@@ -115,4 +115,9 @@ int frame_dump_chunked_as_semiplanar(const struct frame *frame, const char *path
  */
 int frame_dump_mse(const struct frame *frameA, const struct frame *frameB);
 
+/**
+ * \brief Subtract two frames
+ */
+int frame_diff(struct frame *frame, const struct frame *frameA, const struct frame *frameB);
+
 #endif /* FRAME_H_ */

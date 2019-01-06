@@ -627,6 +627,20 @@ int frame_dump_chunked_as_semiplanar(const struct frame *frame, const char *path
 	return RET_SUCCESS;
 }
 
+static int frame_cmp(const struct frame *frameA, const struct frame *frameB)
+{
+	assert( frameA );
+	assert( frameB );
+
+	if ( frameA->width != frameB->width
+	  || frameA->height != frameB->height
+	  || frameA->bpp != frameB->bpp ) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 {
 	size_t height, width;
@@ -637,9 +651,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	assert( frameA );
 	assert( frameB );
 
-	if ( frameA->width != frameB->width
-	  || frameA->height != frameB->height
-	  || frameA->bpp != frameB->bpp ) {
+	if ( frame_cmp(frameA, frameB) ) {
 		dprint (("[ERROR] frame dimensions must be identical\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
@@ -693,5 +705,53 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 
 	dprint (("[INFO] psnr = %f dB\n", psnr));
 #endif
+	return RET_SUCCESS;
+}
+
+int frame_diff(struct frame *frame, const struct frame *frameA, const struct frame *frameB)
+{
+	size_t height, width;
+	size_t y, x;
+	int *data, *dataA, *dataB;
+
+	if ( frame_cmp(frame, frameA) || frame_cmp(frame, frameB) ) {
+		dprint (("[ERROR] frame dimensions must be identical\n"));
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	assert( frame );
+	assert( frameA );
+	assert( frameB );
+
+	height = frame->height;
+	width = frame->width;
+
+	data  = frame->data;
+	dataA = frameA->data;
+	dataB = frameB->data;
+
+	assert( data );
+	assert( dataA );
+	assert( dataB );
+
+	for (y = 0; y < height; ++y) {
+		for (x = 0; x < width; ++x) {
+			int pixA = dataA[y*width + x];
+			int pixB = dataB[y*width + x];
+			int e;
+
+			if ( (pixA < 0 && pixB > INT_MAX + pixA)
+			  || (pixA > 0 && pixB < INT_MIN + pixA) ) {
+				dprint (("[ERROR] error overflow\n"));
+				return RET_FAILURE_OVERFLOW_ERROR;
+			}
+
+			/* error */
+			e = pixB - pixA;
+
+			data[y*width + x] = abs_(e) * (1 << 8);
+		}
+	}
+
 	return RET_SUCCESS;
 }
