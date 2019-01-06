@@ -76,7 +76,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-#if 1
+#if 0
 	/* convolution */
 
 #	define c(n) ((int *)line_)[2*(n)+0]
@@ -120,14 +120,14 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 #	undef x
 #else
 	/* lifting */
-#	define alpha -1.586134342019f
-#	define beta  -0.052980118576f
-#	define gamma +0.882911075493f
-#	define delta +0.443506852049f
-#	define zeta  +1.149604398859f
+#	define alpha -1.58613434201888022056773162788538f
+#	define beta  -0.05298011857604780601431779000503f
+#	define gamma +0.88291107549260031282806293551600f
+#	define delta +0.44350685204939829327158029348930f
+#	define zeta  +1.14960439885900000000000000000000f
 
-#	define c(n) ((float *)line_)[1*(2*(n)+0)]
-#	define d(n) ((float *)line_)[1*(2*(n)+1)]
+#	define c(n) ((float *)line_)[2*(n)+0]
+#	define d(n) ((float *)line_)[2*(n)+1]
 
 	for (n = 0; n < N; ++n) {
 		c(n) = (float) line[stride*(2*n+0)];
@@ -136,33 +136,33 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	/* alpha: predict D from C */
 	for (n = 0; n < N-1; ++n) {
-		d(n) += alpha * (c(n) + c(n+1));
+		d(n)   += alpha * (c(n) + c(n+1));
 	}
-		d(N-1) += alpha * (c(N-1) + c(N-2));
+		d(N-1) += alpha * (c(N-1) + c(N-1));
 	/* beta: update C from D */
 	for (n = 1; n < N; ++n) {
 		c(n) += beta  * (d(n) + d(n-1));
 	}
-		c(0) += beta  * (d(0) + d(1));
+		c(0) += beta  * (d(0) + d(0));
 	/* gamma: predict D from C */
 	for (n = 0; n < N-1; ++n) {
-		d(n) += gamma * (c(n) + c(n+1));
+		d(n)   += gamma * (c(n) + c(n+1));
 	}
-		d(N-1) += gamma * (c(N-1) + c(N-2));
+		d(N-1) += gamma  * (c(N-1) + c(N-1));
 	/* delta: update C from D */
 	for (n = 1; n < N; ++n) {
 		c(n) += delta * (d(n) + d(n-1));
 	}
-		c(0) += delta * (d(0) + d(1));
+		c(0) += delta * (d(0) + d(0));
 	/* zeta: scaling */
 	for (n = 0; n < N; ++n) {
-		c(n) *= zeta;
-		d(n) /= zeta;
+		c(n) = c(n) * (  +zeta);
+		d(n) = d(n) * (1/-zeta);
 	}
 
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = +round_( c(n) );
-		line[stride*(2*n+1)] = -round_( d(n) );
+		line[stride*(2*n+0)] = round_( (double) c(n) );
+		line[stride*(2*n+1)] = round_( (double) d(n) );
 	}
 
 #	undef c
