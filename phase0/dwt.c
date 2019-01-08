@@ -93,8 +93,145 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 #define delta +0.44350685204939829327158029348930f
 #define zeta  +1.14960439885900000000000000000000f
 
+static void vert_2x1_switch(
+	float *t0,
+	float *t1,
+	float *buff,
+	int *lever
+)
+{
+	const float w0 = +delta;
+	const float w1 = +gamma;
+	const float w2 = +beta;
+	const float w3 = +alpha;
+
+	float l0, l1, l2, l3;
+	float c0, c1, c2, c3;
+	float r0, r1, r2, r3;
+	float x0, x1;
+	float y0, y1;
+
+	l0 = buff[0];
+	l1 = buff[1];
+	l2 = buff[2];
+	l3 = buff[3];
+
+	x0 = *t0;
+	x1 = *t1;
+
+	c0 = l1;
+	c1 = l2;
+	c2 = l3;
+	c3 = x0;
+
+	r3 = x1;
+	r2 = c3 + w3 * ( (lever[3] < 0 ? r3 : l3) + (lever[3] > 0 ? l3 : r3) );
+	r1 = c2 + w2 * ( (lever[2] < 0 ? r2 : l2) + (lever[2] > 0 ? l2 : r2) );
+	r0 = c1 + w1 * ( (lever[1] < 0 ? r1 : l1) + (lever[1] > 0 ? l1 : r1) );
+	y0 = c0 + w0 * ( (lever[0] < 0 ? r0 : l0) + (lever[0] > 0 ? l0 : r0) );
+	y1 = r0;
+
+	l0 = r0;
+	l1 = r1;
+	l2 = r2;
+	l3 = r3;
+
+	*t0 = y0;
+	*t1 = y1;
+
+	buff[0] = l0;
+	buff[1] = l1;
+	buff[2] = l2;
+	buff[3] = l3;
+}
+
+int dwtfloat_encode_line_range(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
+{
+	size_t m, N;
+	float t[2];
+
+	assert( is_even(size) );
+
+	N = size/2;
+
+#	define c(n) ( line[stride*(2*(n)+0)] )
+#	define d(n) ( line[stride*(2*(n)+1)] )
+
+	m = n0 + 2;
+
+	if (n0 == 0) {
+		m = 0;
+	}
+
+	/* prologue */
+	for (; m < 1; m++) {
+		int lever[4] = { 0, 0, 0, 0 };
+
+		t[0] = (float) 0;
+		t[1] = (float) c(m);
+		vert_2x1_switch(t+0, t+1, buff, lever);
+	}
+	for (; m < 2; m++) {
+		int lever[4] = { 0, 0, -1, 0 };
+
+		t[0] = (float) d(m-1);
+		t[1] = (float) c(m);
+		vert_2x1_switch(t+0, t+1, buff, lever);
+	}
+	for (; m < 3; m++) {
+		int lever[4] = { -1, 0, 0, 0 };
+
+		t[0] = (float) d(m-1);
+		t[1] = (float) c(m);
+		vert_2x1_switch(t+0, t+1, buff, lever);
+		c(m-2) = roundf_( t[0] * (  +zeta) );
+		d(m-2) = roundf_( t[1] * (1/-zeta) );
+	}
+	/* regular */
+	for (; m < n1 + 2 && m < N; m++) {
+		int lever[4] = { 0, 0, 0, 0 };
+
+		t[0] = (float) d(m-1);
+		t[1] = (float) c(m);
+		vert_2x1_switch(t+0, t+1, buff, lever);
+		c(m-2) = roundf_( t[0] * (  +zeta) );
+		d(m-2) = roundf_( t[1] * (1/-zeta) );
+	}
+	/* epilogue */
+	for (; m < n1 + 2 && m == N; m++) {
+		int lever[4] = { 0, 0, 0, +1 };
+
+		t[0] = (float) d(m-1);
+		t[1] = (float) 0;
+		vert_2x1_switch(t+0, t+1, buff, lever);
+		c(m-2) = roundf_( t[0] * (  +zeta) );
+		d(m-2) = roundf_( t[1] * (1/-zeta) );
+	}
+	for (; m < n1 + 2 && m == N+1; m++) {
+		int lever[4] = { 0, +1, 0, 0 };
+
+		t[0] = (float) 0;
+		t[1] = (float) 0;
+		vert_2x1_switch(t+0, t+1, buff, lever);
+		c(m-2) = roundf_( t[0] * (  +zeta) );
+		d(m-2) = roundf_( t[1] * (1/-zeta) );
+	}
+
+#undef c
+#undef d
+
+	return RET_SUCCESS;
+}
+
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
+#if 1
+	float buff[4] = { .0f, .0f, .0f, .0f };
+
+	assert( is_even(size) );
+
+	return dwtfloat_encode_line_range(line, size, stride, buff, 0, size/2);
+#else
 	void *line_;
 	size_t n, N;
 
@@ -161,6 +298,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	free(line_);
 
 	return RET_SUCCESS;
+#endif
 }
 
 int dwtint_decode_line(int *line, size_t size, size_t stride)
