@@ -84,6 +84,7 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 				break;
 			}
 			default:
+				dprint (("[ERROR] unhandled bit depth\n"));
 				return RET_FAILURE_LOGIC_ERROR;
 		}
 		/* write line */
@@ -472,6 +473,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 					break;
 				}
 				default:
+					dprint (("[ERROR] unhandled bit depth\n"));
 					return RET_FAILURE_LOGIC_ERROR;
 			}
 		}
@@ -752,6 +754,39 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 			data[y*width + x] = abs_(e) * (1 << 8);
 		}
 	}
+
+	return RET_SUCCESS;
+}
+
+int frame_scale_pixels(struct frame *frame, size_t bpp)
+{
+	size_t height, width;
+	size_t y, x;
+	size_t old_bpp;
+	int *data;
+
+	assert( frame );
+
+	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
+
+	old_bpp = frame->bpp;
+
+	data = frame->data;
+
+	assert( data );
+
+	if (old_bpp < bpp) {
+		for (y = 0; y < height; ++y) {
+			for (x = 0; x < width; ++x) {
+				int px = data[y*width + x];
+				data[y*width + x] <<= bpp - old_bpp;
+				data[y*width + x] |= px;
+			}
+		}
+	}
+
+	frame->bpp = bpp;
 
 	return RET_SUCCESS;
 }

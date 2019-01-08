@@ -120,4 +120,9 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB);
  */
 int frame_diff(struct frame *frame, const struct frame *frameA, const struct frame *frameB);
 
+/**
+ * \brief Change depth of the image
+ */
+int frame_scale_pixels(struct frame *frame, size_t bpp);
+
 #endif /* FRAME_H_ */
