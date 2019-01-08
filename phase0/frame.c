@@ -725,8 +725,8 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 	assert( frameA );
 	assert( frameB );
 
-	height = frame->height;
-	width = frame->width;
+	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	data  = frame->data;
 	dataA = frameA->data;
@@ -751,7 +751,7 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 			/* error */
 			e = pixB - pixA;
 
-			data[y*width + x] = abs_(e) * (1 << 8);
+			data[y*width + x] = abs_(e) * (1 << 5);
 		}
 	}
 
