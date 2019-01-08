@@ -93,12 +93,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 #define delta +0.44350685204939829327158029348930f
 #define zeta  +1.14960439885900000000000000000000f
 
-static void dwtfloat_encode_core(
-	float *t0,
-	float *t1,
-	float *buff,
-	int *lever
-)
+static void dwtfloat_encode_core(float *data, float *buff, int *lever)
 {
 	const float w0 = +delta;
 	const float w1 = +gamma;
@@ -116,8 +111,8 @@ static void dwtfloat_encode_core(
 	l2 = buff[2];
 	l3 = buff[3];
 
-	x0 = *t0;
-	x1 = *t1;
+	x0 = data[0];
+	x1 = data[1];
 
 	c0 = l1;
 	c1 = l2;
@@ -136,8 +131,8 @@ static void dwtfloat_encode_core(
 	l2 = r2;
 	l3 = r3;
 
-	*t0 = y0;
-	*t1 = y1;
+	data[0] = y0;
+	data[1] = y1;
 
 	buff[0] = l0;
 	buff[1] = l1;
@@ -148,14 +143,14 @@ static void dwtfloat_encode_core(
 int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
 {
 	size_t m, N;
-	float t[2];
+	float data[2];
 
 	assert( is_even(size) );
 
-	N = size/2;
+	N = size / 2;
 
-#	define c(n) ( line[stride*(2*(n)+0)] )
-#	define d(n) ( line[stride*(2*(n)+1)] )
+#	define c(n) line[stride*(2*(n)+0)]
+#	define d(n) line[stride*(2*(n)+1)]
 
 	m = n0 + 2;
 
@@ -167,54 +162,54 @@ int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *b
 	for (; m < 1; m++) {
 		int lever[4] = { 0, 0, 0, 0 };
 
-		t[0] = (float) 0;
-		t[1] = (float) c(m);
-		dwtfloat_encode_core(t+0, t+1, buff, lever);
+		data[0] = 0.f;
+		data[1] = (float) c(m);
+		dwtfloat_encode_core(data, buff, lever);
 	}
 	for (; m < 2; m++) {
 		int lever[4] = { 0, 0, -1, 0 };
 
-		t[0] = (float) d(m-1);
-		t[1] = (float) c(m);
-		dwtfloat_encode_core(t+0, t+1, buff, lever);
+		data[0] = (float) d(m-1);
+		data[1] = (float) c(m);
+		dwtfloat_encode_core(data, buff, lever);
 	}
 	for (; m < 3; m++) {
 		int lever[4] = { -1, 0, 0, 0 };
 
-		t[0] = (float) d(m-1);
-		t[1] = (float) c(m);
-		dwtfloat_encode_core(t+0, t+1, buff, lever);
-		c(m-2) = roundf_( t[0] * (  +zeta) );
-		d(m-2) = roundf_( t[1] * (1/-zeta) );
+		data[0] = (float) d(m-1);
+		data[1] = (float) c(m);
+		dwtfloat_encode_core(data, buff, lever);
+		c(m-2) = roundf_( data[0] * (  +zeta) );
+		d(m-2) = roundf_( data[1] * (1/-zeta) );
 	}
 	/* regular */
 	for (; m < n1 + 2 && m < N; m++) {
 		int lever[4] = { 0, 0, 0, 0 };
 
-		t[0] = (float) d(m-1);
-		t[1] = (float) c(m);
-		dwtfloat_encode_core(t+0, t+1, buff, lever);
-		c(m-2) = roundf_( t[0] * (  +zeta) );
-		d(m-2) = roundf_( t[1] * (1/-zeta) );
+		data[0] = (float) d(m-1);
+		data[1] = (float) c(m);
+		dwtfloat_encode_core(data, buff, lever);
+		c(m-2) = roundf_( data[0] * (  +zeta) );
+		d(m-2) = roundf_( data[1] * (1/-zeta) );
 	}
 	/* epilogue */
 	for (; m < n1 + 2 && m == N; m++) {
 		int lever[4] = { 0, 0, 0, +1 };
 
-		t[0] = (float) d(m-1);
-		t[1] = (float) 0;
-		dwtfloat_encode_core(t+0, t+1, buff, lever);
-		c(m-2) = roundf_( t[0] * (  +zeta) );
-		d(m-2) = roundf_( t[1] * (1/-zeta) );
+		data[0] = (float) d(m-1);
+		data[1] = 0.f;
+		dwtfloat_encode_core(data, buff, lever);
+		c(m-2) = roundf_( data[0] * (  +zeta) );
+		d(m-2) = roundf_( data[1] * (1/-zeta) );
 	}
 	for (; m < n1 + 2 && m == N+1; m++) {
 		int lever[4] = { 0, +1, 0, 0 };
 
-		t[0] = (float) 0;
-		t[1] = (float) 0;
-		dwtfloat_encode_core(t+0, t+1, buff, lever);
-		c(m-2) = roundf_( t[0] * (  +zeta) );
-		d(m-2) = roundf_( t[1] * (1/-zeta) );
+		data[0] = 0.f;
+		data[1] = 0.f;
+		dwtfloat_encode_core(data, buff, lever);
+		c(m-2) = roundf_( data[0] * (  +zeta) );
+		d(m-2) = roundf_( data[1] * (1/-zeta) );
 	}
 
 #undef c
