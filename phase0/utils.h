@@ -69,7 +69,61 @@ static int floor_(double x)
  * The result of this macro is similar to casting the result of round() to \c int.
  * The round() function is not present in C89.
  */
-#define round_(x) floor_( (x) + 0.5 )
+static int round_(double x)
+{
+	int i;
+
+	/* convert round to floor */
+	x = x + .5;
+
+	/*
+	 * per C89 standard, 6.2.1.3 Floating and integral:
+	 *
+	 * When a value of floating type is convened to integral type,
+	 * the fractional part is discarded. If the value of the integral part
+	 * cannot be represented by the integral type, the behavior is
+	 * undetined.
+	 *
+	 * "... discarded", i.e., the value is truncated toward zero
+	 */
+
+	/* truncate */
+	i = (int) x;
+
+	/* convert trunc to floor */
+	return i - (int) ( (double) i > x );
+}
+
+/**
+ * \brief Round to nearest integer
+ *
+ * The result of this macro is similar to casting the result of roundf() to \c int.
+ * The roundf() function is not present in C89.
+ */
+static int roundf_(float x)
+{
+	int i;
+
+	/* convert round to floor */
+	x = x + .5f;
+
+	/*
+	 * per C89 standard, 6.2.1.3 Floating and integral:
+	 *
+	 * When a value of floating type is convened to integral type,
+	 * the fractional part is discarded. If the value of the integral part
+	 * cannot be represented by the integral type, the behavior is
+	 * undetined.
+	 *
+	 * "... discarded", i.e., the value is truncated toward zero
+	 */
+
+	/* truncate */
+	i = (int) x;
+
+	/* convert trunc to floor */
+	return i - (int) ( (float) i > x );
+}
 
 /**
  * \brief Indicates the layout of multi-byte integers

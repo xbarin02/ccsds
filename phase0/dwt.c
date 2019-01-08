@@ -190,8 +190,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	}
 
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = round_( (double) c(n) );
-		line[stride*(2*n+1)] = round_( (double) d(n) );
+		line[stride*(2*n+0)] = roundf_( c(n) );
+		line[stride*(2*n+1)] = roundf_( d(n) );
 	}
 
 #	undef c
