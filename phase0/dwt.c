@@ -87,6 +87,12 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
  * to compute the lifting scheme completelly in 32-bit floats.
  */
 
+#define alpha -1.58613434201888022056773162788538f
+#define beta  -0.05298011857604780601431779000503f
+#define gamma +0.88291107549260031282806293551600f
+#define delta +0.44350685204939829327158029348930f
+#define zeta  +1.14960439885900000000000000000000f
+
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
 	void *line_;
@@ -104,12 +110,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-	/* lifting (using float32) */
-#	define alpha -1.58613434201888022056773162788538f
-#	define beta  -0.05298011857604780601431779000503f
-#	define gamma +0.88291107549260031282806293551600f
-#	define delta +0.44350685204939829327158029348930f
-#	define zeta  +1.14960439885900000000000000000000f
+	/* lifting */
 
 #	define c(n) ((float *)line_)[2*(n)+0]
 #	define d(n) ((float *)line_)[2*(n)+1]
@@ -124,21 +125,25 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 		d(n)   += alpha * (c(n) + c(n+1));
 	}
 		d(N-1) += alpha * (c(N-1) + c(N-1));
+
 	/* beta: update C from D */
 	for (n = 1; n < N; ++n) {
 		c(n) += beta  * (d(n) + d(n-1));
 	}
 		c(0) += beta  * (d(0) + d(0));
+
 	/* gamma: predict D from C */
 	for (n = 0; n < N-1; ++n) {
 		d(n)   += gamma * (c(n) + c(n+1));
 	}
 		d(N-1) += gamma  * (c(N-1) + c(N-1));
+
 	/* delta: update C from D */
 	for (n = 1; n < N; ++n) {
 		c(n) += delta * (d(n) + d(n-1));
 	}
 		c(0) += delta * (d(0) + d(0));
+
 	/* zeta: scaling */
 	for (n = 0; n < N; ++n) {
 		c(n) = c(n) * (  +zeta);
@@ -213,61 +218,63 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 {
 	int *line_;
-	int *D, *C;
 	size_t n, N;
 
 	assert( is_even(size) );
 
 	N = size/2;
 
-	line_ = malloc( size * sizeof(int) );
+	line_ = malloc( size * sizeof(float) );
 
 	if (NULL == line_) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	C = line_;
-	D = line_ + N;
-
 	assert( line );
 
-	/* line[] is interleaved */
+	/* inverse lifting */
+
+#	define c(n) ((float *)line_)[2*(n)+0]
+#	define d(n) ((float *)line_)[2*(n)+1]
+
 	for (n = 0; n < N; ++n) {
-		C[n] = line[stride*(2*n+0)];
-		D[n] = line[stride*(2*n+1)];
+		c(n) = (float) line[stride*(2*n+0)];
+		d(n) = (float) line[stride*(2*n+1)];
 	}
 
-	/* inverse convolution */
+	/* zeta: scaling */
+	for (n = 0; n < N; ++n) {
+		c(n) = c(n) * (1/+zeta);
+		d(n) = d(n) * (  -zeta);
+	}
 
-#	define c(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? C[-(m)] : \
-		( (m) > (N-1) ? C[((N-1)-(m)+(N))] : \
-		C[(m)] ) )
-#	define d(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? D[-(m)-1] : \
-		( (m) > (N-1) ? D[(2*(N-1)-(m))] : \
-		D[(m)] ) )
+	/* delta: update C from D */
+	for (n = 1; n < N; ++n) {
+		c(n) -= delta * (d(n) + d(n-1));
+	}
+		c(0) -= delta * (d(0) + d(0));
+
+	/* gamma: predict D from C */
+	for (n = 0; n < N-1; ++n) {
+		d(n)   -= gamma * (c(n) + c(n+1));
+	}
+		d(N-1) -= gamma  * (c(N-1) + c(N-1));
+
+	/* beta: update C from D */
+	for (n = 1; n < N; ++n) {
+		c(n) -= beta  * (d(n) + d(n-1));
+	}
+		c(0) -= beta  * (d(0) + d(0));
+
+	/* alpha: predict D from C */
+	for (n = 0; n < N-1; ++n) {
+		d(n)   -= alpha * (c(n) + c(n+1));
+	}
+		d(N-1) -= alpha * (c(N-1) + c(N-1));
 
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n)] = (int) round_ (
-			-0.040689417609 * c(n-1)
-			+0.788485616406 * c(n+0)
-			-0.040689417609 * c(n+1)
-			-0.023849465020 * d(n-2)
-			+0.377402855613 * d(n-1)
-			+0.377402855613 * d(n+0)
-			-0.023849465020 * d(n+1)
-		);
-
-		line[stride*(2*n+1)] = (int) round_ (
-			-0.064538882629 * c(n-1)
-			+0.418092273222 * c(n+0)
-			+0.418092273222 * c(n+1)
-			-0.064538882629 * c(n+2)
-			-0.037828455507 * d(n-2)
-			+0.110624404418 * d(n-1)
-			-0.852698679009 * d(n+0)
-			+0.110624404418 * d(n+1)
-			-0.037828455507 * d(n+2)
-		);
+		line[stride*(2*n+0)] = roundf_( c(n) );
+		line[stride*(2*n+1)] = roundf_( d(n) );
 	}
 
 #	undef c
