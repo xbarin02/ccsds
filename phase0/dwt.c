@@ -59,6 +59,34 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
+/*
+ * The CCSDS standard states that pixel bit depth shall not exceed the limit
+ * of 28 bits for the signed pixel type (sign bit + 27 bit magnitude).
+ *
+ * To support 28 bit pixels, one would need 32 (28 + 6 due to DWT) bits for
+ * coefficients, 8 fractional bits for lifting scheme, and 23 < n <= 52 bits
+ * for lifting constants, giving a total of 40 + n > 64 bits. Thus one would
+ * need 64x64 -> 128 multiplication. Another possibility is to multiply 64-bit
+ * lifting coefficients by constants in double-precision floating-point format
+ * (single-precision format is not sufficient).
+ *
+ * The Open122 library supports 16-bit unsigned pixels.
+ *
+ * To support 16-bit input, one need 22 (16 + 6) for DWT coefficients,
+ * at least 6 fractional bits for lifting coefficients, and at least 22
+ * fractional bits for lifting constants. Thus 32x32 -> 64 multiplication
+ * should be sufficient. Another possibility is to multiply the coefficients
+ * by constants in single-precision (or double-) format. Yet another
+ * possibility is to carry out the lifting scheme completelly in floats.
+ *
+ * Note that minimum long int size per the standard is 32 bits. This is
+ * de facto standard on 32-bit machines (int and long int are 32-bit numbers).
+ * Therefore no 32x32 -> 64 multiplication is available here. For these
+ * reasons, the 32-bit integer for coefficients and 32-bit float for lifting
+ * constants seems to be quite portable solution. Another portable solution is
+ * to compute the lifting scheme completelly in 32-bit floats.
+ */
+
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
 	void *line_;
@@ -77,7 +105,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	assert( line );
 
 #if 0
-	/* convolution */
+	/* convolution (using float64) */
 
 #	define c(n) ((int *)line_)[2*(n)+0]
 #	define d(n) ((int *)line_)[2*(n)+1]
@@ -118,8 +146,9 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 #	undef c
 #	undef d
 #	undef x
-#else
-	/* lifting */
+#endif
+#if 1
+	/* lifting (using float32) */
 #	define alpha -1.58613434201888022056773162788538f
 #	define beta  -0.05298011857604780601431779000503f
 #	define gamma +0.88291107549260031282806293551600f
