@@ -96,7 +96,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	N = size/2;
 
-	line_ = malloc( size * sizeof(int) );
+	line_ = malloc( size * sizeof(float) );
 
 	if (NULL == line_) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -104,50 +104,6 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	assert( line );
 
-#if 0
-	/* convolution (using float64) */
-
-#	define c(n) ((int *)line_)[2*(n)+0]
-#	define d(n) ((int *)line_)[2*(n)+1]
-#	define x(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? line[stride*-(m)] : \
-		( (m) > (size-1) ? line[stride*(2*(size-1)-(m))] : \
-		line[stride*(m)] ) )
-
-	for (n = 0; n < N; ++n) {
-		c(n) = (int) round_ (
-			+0.037828455507 * x(2*n-4)
-			-0.023849465020 * x(2*n-3)
-			-0.110624404418 * x(2*n-2)
-			+0.377402855613 * x(2*n-1)
-			+0.852698679009 * x(2*n+0)
-			+0.377402855613 * x(2*n+1)
-			-0.110624404418 * x(2*n+2)
-			-0.023849465020 * x(2*n+3)
-			+0.037828455507 * x(2*n+4)
-		);
-
-		d(n) = (int) round_ (
-			-0.064538882629 * x(2*n+1-3)
-			+0.040689417609 * x(2*n+1-2)
-			+0.418092273222 * x(2*n+1-1)
-			-0.788485616406 * x(2*n+1+0)
-			+0.418092273222 * x(2*n+1+1)
-			+0.040689417609 * x(2*n+1+2)
-			-0.064538882629 * x(2*n+1+3)
-		);
-	}
-
-	/* keep interleaved */
-	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = c(n);
-		line[stride*(2*n+1)] = d(n);
-	}
-
-#	undef c
-#	undef d
-#	undef x
-#endif
-#if 1
 	/* lifting (using float32) */
 #	define alpha -1.58613434201888022056773162788538f
 #	define beta  -0.05298011857604780601431779000503f
@@ -196,7 +152,6 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 #	undef c
 #	undef d
-#endif
 
 	free(line_);
 
