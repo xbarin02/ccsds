@@ -10,11 +10,6 @@ int main()
 	struct frame frame;
 	struct parameters parameters;
 
-	if (argc < 2) {
-		fprintf(stderr, "[ERROR] argument expected\n");
-		return EXIT_FAILURE;
-	}
-
 	frame.width = 4096;
 	frame.height = 2048;
 	frame.bpp = 16;
