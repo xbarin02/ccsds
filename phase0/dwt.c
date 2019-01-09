@@ -87,6 +87,16 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
  * to compute the lifting scheme completelly in 32-bit floats.
  */
 
+/*
+ * Lifting constants for the CDF 9/7 wavelet
+ *
+ * The CCSDS standard defines low-pass filter coefficients for the CDF 9/7 wavelet.
+ * These cofficients were factored into the lifting scheme using the equations in
+ * Daubechies, I. & Sweldens, W. The Journal of Fourier Analysis and Applications
+ * (1998) 4: 247. DOI: 10.1007/BF02476026. Note that the paper also provides similar
+ * lifting coefficients for the CDF 9/7 wavelet, but these differ in some rounding
+ * errors.
+ */
 #define alpha -1.58613434201888022056773162788538f
 #define beta  -0.05298011857604780601431779000503f
 #define gamma +0.88291107549260031282806293551600f
@@ -140,6 +150,12 @@ static void dwtfloat_encode_core(float *data, float *buff, int *lever)
 	buff[3] = l3;
 }
 
+/*
+ * Compute a part of one-dimensional wavelet transform.
+ * The n0 and n1 define coordinates of the part to be computed (in output signal coordinate system).
+ * The n0 is the initial coordinate and n1 is the smallest coordinate behind the signal.
+ * Valid coordinates are in range [0, N) with N = size/2 (the signal length must be even).
+ */
 int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
 {
 	size_t m, N;
