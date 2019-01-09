@@ -14,7 +14,7 @@ int main()
 	frame.height = 2048;
 	frame.bpp = 16;
 
-	if (frame_alloc_data(&frame)) {
+	if (frame_create_random(&frame)) {
 		fprintf(stderr, "[ERROR] frame allocation failed\n");
 		return EXIT_FAILURE;
 	}

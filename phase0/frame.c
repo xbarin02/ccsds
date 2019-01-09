@@ -790,3 +790,36 @@ int frame_scale_pixels(struct frame *frame, size_t bpp)
 
 	return RET_SUCCESS;
 }
+
+int frame_create_random(struct frame *frame)
+{
+	size_t height, width;
+	size_t y, x;
+	int maxval;
+	int *data;
+	int err;
+
+	err = frame_alloc_data(frame);
+
+	if (err) {
+		return err;
+	}
+
+	assert( frame );
+
+	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
+
+	data = frame->data;
+
+	maxval = (int) convert_bpp_to_maxval(frame->bpp);
+
+	for (y = 0; y < height; ++y) {
+		for (x = 0; x < width; ++x) {
+			int sample = (int) (x ^ y) & maxval;
+			data[y*width + x] = sample;
+		}
+	}
+
+	return RET_SUCCESS;
+}
