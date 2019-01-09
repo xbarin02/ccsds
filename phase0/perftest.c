@@ -26,5 +26,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
+	frame_destroy(&frame);
+
 	return EXIT_SUCCESS;
 }

@@ -3,7 +3,7 @@ LDLIBS=
 
 .PHONY: all clean
 
-all: compress
+all: compress perftest
 
 compress: compress.o frame.o dwt.o
 
