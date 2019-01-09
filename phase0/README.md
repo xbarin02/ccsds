@@ -1,15 +1,14 @@
 # Open122
 
-Open122 is an open-source CCSDS 122.0 codec written in C language.
+Open122 is an open-source CCSDS 122.0 codec written in C programming language.
 The CCSDS 122.0 is a standard for lossy-to-lossless image data compression.
-The compression method targets instruments used on board of spacecrafts.
+The compression method targets instruments used on board of spacecraft.
 
 ### Prerequisites
 
-The library is written in pure C89.
-No compiler extensions nor assembly language are employed.
-It does not even rely on POSIX.
-You only need working compiler toolchain.
+The library is written in pure C89. No compiler extensions nor assembly language
+are employed. It does not even rely on POSIX. You only need working compiler
+toolchain.
 
 ### Installing
 
@@ -25,8 +24,8 @@ make
 
 ## License
 
-This project is licensed under the MIT License.
-See the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License. See the [LICENSE.md](LICENSE.md)
+file for details.
 
 ## Acknowledgments
 
