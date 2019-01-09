@@ -568,6 +568,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 {
 	size_t y, x;
 
+#if 0
 	/* for each row */
 	for (y = 0; y < height; ++y) {
 		/* invoke one-dimensional transform */
@@ -578,6 +579,33 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 		/* invoke one-dimensional transform */
 		dwtfloat_encode_line(band + x*stride_x, height, stride_y);
 	}
+#else
+	float *buff;
+
+	buff = malloc( width * 4 * sizeof(float) );
+
+	if (NULL == buff) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	/* for each row */
+	for (y = 0; y < height; ++y) {
+		/* invoke one-dimensional transform */
+		dwtfloat_encode_line(band + y*stride_y, width, stride_x);
+
+		if (is_even(y)) {
+			for (x = 0; x < width; ++x) {
+				dwtfloat_encode_line_coefficient(band + x*stride_x, height, stride_y, buff + 4*x, y);
+			}
+		}
+	}
+
+	for (x = 0; x < width; ++x) {
+		dwtfloat_encode_line_coefficient(band + x*stride_x, height, stride_y, buff+4*x, height);
+	}
+
+	free(buff);
+#endif
 
 	return RET_SUCCESS;
 }
