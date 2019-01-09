@@ -5,7 +5,7 @@
 #include "common.h"
 #include "dwt.h"
 
-int main(int argc, char *argv[])
+int main()
 {
 	struct frame frame;
 	struct parameters parameters;
@@ -15,8 +15,12 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if ( frame_load_pgm(&frame, argv[1]) ) {
-		fprintf(stderr, "[ERROR] unable to load image\n");
+	frame.width = 4096;
+	frame.height = 2048;
+	frame.bpp = 16;
+
+	if (frame_alloc_data(&frame)) {
+		fprintf(stderr, "[ERROR] frame allocation failed\n");
 		return EXIT_FAILURE;
 	}
 

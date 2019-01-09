@@ -125,4 +125,6 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
  */
 int frame_scale_pixels(struct frame *frame, size_t bpp);
 
+int frame_alloc_data(struct frame *frame);
+
 #endif /* FRAME_H_ */
