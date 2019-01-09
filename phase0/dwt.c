@@ -234,15 +234,102 @@ int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *b
 	return RET_SUCCESS;
 }
 
+/*
+ * 17x17 image => 24x24 image on input of 1st level
+ *
+ * 12x12 image on input of 2nd level
+ *
+ * 6x6 image on input of 3rd level
+ *
+ * 6 sample input signal:
+ *
+ * x(0) x(1) x(2) x(3) x(4) x(size-1)
+ * c(0) d(0) c(1) d(1) c(2) d(N-1)
+ */
+
+static void dwtfloat_encode_line_step(int *line, size_t stride, float *buff, size_t m, int state)
+{
+	float data[2];
+	int lever[4] = { 0, 0, 0, 0 };
+
+	switch (state) {
+		case 0: break;
+		case 1: lever[2] = -1; break;
+		case 2: lever[0] = -1; break;
+		case 3: break;
+		case 4: lever[3] = +1; break;
+		case 5: lever[1] = +1; break;
+	}
+
+#	define c(n) line[stride*(2*(n)+0)]
+#	define d(n) line[stride*(2*(n)+1)]
+
+	if (state > 0 && state < 5)
+		data[0] = (float) d(m-1);
+	if (state < 4)
+		data[1] = (float) c(m);
+
+	dwtfloat_encode_core(data, buff, lever);
+
+	if (state > 1) {
+		c(m-2) = roundf_( data[0] * (  +zeta) );
+		d(m-2) = roundf_( data[1] * (1/-zeta) );
+	}
+
+#	undef c
+#	undef d
+}
+
+/*
+ * consume line[s-1] and line[s], size can be unknown
+ */
+void dwtfloat_encode_line_coefficient(int *line, size_t size, size_t stride, float *buff, size_t s)
+{
+	size_t m;
+
+	assert( is_even(size) );
+
+	assert( is_even(s) );
+
+	m = s / 2;
+
+	       if (s == 0) {
+		dwtfloat_encode_line_step(line, stride, buff, m, 0);
+	} else if (s == 2) {
+		dwtfloat_encode_line_step(line, stride, buff, m, 1);
+	} else if (s == 4) {
+		dwtfloat_encode_line_step(line, stride, buff, m, 2);
+	} else if (s < size) {
+		dwtfloat_encode_line_step(line, stride, buff, m, 3);
+	} else {
+		dwtfloat_encode_line_step(line, stride, buff, m+0, 4);
+		dwtfloat_encode_line_step(line, stride, buff, m+1, 5);
+	}
+}
+
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
+#if 0
+	size_t n;
+	float buff[4] = { .0f, .0f, .0f, .0f };
+
+	assert( is_even(size) );
+
+	/* loop over the input signal */
+	for (n = 0; n < size+1; n += 2) {
+		dwtfloat_encode_line_coefficient(line, size, stride, buff, n);
+	}
+
+	return 0;
+#endif
 #if 1
 	float buff[4] = { .0f, .0f, .0f, .0f };
 
 	assert( is_even(size) );
 
 	return dwtfloat_encode_line_segment(line, size, stride, buff, 0, size/2);
-#else
+#endif
+#if 0
 	void *line_;
 	size_t n, N;
 
