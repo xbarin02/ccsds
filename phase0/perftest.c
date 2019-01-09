@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "frame.h"
 #include "common.h"
@@ -9,6 +10,9 @@ int main()
 {
 	struct frame frame;
 	struct parameters parameters;
+
+	clock_t begin, end;
+	double t;
 
 	frame.width = 4096;
 	frame.height = 2048;
@@ -21,10 +25,18 @@ int main()
 
 	parameters.DWTtype = 0;
 
+	begin = clock();
+
 	if (dwt_encode(&frame, &parameters)) {
 		fprintf(stderr, "[ERROR] transform failed\n");
 		return EXIT_FAILURE;
 	}
+
+	end = clock();
+
+	t = (double)(end - begin) / CLOCKS_PER_SEC;
+
+	printf("%f secs\n", t);
 
 	frame_destroy(&frame);
 
