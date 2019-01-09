@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 #include "frame.h"
 #include "common.h"
@@ -35,16 +36,23 @@ double measure_dwt_encode_secs(struct frame *frame)
 int main()
 {
 	struct frame frame;
-
-	double t;
+	int i;
+	double min_t = HUGE_VAL;
 
 	frame.width = 4096;
 	frame.height = 2048;
 	frame.bpp = 16;
 
-	t = measure_dwt_encode_secs(&frame);
+	for (i = 0; i < 5; ++i) {
+		double t = measure_dwt_encode_secs(&frame);
 
-	printf("%f secs\n", t);
+		printf("%f secs\n", t);
+
+		if (t < min_t)
+			min_t = t;
+	}
+
+	printf("%f secs (minimum)\n", min_t);
 
 	frame_destroy(&frame);
 
