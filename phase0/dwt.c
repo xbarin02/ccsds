@@ -152,13 +152,13 @@ static void dwtfloat_encode_core(float *data, float *buff, int *lever)
 
 /*
  * Compute a part of one-dimensional wavelet transform.
- * The n0 and n1 define coordinates of the part to be computed (in output signal coordinate system).
- * The n0 is the initial coordinate and n1 is the smallest coordinate behind the signal.
- * Valid coordinates are in range [0, N) with N = size/2 (the signal length must be even).
+ * The n0 and n1 define coordinates of the part to be computed.
+ * The n0 is the initial coordinate and n1 is the smallest coordinate behind the signal segment.
+ * Valid coordinates are in range [0, N+2) with N = size/2 (the signal length must be even).
  */
 int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
 {
-	size_t m, N;
+	size_t n, N;
 	float data[2];
 
 	assert( is_even(size) );
@@ -168,64 +168,60 @@ int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *b
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
-	m = n0 + 2;
-
-	if (n0 == 0) {
-		m = 0;
-	}
+	n = n0;
 
 	/* prologue */
-	for (; m < 1; m++) {
+	for (; n < n1 && n < 1; n++) {
 		int lever[4] = { 0, 0, 0, 0 };
 
 		data[0] = 0.f;
-		data[1] = (float) c(m);
+		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
 	}
-	for (; m < 2; m++) {
+	for (; n < n1 && n < 2; n++) {
 		int lever[4] = { 0, 0, -1, 0 };
 
-		data[0] = (float) d(m-1);
-		data[1] = (float) c(m);
+		data[0] = (float) d(n-1);
+		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
 	}
-	for (; m < 3; m++) {
+	for (; n < n1 && n < 3; n++) {
 		int lever[4] = { -1, 0, 0, 0 };
 
-		data[0] = (float) d(m-1);
-		data[1] = (float) c(m);
+		data[0] = (float) d(n-1);
+		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
-		c(m-2) = roundf_( data[0] * (  +zeta) );
-		d(m-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (  +zeta) );
+		d(n-2) = roundf_( data[1] * (1/-zeta) );
 	}
 	/* regular */
-	for (; m < n1 + 2 && m < N; m++) {
+	for (; n < n1 && n < N; n++) {
 		int lever[4] = { 0, 0, 0, 0 };
 
-		data[0] = (float) d(m-1);
-		data[1] = (float) c(m);
+		data[0] = (float) d(n-1);
+		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
-		c(m-2) = roundf_( data[0] * (  +zeta) );
-		d(m-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (  +zeta) );
+		d(n-2) = roundf_( data[1] * (1/-zeta) );
 	}
 	/* epilogue */
-	for (; m < n1 + 2 && m == N; m++) {
+	for (; n < n1 && n == N; n++) {
 		int lever[4] = { 0, 0, 0, +1 };
 
-		data[0] = (float) d(m-1);
+		data[0] = (float) d(n-1);
 		data[1] = 0.f;
 		dwtfloat_encode_core(data, buff, lever);
-		c(m-2) = roundf_( data[0] * (  +zeta) );
-		d(m-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (  +zeta) );
+		d(n-2) = roundf_( data[1] * (1/-zeta) );
 	}
-	for (; m < n1 + 2 && m == N+1; m++) {
+	for (; n < n1 && n == N+1; n++) {
 		int lever[4] = { 0, +1, 0, 0 };
 
 		data[0] = 0.f;
 		data[1] = 0.f;
 		dwtfloat_encode_core(data, buff, lever);
-		c(m-2) = roundf_( data[0] * (  +zeta) );
-		d(m-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (  +zeta) );
+		d(n-2) = roundf_( data[1] * (1/-zeta) );
 	}
 
 #undef c
@@ -314,7 +310,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	assert( is_even(size) );
 
-	return dwtfloat_encode_line_segment(line, size, stride, buff, 0, size/2);
+	return dwtfloat_encode_line_segment(line, size, stride, buff, 0, size/2+2);
 #endif
 #if 0
 	void *line_;
