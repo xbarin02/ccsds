@@ -575,14 +575,13 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 	}
 
 	/* for each row */
-	for (y = 0; y < height; ++y) {
+	for (y = 0; y < height; y += 2) {
 		/* invoke one-dimensional transform */
-		dwtfloat_encode_line(band + y*stride_y, width, stride_x);
+		dwtfloat_encode_line(band + (y+0)*stride_y, width, stride_x);
+		dwtfloat_encode_line(band + (y+1)*stride_y, width, stride_x);
 
-		if (is_even(y)) {
-			for (x = 0; x < width; ++x) {
-				dwtfloat_encode_step(band + x*stride_x, height, stride_y, buff + 4*x, y);
-			}
+		for (x = 0; x < width; ++x) {
+			dwtfloat_encode_step(band + x*stride_x, height, stride_y, buff + 4*x, y);
 		}
 	}
 
