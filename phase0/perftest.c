@@ -1,11 +1,17 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <float.h>
 
 #include "frame.h"
 #include "common.h"
 #include "dwt.h"
+
+/* number of measurements */
+#define MEASUREMENTS_NO 5
+#define BPP 8
 
 double measure_dwt_encode_secs(struct frame *frame)
 {
@@ -30,21 +36,29 @@ double measure_dwt_encode_secs(struct frame *frame)
 
 	frame_destroy(frame);
 
+	if (begin == (clock_t) -1 || end == (clock_t) -1) {
+		return 0.;
+	}
+
 	return (double)(end - begin) / CLOCKS_PER_SEC;
 }
 
-int main()
+double measure_dwt_encode_secs_point(size_t height, size_t width)
 {
 	struct frame frame;
-	int i;
 	double min_t = HUGE_VAL;
+	int i;
 
-	frame.width = 4096;
-	frame.height = 2048;
-	frame.bpp = 16;
+	frame.height = height;
+	frame.width = width;
+	frame.bpp = BPP;
 
-	for (i = 0; i < 5; ++i) {
+	for (i = 0; i < MEASUREMENTS_NO; ++i) {
 		double t = measure_dwt_encode_secs(&frame);
+
+		if (t < DBL_MIN) {
+			return 0.;
+		}
 
 		printf("%f secs\n", t);
 
@@ -52,9 +66,16 @@ int main()
 			min_t = t;
 	}
 
-	printf("%f secs (minimum)\n", min_t);
+	return min_t;
+}
 
-	frame_destroy(&frame);
+int main()
+{
+	double t;
+
+	t = measure_dwt_encode_secs_point(1080, 1920);
+
+	printf("%f secs (minimum)\n", t);
 
 	return EXIT_SUCCESS;
 }
