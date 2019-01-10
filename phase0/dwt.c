@@ -320,7 +320,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 		dwtfloat_encode_line_coefficient(line, size, stride, buff, n);
 	}
 
-	return 0;
+	return RET_SUCCESS;
 #endif
 #if 1
 	float buff[4] = { .0f, .0f, .0f, .0f };
