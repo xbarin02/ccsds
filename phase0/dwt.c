@@ -587,7 +587,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 
 	for (; y < height+4; y += 2) {
 		for (x = 0; x < width; ++x) {
-			dwtfloat_encode_step(band + x*stride_x, height, stride_y, buff+4*x, y);
+			dwtfloat_encode_step(band + x*stride_x, height, stride_y, buff + 4*x, y);
 		}
 	}
 
