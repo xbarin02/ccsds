@@ -8,11 +8,13 @@
 #include "frame.h"
 #include "common.h"
 #include "dwt.h"
+#include "utils.h"
 
 /* number of measurements */
 #define MEASUREMENTS_NO 5
 #define BPP 8
 
+/* single measurement */
 double measure_dwt_encode_secs(struct frame *frame)
 {
 	struct parameters parameters;
@@ -43,6 +45,7 @@ double measure_dwt_encode_secs(struct frame *frame)
 	return (double)(end - begin) / CLOCKS_PER_SEC;
 }
 
+/* multiple measurements */
 double measure_dwt_encode_secs_point(size_t height, size_t width)
 {
 	struct frame frame;
@@ -60,7 +63,7 @@ double measure_dwt_encode_secs_point(size_t height, size_t width)
 			return 0.;
 		}
 
-		printf("%f secs\n", t);
+		/* printf("%f secs\n", t); */
 
 		if (t < min_t)
 			min_t = t;
@@ -69,13 +72,28 @@ double measure_dwt_encode_secs_point(size_t height, size_t width)
 	return min_t;
 }
 
+int measurement_dwt_encode()
+{
+	size_t k;
+
+	for(k = 1; k < 10; ++k) {
+		size_t width = k * 160;
+		size_t height = k * 120;
+
+		size_t resolution = height * width;
+
+		double t = measure_dwt_encode_secs_point(height, width);
+
+		fprintf(stdout, "# %lu %lu\n", (unsigned long) width, (unsigned long) height);
+		fprintf(stdout, "%lu\t%f\n", (unsigned long) resolution, t);
+	}
+
+	return RET_SUCCESS;
+}
+
 int main()
 {
-	double t;
-
-	t = measure_dwt_encode_secs_point(1080, 1920);
-
-	printf("%f secs (minimum)\n", t);
+	measurement_dwt_encode();
 
 	return EXIT_SUCCESS;
 }
