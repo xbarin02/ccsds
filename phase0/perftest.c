@@ -74,7 +74,7 @@ int measurement_dwt_encode()
 {
 	size_t k;
 
-	for(k = 1; k < 20; ++k) {
+	for(k = 1; k < 32; ++k) {
 		size_t width = k * 160;
 		size_t height = k * 120;
 
