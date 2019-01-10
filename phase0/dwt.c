@@ -156,7 +156,7 @@ static void dwtfloat_encode_core(float *data, float *buff, int *lever)
  * The n0 is the initial coordinate and n1 is the smallest coordinate behind the signal segment.
  * Valid coordinates are in range [0, N+2) with N = size/2 (the signal length must be even).
  */
-int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
+void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
 {
 	size_t n, N;
 	float data[2];
@@ -226,8 +226,6 @@ int dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *b
 
 #undef c
 #undef d
-
-	return RET_SUCCESS;
 }
 
 /*
@@ -299,18 +297,23 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	assert( is_even(size) );
 
 	/* loop over the input signal */
-	for (n = 0; n < size+3; n += 2) {
+	for (n = 0; n < size+4; n += 2) {
 		dwtfloat_encode_step(line, size, stride, buff, n);
 	}
 
 	return RET_SUCCESS;
 #endif
 #if 1
+	size_t N;
 	float buff[4] = { .0f, .0f, .0f, .0f };
 
 	assert( is_even(size) );
 
-	return dwtfloat_encode_line_segment(line, size, stride, buff, 0, size/2+2);
+	N = size/2;
+
+	dwtfloat_encode_line_segment(line, size, stride, buff, 0, N+2);
+
+	return RET_SUCCESS;
 #endif
 #if 0
 	void *line_;
