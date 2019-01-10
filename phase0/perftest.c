@@ -63,8 +63,6 @@ double measure_dwt_encode_secs_point(size_t height, size_t width)
 			return 0.;
 		}
 
-		/* printf("%f secs\n", t); */
-
 		if (t < min_t)
 			min_t = t;
 	}
@@ -76,16 +74,17 @@ int measurement_dwt_encode()
 {
 	size_t k;
 
-	for(k = 1; k < 10; ++k) {
+	for(k = 1; k < 20; ++k) {
 		size_t width = k * 160;
 		size_t height = k * 120;
 
 		size_t resolution = height * width;
 
-		double t = measure_dwt_encode_secs_point(height, width);
+		double secs = measure_dwt_encode_secs_point(height, width);
+		double nsecs_per_pel = secs / (double) resolution * 1e9;
 
 		fprintf(stdout, "# %lu %lu\n", (unsigned long) width, (unsigned long) height);
-		fprintf(stdout, "%lu\t%f\n", (unsigned long) resolution, t);
+		fprintf(stdout, "%lu\t%f\n", (unsigned long) resolution, nsecs_per_pel);
 	}
 
 	return RET_SUCCESS;
