@@ -156,6 +156,53 @@ static void dwtfloat_encode_core(float *data, float *buff, int *lever)
 	buff[3] = l3;
 }
 
+static void dwtfloat_decode_core(float *data, float *buff, int *lever)
+{
+	const float w0 = -alpha;
+	const float w1 = -beta;
+	const float w2 = -gamma;
+	const float w3 = -delta;
+
+	float l0, l1, l2, l3;
+	float c0, c1, c2, c3;
+	float r0, r1, r2, r3;
+	float x0, x1;
+	float y0, y1;
+
+	l0 = buff[0];
+	l1 = buff[1];
+	l2 = buff[2];
+	l3 = buff[3];
+
+	x0 = data[0];
+	x1 = data[1];
+
+	c0 = l1;
+	c1 = l2;
+	c2 = l3;
+	c3 = x0;
+
+	r3 = x1;
+	r2 = c3 + w3 * ( (lever[3] < 0 ? r3 : l3) + (lever[3] > 0 ? l3 : r3) );
+	r1 = c2 + w2 * ( (lever[2] < 0 ? r2 : l2) + (lever[2] > 0 ? l2 : r2) );
+	r0 = c1 + w1 * ( (lever[1] < 0 ? r1 : l1) + (lever[1] > 0 ? l1 : r1) );
+	y0 = c0 + w0 * ( (lever[0] < 0 ? r0 : l0) + (lever[0] > 0 ? l0 : r0) );
+	y1 = r0;
+
+	l0 = r0;
+	l1 = r1;
+	l2 = r2;
+	l3 = r3;
+
+	data[0] = y0;
+	data[1] = y1;
+
+	buff[0] = l0;
+	buff[1] = l1;
+	buff[2] = l2;
+	buff[3] = l3;
+}
+
 /*
  * Compute a part of one-dimensional wavelet transform.
  * The n0 and n1 define coordinates of the part to be computed.
@@ -255,9 +302,17 @@ static void encode_adjust_levers(int lever[4], size_t n, size_t N)
 	lever[1] = n == N+1 ? +1 : 0;
 }
 
+static void decode_adjust_levers(int lever[4], size_t n, size_t N)
+{
+	lever[3] = n ==   0 ? -1 : 0;
+	lever[1] = n ==   1 ? -1 : 0;
+	lever[2] = n == N   ? +1 : 0;
+	lever[0] = n == N+1 ? +1 : 0;
+}
+
 static int encode_is_valid_input_c(size_t n, size_t N)
 {
-	return n < N;
+	return n < N; (void)N;
 }
 
 static int encode_is_valid_input_d(size_t n, size_t N)
@@ -362,6 +417,71 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
 		dd(n_y-2, n_x-2) = roundf_( core[3] * rcp_sqr_zeta ); /* HH */
 	}
+
+#	undef cc
+#	undef dc
+#	undef cd
+#	undef dd
+}
+
+void dwtfloat_decode_step_2x2(int *data, size_t height, size_t width, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t k_y, size_t k_x)
+{
+	size_t n_y, n_x, N_y, N_x;
+	/* vertical lever at [0], horizontal at [1] */
+	int lever[2][4];
+	/* order on input: 0=LL, 1=HL, 2=LH, 3=HH */
+	float core[4];
+
+	assert( is_even(height) && is_even(width) );
+	assert( is_even(k_y) && is_even(k_x) );
+
+	N_y = height / 2;
+	N_x = width / 2;
+	n_y = k_y / 2;
+	n_x = k_x / 2;
+
+	decode_adjust_levers(lever[0], n_y, N_y);
+	decode_adjust_levers(lever[1], n_x, N_x);
+
+#	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
+#	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
+#	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
+#	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
+
+#	define decode_is_valid_input(n, N) ( (n) < (N) )
+
+	if ( decode_is_valid_input(n_y, N_y) && decode_is_valid_input(n_x, N_x) ) {
+		core[0] = (float) cc(n_y, n_x) * rcp_sqr_zeta; /* LL */
+		core[1] = (float) dc(n_y, n_x) * -1;           /* HL */
+		core[2] = (float) cd(n_y, n_x) * -1;           /* LH */
+		core[3] = (float) dd(n_y, n_x) * sqr_zeta;     /* HH */
+	}
+
+#	undef decode_is_valid_input
+
+	/* horizontal filtering */
+	dwtfloat_decode_core(&core[0], buff_y + 4*(2*n_y+0), lever[1]);
+	dwtfloat_decode_core(&core[2], buff_y + 4*(2*n_y+1), lever[1]);
+	transpose(core);
+	/* vertical filtering */
+	dwtfloat_decode_core(&core[0], buff_x + 4*(2*n_x+0), lever[0]);
+	dwtfloat_decode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
+	transpose(core);
+
+#	define decode_is_valid_output_c(n, N) ( (n) > 0 && (n) < (N)+1 )
+#	define decode_is_valid_output_d(n, N) ( (n) > 1 && (n) < (N)+2 )
+
+	if ( decode_is_valid_output_c(n_y, N_y) && decode_is_valid_output_c(n_x, N_x) )
+		cc(n_y-1, n_x-1) = roundf_( core[3] ); /* LL */
+	if ( decode_is_valid_output_c(n_y, N_y) && encode_is_valid_output(n_x, N_x) )
+		dc(n_y-1, n_x-2) = roundf_( core[2] ); /* HL */
+	if ( decode_is_valid_output_d(n_y, N_y) && decode_is_valid_output_c(n_x, N_x) )
+		cd(n_y-2, n_x-1) = roundf_( core[1] ); /* LH */
+	if ( decode_is_valid_output_d(n_y, N_y) && decode_is_valid_output_d(n_x, N_x) )
+		dd(n_y-2, n_x-2) = roundf_( core[0] ); /* HH */
+
+#	undef decode_is_valid_output_c
+#	undef decode_is_valid_output_d
 
 #	undef cc
 #	undef dc
@@ -762,7 +882,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
 {
 	size_t y, x;
-
+#if 0
 	/* for each column */
 	for (x = 0; x < width; ++x) {
 		/* invoke one-dimensional transform */
@@ -773,7 +893,26 @@ int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 		/* invoke one-dimensional transform */
 		dwtfloat_decode_line(band + y*stride_y, width, stride_x);
 	}
+#endif
+#if 1
+	float *buff_y, *buff_x;
 
+	buff_y = malloc( (height+4) * 4 * sizeof(float) );
+	buff_x = malloc( (width+4) * 4 * sizeof(float) );
+
+	if (NULL == buff_y || NULL == buff_x) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	for (y = 0; y < height+4; y += 2) {
+		for (x = 0; x < width+4; x += 2) {
+			dwtfloat_decode_step_2x2(band, height, width, stride_y, stride_x, buff_y, buff_x, y, x);
+		}
+	}
+
+	free(buff_x);
+	free(buff_y);
+#endif
 	return RET_SUCCESS;
 }
 
