@@ -247,7 +247,7 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
  * c(0) d(0) c(1) d(1) c(2) d(N-1)
  */
 
-static void adjust_levers(int lever[4], size_t n, size_t N)
+static void encode_adjust_levers(int lever[4], size_t n, size_t N)
 {
 	lever[2] = n ==   1 ? -1 : 0;
 	lever[0] = n ==   2 ? -1 : 0;
@@ -255,17 +255,17 @@ static void adjust_levers(int lever[4], size_t n, size_t N)
 	lever[1] = n == N+1 ? +1 : 0;
 }
 
-static int is_valid_input_c(size_t n, size_t N)
+static int encode_is_valid_input_c(size_t n, size_t N)
 {
 	return n < N;
 }
 
-static int is_valid_input_d(size_t n, size_t N)
+static int encode_is_valid_input_d(size_t n, size_t N)
 {
 	return n > 0 && n < N+1;
 }
 
-static int is_valid_output(size_t n, size_t N)
+static int encode_is_valid_output(size_t n, size_t N)
 {
 	return n > 1; (void)N;
 }
@@ -285,19 +285,19 @@ void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, si
 	N = size / 2;
 	n = k / 2;
 
-	adjust_levers(lever, n, N);
+	encode_adjust_levers(lever, n, N);
 
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
-	if (is_valid_input_d(n, N))
+	if (encode_is_valid_input_d(n, N))
 		data[0] = (float) d(n-1);
-	if (is_valid_input_c(n, N))
+	if (encode_is_valid_input_c(n, N))
 		data[1] = (float) c(n);
 
 	dwtfloat_encode_core(data, buff, lever);
 
-	if (is_valid_output(n, N)) {
+	if (encode_is_valid_output(n, N)) {
 		c(n-2) = roundf_( data[0] * (    +zeta) );
 		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
@@ -330,21 +330,21 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 	n_y = k_y / 2;
 	n_x = k_x / 2;
 
-	adjust_levers(lever[0], n_y, N_y);
-	adjust_levers(lever[1], n_x, N_x);
+	encode_adjust_levers(lever[0], n_y, N_y);
+	encode_adjust_levers(lever[1], n_x, N_x);
 
 #	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
 #	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
-	if (is_valid_input_d(n_y, N_y) && is_valid_input_d(n_x, N_x)) /* HH */
+	if (encode_is_valid_input_d(n_y, N_y) && encode_is_valid_input_d(n_x, N_x)) /* HH */
 		core[0] = (float) dd(n_y-1, n_x-1);
-	if (is_valid_input_d(n_y, N_y) && is_valid_input_c(n_x, N_x)) /* LH */
+	if (encode_is_valid_input_d(n_y, N_y) && encode_is_valid_input_c(n_x, N_x)) /* LH */
 		core[1] = (float) cd(n_y-1, n_x);
-	if (is_valid_input_c(n_y, N_y) && is_valid_input_d(n_x, N_x)) /* HL */
+	if (encode_is_valid_input_c(n_y, N_y) && encode_is_valid_input_d(n_x, N_x)) /* HL */
 		core[2] = (float) dc(n_y, n_x-1);
-	if (is_valid_input_c(n_y, N_y) && is_valid_input_c(n_x, N_x)) /* LL */
+	if (encode_is_valid_input_c(n_y, N_y) && encode_is_valid_input_c(n_x, N_x)) /* LL */
 		core[3] = (float) cc(n_y, n_x);
 
 	/* horizontal filtering */
@@ -356,7 +356,7 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 	dwtfloat_encode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
 	transpose(core);
 
-	if (is_valid_output(n_y, N_y) && is_valid_output(n_x, N_x)) {
+	if (encode_is_valid_output(n_y, N_y) && encode_is_valid_output(n_x, N_x)) {
 		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
 		dc(n_y-2, n_x-2) = roundf_( core[1] * -1           ); /* HL */
 		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
