@@ -6,13 +6,13 @@ The compression method targets instruments used on board of spacecraft.
 
 ### Prerequisites
 
-The library is written in pure C89. No compiler extensions nor assembly language
-are employed. It does not even rely on POSIX. You only need working compiler
-toolchain.
+The library is written in pure C89 (ANSI C). No compiler extensions nor
+assembly language are employed. No third-party libraries are needed. It does
+not even rely on POSIX. You only need working compiler toolchain.
 
 ### Installing
 
-To build the library, run the following magic command in source tree directory:
+To build the library, run the following command in source tree directory:
 
 ```
 make
