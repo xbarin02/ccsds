@@ -448,16 +448,16 @@ void dwtfloat_decode_step_2x2(int *data, size_t height, size_t width, size_t str
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
-#	define decode_is_valid_input(n, N) ( (n) < (N) )
+#	define is_input_valid(n, N) ( (n) < (N) )
 
-	if ( decode_is_valid_input(n_y, N_y) && decode_is_valid_input(n_x, N_x) ) {
+	if ( is_input_valid(n_y, N_y) && is_input_valid(n_x, N_x) ) {
 		core[0] = (float) cc(n_y, n_x) * rcp_sqr_zeta; /* LL */
 		core[1] = (float) dc(n_y, n_x) * -1;           /* HL */
 		core[2] = (float) cd(n_y, n_x) * -1;           /* LH */
 		core[3] = (float) dd(n_y, n_x) * sqr_zeta;     /* HH */
 	}
 
-#	undef decode_is_valid_input
+#	undef is_input_valid
 
 	/* horizontal filtering */
 	dwtfloat_decode_core(&core[0], buff_y + 4*(2*n_y+0), lever[1]);
@@ -468,20 +468,20 @@ void dwtfloat_decode_step_2x2(int *data, size_t height, size_t width, size_t str
 	dwtfloat_decode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
 	transpose(core);
 
-#	define decode_is_valid_output_c(n, N) ( (n) > 0 && (n) < (N)+1 )
-#	define decode_is_valid_output_d(n, N) ( (n) > 1 && (n) < (N)+2 )
+#	define is_output_c_valid(n, N) ( (n) > 0 && (n) < (N)+1 )
+#	define is_output_d_valid(n, N) ( (n) > 1 && (n) < (N)+2 )
 
-	if ( decode_is_valid_output_c(n_y, N_y) && decode_is_valid_output_c(n_x, N_x) )
+	if ( is_output_c_valid(n_y, N_y) && is_output_c_valid(n_x, N_x) )
 		cc(n_y-1, n_x-1) = roundf_( core[3] ); /* LL */
-	if ( decode_is_valid_output_c(n_y, N_y) && encode_is_valid_output(n_x, N_x) )
+	if ( is_output_c_valid(n_y, N_y) && encode_is_valid_output(n_x, N_x) )
 		dc(n_y-1, n_x-2) = roundf_( core[2] ); /* HL */
-	if ( decode_is_valid_output_d(n_y, N_y) && decode_is_valid_output_c(n_x, N_x) )
+	if ( is_output_d_valid(n_y, N_y) && is_output_c_valid(n_x, N_x) )
 		cd(n_y-2, n_x-1) = roundf_( core[1] ); /* LH */
-	if ( decode_is_valid_output_d(n_y, N_y) && decode_is_valid_output_d(n_x, N_x) )
+	if ( is_output_d_valid(n_y, N_y) && is_output_d_valid(n_x, N_x) )
 		dd(n_y-2, n_x-2) = roundf_( core[0] ); /* HH */
 
-#	undef decode_is_valid_output_c
-#	undef decode_is_valid_output_d
+#	undef is_output_c_valid
+#	undef is_output_d_valid
 
 #	undef cc
 #	undef dc
