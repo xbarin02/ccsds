@@ -197,8 +197,8 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
 		data[0] = (float) d(n-1);
 		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (  +zeta) );
-		d(n-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (    +zeta) );
+		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
 	/* regular */
 	for (; n < n1 && n < N; n++) {
@@ -207,8 +207,8 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
 		data[0] = (float) d(n-1);
 		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (  +zeta) );
-		d(n-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (    +zeta) );
+		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
 	/* epilogue */
 	for (; n < n1 && n == N; n++) {
@@ -217,8 +217,8 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
 		data[0] = (float) d(n-1);
 		data[1] = 0.f;
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (  +zeta) );
-		d(n-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (    +zeta) );
+		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
 	for (; n < n1 && n == N+1; n++) {
 		int lever[4] = { 0, +1, 0, 0 };
@@ -226,8 +226,8 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
 		data[0] = 0.f;
 		data[1] = 0.f;
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (  +zeta) );
-		d(n-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (    +zeta) );
+		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
 
 #undef c
@@ -298,8 +298,8 @@ void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, si
 	dwtfloat_encode_core(data, buff, lever);
 
 	if (is_valid_output(n, N)) {
-		c(n-2) = roundf_( data[0] * (  +zeta) );
-		d(n-2) = roundf_( data[1] * (1/-zeta) );
+		c(n-2) = roundf_( data[0] * (    +zeta) );
+		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
 
 #	undef c
