@@ -102,6 +102,12 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 #define gamma +0.88291107549260031282806293551600f
 #define delta +0.44350685204939829327158029348930f
 #define zeta  +1.14960439885900000000000000000000f
+#define rcp_zeta \
+              +0.86986445162572041243487498011333f
+#define sqr_zeta \
+              +1.32159027387596276050188100000000f
+#define rcp_sqr_zeta \
+              +0.75666416420211528747583823019750f
 
 static void dwtfloat_encode_core(float *data, float *buff, int *lever)
 {
@@ -241,6 +247,29 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
  * c(0) d(0) c(1) d(1) c(2) d(N-1)
  */
 
+static void adjust_levers(int lever[4], size_t n, size_t N)
+{
+	lever[2] = n ==   1 ? -1 : 0;
+	lever[0] = n ==   2 ? -1 : 0;
+	lever[3] = n == N   ? +1 : 0;
+	lever[1] = n == N+1 ? +1 : 0;
+}
+
+static int is_valid_input_c(size_t n, size_t N)
+{
+	return n < N;
+}
+
+static int is_valid_input_d(size_t n, size_t N)
+{
+	return n > 0 && n < N+1;
+}
+
+static int is_valid_output(size_t n, size_t N)
+{
+	return n > 1; (void)N;
+}
+
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
@@ -256,36 +285,88 @@ void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, si
 	N = size / 2;
 	n = k / 2;
 
-	if (n < 3) {
-		if (n == 1)
-			lever[2] = -1;
-		if (n == 2)
-			lever[0] = -1;
-	}
-	if (n >= N) {
-		if (n == N)
-			lever[3] = +1;
-		if (n == N+1)
-			lever[1] = +1;
-	}
+	adjust_levers(lever, n, N);
 
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
-	if (n > 0 && n < N+1)
+	if (is_valid_input_d(n, N))
 		data[0] = (float) d(n-1);
-	if (n < N)
+	if (is_valid_input_c(n, N))
 		data[1] = (float) c(n);
 
 	dwtfloat_encode_core(data, buff, lever);
 
-	if (n > 1) {
+	if (is_valid_output(n, N)) {
 		c(n-2) = roundf_( data[0] * (  +zeta) );
 		d(n-2) = roundf_( data[1] * (1/-zeta) );
 	}
 
 #	undef c
 #	undef d
+}
+
+/* transpose 2x2 matrix */
+static void transpose(float core[4])
+{
+	float t = core[1];
+	core[1] = core[2];
+	core[2] = t;
+}
+
+void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t k_y, size_t k_x)
+{
+	size_t n_y, n_x, N_y, N_x;
+	/* vertical lever at [0], horizontal at [1] */
+	int lever[2][4];
+	/* order on input: 0=HH, 1=LH, 2=HH, 3=LL */
+	float core[4];
+
+	assert( is_even(height) && is_even(width) );
+	assert( is_even(k_y) && is_even(k_x) );
+
+	N_y = height / 2;
+	N_x = width / 2;
+	n_y = k_y / 2;
+	n_x = k_x / 2;
+
+	adjust_levers(lever[0], n_y, N_y);
+	adjust_levers(lever[1], n_x, N_x);
+
+#	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
+#	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
+#	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
+#	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
+
+	if (is_valid_input_d(n_y, N_y) && is_valid_input_d(n_x, N_x)) /* HH */
+		core[0] = (float) dd(n_y-1, n_x-1);
+	if (is_valid_input_d(n_y, N_y) && is_valid_input_c(n_x, N_x)) /* LH */
+		core[1] = (float) cd(n_y-1, n_x);
+	if (is_valid_input_c(n_y, N_y) && is_valid_input_d(n_x, N_x)) /* HL */
+		core[2] = (float) dc(n_y, n_x-1);
+	if (is_valid_input_c(n_y, N_y) && is_valid_input_c(n_x, N_x)) /* LL */
+		core[3] = (float) cc(n_y, n_x);
+
+	/* horizontal filtering */
+	dwtfloat_encode_core(&core[0], buff_y + 4*(2*n_y+0), lever[1]);
+	dwtfloat_encode_core(&core[2], buff_y + 4*(2*n_y+1), lever[1]);
+	transpose(core);
+	/* vertical filtering */
+	dwtfloat_encode_core(&core[0], buff_x + 4*(2*n_x+0), lever[0]);
+	dwtfloat_encode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
+	transpose(core);
+
+	if (is_valid_output(n_y, N_y) && is_valid_output(n_x, N_x)) {
+		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
+		dc(n_y-2, n_x-2) = roundf_( core[1] * -1           ); /* HL */
+		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
+		dd(n_y-2, n_x-2) = roundf_( core[3] * rcp_sqr_zeta ); /* HH */
+	}
+
+#	undef cc
+#	undef dc
+#	undef cd
+#	undef dd
 }
 
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
@@ -627,7 +708,8 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 		/* invoke one-dimensional transform */
 		dwtfloat_encode_line(band + x*stride_x, height, stride_y);
 	}
-#else
+#endif
+#if 0
 	float *buff;
 
 	buff = malloc( width * 4 * sizeof(float) );
@@ -655,7 +737,25 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 
 	free(buff);
 #endif
+#if 1
+	float *buff_y, *buff_x;
 
+	buff_y = malloc( (height+4) * 4 * sizeof(float) );
+	buff_x = malloc( (width+4) * 4 * sizeof(float) );
+
+	if (NULL == buff_y || NULL == buff_x) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	for (y = 0; y < height+4; y += 2) {
+		for (x = 0; x < width+4; x += 2) {
+			dwtfloat_encode_step_2x2(band, height, width, stride_y, stride_x, buff_y, buff_x, y, x);
+		}
+	}
+
+	free(buff_x);
+	free(buff_y);
+#endif
 	return RET_SUCCESS;
 }
 
