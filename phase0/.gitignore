@@ -1,0 +1,13 @@
+# doc directory
+doc
+
+# binaries
+compress
+perftest
+
+# backup files
+*~
+
+# object files
+*.o
+
