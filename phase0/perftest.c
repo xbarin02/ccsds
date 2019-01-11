@@ -74,7 +74,7 @@ int measurement_dwt_encode()
 {
 	size_t k;
 
-	for(k = 1; k < 32; ++k) {
+	for(k = 1; k < 64; ++k) {
 		size_t width = k * 160;
 		size_t height = k * 120;
 
@@ -85,6 +85,7 @@ int measurement_dwt_encode()
 
 		fprintf(stdout, "# %lu %lu\n", (unsigned long) width, (unsigned long) height);
 		fprintf(stdout, "%lu\t%f\n", (unsigned long) resolution, nsecs_per_pel);
+		fflush(stdout);
 	}
 
 	return RET_SUCCESS;
