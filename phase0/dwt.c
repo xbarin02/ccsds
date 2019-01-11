@@ -383,6 +383,68 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	return RET_SUCCESS;
 #endif
+#if 0
+        void *line_;
+        size_t n, N;
+
+        assert( is_even(size) );
+
+        N = size/2;
+
+        line_ = malloc( size * sizeof(int) );
+
+        if (NULL == line_) {
+                return RET_FAILURE_MEMORY_ALLOCATION;
+        }
+
+        assert( line );
+
+        /* convolution (using float64) */
+
+#       define c(n) ((int *)line_)[2*(n)+0]
+#       define d(n) ((int *)line_)[2*(n)+1]
+#       define x(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? line[stride*-(m)] : \
+                ( (m) > (size-1) ? line[stride*(2*(size-1)-(m))] : \
+                line[stride*(m)] ) )
+
+        for (n = 0; n < N; ++n) {
+                c(n) = (int) roundf_ (
+                        +0.037828455507f * (float) x(2*n-4)
+                        -0.023849465020f * (float) x(2*n-3)
+                        -0.110624404418f * (float) x(2*n-2)
+                        +0.377402855613f * (float) x(2*n-1)
+                        +0.852698679009f * (float) x(2*n+0)
+                        +0.377402855613f * (float) x(2*n+1)
+                        -0.110624404418f * (float) x(2*n+2)
+                        -0.023849465020f * (float) x(2*n+3)
+                        +0.037828455507f * (float) x(2*n+4)
+                );
+
+                d(n) = (int) roundf_ (
+                        -0.064538882629f * (float) x(2*n+1-3)
+                        +0.040689417609f * (float) x(2*n+1-2)
+                        +0.418092273222f * (float) x(2*n+1-1)
+                        -0.788485616406f * (float) x(2*n+1+0)
+                        +0.418092273222f * (float) x(2*n+1+1)
+                        +0.040689417609f * (float) x(2*n+1+2)
+                        -0.064538882629f * (float) x(2*n+1+3)
+                );
+        }
+
+        /* keep interleaved */
+        for (n = 0; n < N; ++n) {
+                line[stride*(2*n+0)] = c(n);
+                line[stride*(2*n+1)] = d(n);
+        }
+
+#       undef c
+#       undef d
+#       undef x
+
+	free(line_);
+
+	return RET_SUCCESS;
+#endif
 }
 
 int dwtint_decode_line(int *line, size_t size, size_t stride)
