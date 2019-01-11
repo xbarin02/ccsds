@@ -1,5 +1,5 @@
-CFLAGS=-std=c89 -pedantic -Wall -Wextra -Wconversion -ftrapv -Wfloat-equal
-LDLIBS=
+CFLAGS=-std=c89 -pedantic -Wall -Wextra -Wconversion -ftrapv -Wfloat-equal -g
+LDLIBS=-g -rdynamic
 
 .PHONY: all clean
 
