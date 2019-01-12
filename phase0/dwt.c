@@ -310,20 +310,11 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 	lever[0] = n == N+1 ? +1 : 0;
 }
 
-static int encode_is_valid_input_c(size_t n, size_t N)
-{
-	return n < N; (void)N;
-}
+#define encode_is_valid_input_c(n, N) ( (n) < (N) )
 
-static int encode_is_valid_input_d(size_t n, size_t N)
-{
-	return n > 0 && n < N+1;
-}
+#define encode_is_valid_input_d(n, N) ( (n) > 0 && (n) < (N)+1 )
 
-static int encode_is_valid_output(size_t n, size_t N)
-{
-	return n > 1; (void)N;
-}
+#define encode_is_valid_output(n, N) ( (n) > 1 && (n) < (N)+2 )
 
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
