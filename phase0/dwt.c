@@ -321,17 +321,10 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
-void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, size_t k)
+void dwtfloat_encode_step(int *line, size_t N, size_t stride, float *buff, size_t n)
 {
-	size_t n, N;
 	float data[2];
 	int lever[4] = { 0, 0, 0, 0 };
-
-	assert( is_even(size) );
-	assert( is_even(k) );
-
-	N = size / 2;
-	n = k / 2;
 
 	encode_adjust_levers(lever, n, N);
 
@@ -466,14 +459,16 @@ void dwtfloat_decode_step_2x2(int *data, size_t height, size_t width, size_t str
 int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 {
 #if 0
-	size_t n;
+	size_t n, N;
 	float buff[4] = { .0f, .0f, .0f, .0f };
 
 	assert( is_even(size) );
 
+	N = size / 2;
+
 	/* loop over the input signal */
-	for (n = 0; n < size+4; n += 2) {
-		dwtfloat_encode_step(line, size, stride, buff, n);
+	for (n = 0; n < N+2; ++n) {
+		dwtfloat_encode_step(line, N, stride, buff, n);
 	}
 
 	return RET_SUCCESS;
@@ -819,13 +814,13 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 		dwtfloat_encode_line(band + (y+1)*stride_y, width, stride_x);
 
 		for (x = 0; x < width; ++x) {
-			dwtfloat_encode_step(band + x*stride_x, height, stride_y, buff + 4*x, y);
+			dwtfloat_encode_step(band + x*stride_x, height/2, stride_y, buff + 4*x, y/2);
 		}
 	}
 
 	for (; y < height+4; y += 2) {
 		for (x = 0; x < width; ++x) {
-			dwtfloat_encode_step(band + x*stride_x, height, stride_y, buff + 4*x, y);
+			dwtfloat_encode_step(band + x*stride_x, height/2, stride_y, buff + 4*x, y/2);
 		}
 	}
 
