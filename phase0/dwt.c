@@ -386,20 +386,14 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
-#	define is_input_c_valid(n, N) ( (n) < (N) )
-#	define is_input_d_valid(n, N) ( (n) > 0 && (n) < (N)+1 )
-
-	if (is_input_d_valid(n_y, N_y) && is_input_d_valid(n_x, N_x)) /* HH */
+	if (signal_defined(n_y, 1, N_y) && signal_defined(n_x, 1, N_x)) /* HH */
 		core[0] = (float) dd(n_y-1, n_x-1);
-	if (is_input_d_valid(n_y, N_y) && is_input_c_valid(n_x, N_x)) /* LH */
-		core[1] = (float) cd(n_y-1, n_x);
-	if (is_input_c_valid(n_y, N_y) && is_input_d_valid(n_x, N_x)) /* HL */
-		core[2] = (float) dc(n_y, n_x-1);
-	if (is_input_c_valid(n_y, N_y) && is_input_c_valid(n_x, N_x)) /* LL */
-		core[3] = (float) cc(n_y, n_x);
-
-#	undef is_input_c_valid
-#	undef is_input_d_valid
+	if (signal_defined(n_y, 1, N_y) && signal_define0(n_x, 0, N_x)) /* LH */
+		core[1] = (float) cd(n_y-1, n_x-0);
+	if (signal_define0(n_y, 0, N_y) && signal_defined(n_x, 1, N_x)) /* HL */
+		core[2] = (float) dc(n_y-0, n_x-1);
+	if (signal_define0(n_y, 0, N_y) && signal_define0(n_x, 0, N_x)) /* LL */
+		core[3] = (float) cc(n_y-0, n_x-0);
 
 	/* horizontal filtering */
 	dwtfloat_encode_core(&core[0], buff_y + 4*(2*n_y+0), lever[1]);
@@ -410,16 +404,12 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 	dwtfloat_encode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
 	transpose(core);
 
-#	define is_output_valid(n, N) ( (n) > 1 && (n) < (N)+2 )
-
-	if (is_output_valid(n_y, N_y) && is_output_valid(n_x, N_x)) {
+	if (signal_defined(n_y, 2, N_y) && signal_defined(n_x, 2, N_x)) {
 		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
 		dc(n_y-2, n_x-2) = roundf_( core[1] * -1           ); /* HL */
 		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
 		dd(n_y-2, n_x-2) = roundf_( core[3] * rcp_sqr_zeta ); /* HH */
 	}
-
-#	undef is_output_valid
 
 #	undef cc
 #	undef dc
