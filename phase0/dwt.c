@@ -316,7 +316,7 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
  * Note that a signal is defined on [0; N).
  */
 #define signal_defined(n, s, N) ( (n) >= (s) && (n) < (N) + (s) )
-#define signal_define0(n, s, N) ( (n) < (N) )
+#define signal_define0(n, s, N) (               (n) < (N)       )
 
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
