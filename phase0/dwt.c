@@ -311,6 +311,14 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 }
 
 /*
+ * Predicate: Is a signal defined at the position 'n-s'?
+ *
+ * Note that a signal is defined on [0; N).
+ */
+#define signal_defined(n, s, N) ( (n) >= (s) && (n) < (N) + (s) )
+#define signal_define0(n, s, N) ( (n) < (N) )
+
+/*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
 void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, size_t k)
@@ -330,27 +338,17 @@ void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, si
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
-#	define is_input_c_valid(n, N) ( (n) < (N) )
-#	define is_input_d_valid(n, N) ( (n) > 0 && (n) < (N)+1 )
-
-	if (is_input_d_valid(n, N))
+	if (signal_defined(n, 1, N))
 		data[0] = (float) d(n-1);
-	if (is_input_c_valid(n, N))
-		data[1] = (float) c(n);
-
-#	undef is_input_c_valid
-#	undef is_input_d_valid
+	if (signal_define0(n, 0, N))
+		data[1] = (float) c(n-0);
 
 	dwtfloat_encode_core(data, buff, lever);
 
-#	define is_output_valid(n, N) ( (n) > 1 && (n) < (N)+2 )
-
-	if (is_output_valid(n, N)) {
+	if (signal_defined(n, 2, N)) {
 		c(n-2) = roundf_( data[0] * (    +zeta) );
 		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
-
-#	undef is_output_valid
 
 #	undef c
 #	undef d
