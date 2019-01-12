@@ -362,21 +362,12 @@ static void transpose(float core[4])
 	core[2] = t;
 }
 
-void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t k_y, size_t k_x)
+void dwtfloat_encode_step_2x2(int *data, size_t N_y, size_t N_x, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t n_y, size_t n_x)
 {
-	size_t n_y, n_x, N_y, N_x;
 	/* vertical lever at [0], horizontal at [1] */
 	int lever[2][4];
 	/* order on input: 0=HH, 1=LH, 2=HH, 3=LL */
 	float core[4];
-
-	assert( is_even(height) && is_even(width) );
-	assert( is_even(k_y) && is_even(k_x) );
-
-	N_y = height / 2;
-	N_x = width / 2;
-	n_y = k_y / 2;
-	n_x = k_x / 2;
 
 	encode_adjust_levers(lever[0], n_y, N_y);
 	encode_adjust_levers(lever[1], n_x, N_x);
@@ -852,7 +843,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 
 	for (y = 0; y < height+4; y += 2) {
 		for (x = 0; x < width+4; x += 2) {
-			dwtfloat_encode_step_2x2(band, height, width, stride_y, stride_x, buff_y, buff_x, y, x);
+			dwtfloat_encode_step_2x2(band, height / 2, width / 2, stride_y, stride_x, buff_y, buff_x, y / 2, x / 2);
 		}
 	}
 
