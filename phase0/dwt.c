@@ -109,7 +109,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 #define rcp_sqr_zeta \
               +0.75666416420211528747583823019750f
 
-static void dwtfloat_encode_core(float *data, float *buff, int *lever)
+static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = +delta;
 	const float w1 = +gamma;
@@ -156,7 +156,7 @@ static void dwtfloat_encode_core(float *data, float *buff, int *lever)
 	buff[3] = l3;
 }
 
-static void dwtfloat_decode_core(float *data, float *buff, int *lever)
+static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = -alpha;
 	const float w1 = -beta;
