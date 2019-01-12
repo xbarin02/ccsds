@@ -310,12 +310,6 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 	lever[0] = n == N+1 ? +1 : 0;
 }
 
-#define encode_is_valid_input_c(n, N) ( (n) < (N) )
-
-#define encode_is_valid_input_d(n, N) ( (n) > 0 && (n) < (N)+1 )
-
-#define encode_is_valid_output(n, N) ( (n) > 1 && (n) < (N)+2 )
-
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
@@ -336,17 +330,27 @@ void dwtfloat_encode_step(int *line, size_t size, size_t stride, float *buff, si
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
+#	define encode_is_valid_input_c(n, N) ( (n) < (N) )
+#	define encode_is_valid_input_d(n, N) ( (n) > 0 && (n) < (N)+1 )
+
 	if (encode_is_valid_input_d(n, N))
 		data[0] = (float) d(n-1);
 	if (encode_is_valid_input_c(n, N))
 		data[1] = (float) c(n);
 
+#	undef encode_is_valid_input_c
+#	undef encode_is_valid_input_d
+
 	dwtfloat_encode_core(data, buff, lever);
+
+#	define encode_is_valid_output(n, N) ( (n) > 1 && (n) < (N)+2 )
 
 	if (encode_is_valid_output(n, N)) {
 		c(n-2) = roundf_( data[0] * (    +zeta) );
 		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
+
+#	undef encode_is_valid_output
 
 #	undef c
 #	undef d
@@ -384,6 +388,9 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
+#	define encode_is_valid_input_c(n, N) ( (n) < (N) )
+#	define encode_is_valid_input_d(n, N) ( (n) > 0 && (n) < (N)+1 )
+
 	if (encode_is_valid_input_d(n_y, N_y) && encode_is_valid_input_d(n_x, N_x)) /* HH */
 		core[0] = (float) dd(n_y-1, n_x-1);
 	if (encode_is_valid_input_d(n_y, N_y) && encode_is_valid_input_c(n_x, N_x)) /* LH */
@@ -392,6 +399,9 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 		core[2] = (float) dc(n_y, n_x-1);
 	if (encode_is_valid_input_c(n_y, N_y) && encode_is_valid_input_c(n_x, N_x)) /* LL */
 		core[3] = (float) cc(n_y, n_x);
+
+#	undef encode_is_valid_input_c
+#	undef encode_is_valid_input_d
 
 	/* horizontal filtering */
 	dwtfloat_encode_core(&core[0], buff_y + 4*(2*n_y+0), lever[1]);
@@ -402,12 +412,16 @@ void dwtfloat_encode_step_2x2(int *data, size_t height, size_t width, size_t str
 	dwtfloat_encode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
 	transpose(core);
 
+#	define encode_is_valid_output(n, N) ( (n) > 1 && (n) < (N)+2 )
+
 	if (encode_is_valid_output(n_y, N_y) && encode_is_valid_output(n_x, N_x)) {
 		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
 		dc(n_y-2, n_x-2) = roundf_( core[1] * -1           ); /* HL */
 		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
 		dd(n_y-2, n_x-2) = roundf_( core[3] * rcp_sqr_zeta ); /* HH */
 	}
+
+#	undef encode_is_valid_output
 
 #	undef cc
 #	undef dc
@@ -464,7 +478,7 @@ void dwtfloat_decode_step_2x2(int *data, size_t height, size_t width, size_t str
 
 	if ( is_output_c_valid(n_y, N_y) && is_output_c_valid(n_x, N_x) )
 		cc(n_y-1, n_x-1) = roundf_( core[3] ); /* LL */
-	if ( is_output_c_valid(n_y, N_y) && encode_is_valid_output(n_x, N_x) )
+	if ( is_output_c_valid(n_y, N_y) && is_output_d_valid(n_x, N_x) )
 		dc(n_y-1, n_x-2) = roundf_( core[2] ); /* HL */
 	if ( is_output_d_valid(n_y, N_y) && is_output_c_valid(n_x, N_x) )
 		cd(n_y-2, n_x-1) = roundf_( core[1] ); /* LH */
