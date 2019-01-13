@@ -355,6 +355,18 @@ static void transpose(float core[4])
 	core[2] = t;
 }
 
+static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
+{
+	/* horizontal filtering */
+	dwtfloat_encode_core(&core[0], buff_y + 4*(0), lever[1]);
+	dwtfloat_encode_core(&core[2], buff_y + 4*(1), lever[1]);
+	transpose(core);
+	/* vertical filtering */
+	dwtfloat_encode_core(&core[0], buff_x + 4*(0), lever[0]);
+	dwtfloat_encode_core(&core[2], buff_x + 4*(1), lever[0]);
+	transpose(core);
+}
+
 void dwtfloat_encode_step_2x2(int *data, size_t N_y, size_t N_x, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t n_y, size_t n_x)
 {
 	/* vertical lever at [0], horizontal at [1] */
@@ -379,14 +391,7 @@ void dwtfloat_encode_step_2x2(int *data, size_t N_y, size_t N_x, size_t stride_y
 	if (signal_define0(n_y, 0, N_y) && signal_define0(n_x, 0, N_x)) /* LL */
 		core[3] = (float) cc(n_y-0, n_x-0);
 
-	/* horizontal filtering */
-	dwtfloat_encode_core(&core[0], buff_y + 4*(2*n_y+0), lever[1]);
-	dwtfloat_encode_core(&core[2], buff_y + 4*(2*n_y+1), lever[1]);
-	transpose(core);
-	/* vertical filtering */
-	dwtfloat_encode_core(&core[0], buff_x + 4*(2*n_x+0), lever[0]);
-	dwtfloat_encode_core(&core[2], buff_x + 4*(2*n_x+1), lever[0]);
-	transpose(core);
+	dwtfloat_encode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
 
 	if (signal_defined(n_y, 2, N_y) && signal_defined(n_x, 2, N_x)) {
 		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
