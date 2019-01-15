@@ -117,6 +117,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
  * valid after few iterations.
  */
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4])
 {
@@ -167,6 +168,7 @@ static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4])
 {
@@ -332,6 +334,7 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 #define signal_define0(n, s, N) (               (n) < (N)       )
 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
@@ -384,6 +387,7 @@ static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, i
 }
 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 /*
  * encode 2x2 coefficients
