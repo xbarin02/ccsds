@@ -11,3 +11,5 @@ perftest
 # object files
 *.o
 
+# image files
+*.pgm
