@@ -16,9 +16,9 @@
 /*
  * 0 for convolution, 1 for multi-loop lifting, 2 for single-loop lifting
  */
-#define CONFIG_DWT1_MODE 0
+#define CONFIG_DWT1_MODE 2
 
 /*
  * 0 for separable mode, 1 for line-based mode, 2 for single-loop mode
  */
-#define CONFIG_DWT2_MODE 0
+#define CONFIG_DWT2_MODE 2

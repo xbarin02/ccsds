@@ -477,7 +477,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	return RET_SUCCESS;
 #endif
-#if 1
+#if (CONFIG_DWT1_MODE == 2)
 	size_t N;
 	float buff[4] = { .0f, .0f, .0f, .0f };
 
@@ -489,7 +489,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	return RET_SUCCESS;
 #endif
-#if 0
+#if (CONFIG_DWT1_MODE == 1)
 	void *line_;
 	size_t n, N;
 
@@ -557,7 +557,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	return RET_SUCCESS;
 #endif
-#if 0
+#if (CONFIG_DWT1_MODE == 0)
         void *line_;
         size_t n, N;
 
@@ -790,7 +790,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 {
 	size_t y, x;
 
-#if 0
+#if (CONFIG_DWT2_MODE == 0)
 	/* for each row */
 	for (y = 0; y < height; ++y) {
 		/* invoke one-dimensional transform */
@@ -802,7 +802,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 		dwtfloat_encode_line(band + x*stride_x, height, stride_y);
 	}
 #endif
-#if 0
+#if (CONFIG_DWT2_MODE == 1)
 	float *buff;
 
 	buff = malloc( width * 4 * sizeof(float) );
@@ -830,7 +830,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 
 	free(buff);
 #endif
-#if 1
+#if (CONFIG_DWT2_MODE == 2)
 	float *buff_y, *buff_x;
 
 	buff_y = malloc( (height+4) * 4 * sizeof(float) );
@@ -855,7 +855,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
 {
 	size_t y, x;
-#if 0
+#if (CONFIG_DWT2_MODE == 0) || (CONFIG_DWT2_MODE == 1)
 	/* for each column */
 	for (x = 0; x < width; ++x) {
 		/* invoke one-dimensional transform */
@@ -867,7 +867,7 @@ int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 		dwtfloat_decode_line(band + y*stride_y, width, stride_x);
 	}
 #endif
-#if 1
+#if (CONFIG_DWT2_MODE == 2)
 	float *buff_y, *buff_x;
 
 	buff_y = malloc( (height+4) * 4 * sizeof(float) );
