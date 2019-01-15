@@ -109,6 +109,15 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 #define rcp_sqr_zeta \
               +0.75666416420211528747583823019750f
 
+/*
+ * Suppress the "... may be used uninitialized in this function" warning.
+ *
+ * Well, GCC is right here. I however use these variables uninitialized
+ * intentionally. This is actually a sort of IIR filter. The results become
+ * valid after few iterations.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = +delta;
@@ -155,7 +164,10 @@ static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4
 	buff[2] = l2;
 	buff[3] = l3;
 }
+#pragma GCC diagnostic pop
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = -alpha;
@@ -202,6 +214,7 @@ static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4
 	buff[2] = l2;
 	buff[3] = l3;
 }
+#pragma GCC diagnostic pop
 
 /*
  * Compute a part of one-dimensional wavelet transform.
@@ -318,6 +331,8 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 #define signal_defined(n, s, N) ( (n) >= (s) && (n) < (N) + (s) )
 #define signal_define0(n, s, N) (               (n) < (N)       )
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
@@ -346,6 +361,7 @@ void dwtfloat_encode_step(int *line, size_t N, size_t stride, float *buff, size_
 #	undef c
 #	undef d
 }
+#pragma GCC diagnostic pop
 
 /* transpose 2x2 matrix */
 static void transpose(float core[4])
@@ -367,6 +383,8 @@ static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, i
 	transpose(core);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 /*
  * encode 2x2 coefficients
  */
@@ -408,6 +426,7 @@ void dwtfloat_encode_patch(int *data, size_t N_y, size_t N_x, size_t stride_y, s
 #	undef cd
 #	undef dd
 }
+#pragma GCC diagnostic pop
 
 static void dwtfloat_decode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
 {
