@@ -14,7 +14,7 @@
 #define CONFIG_HAS_LONG64 1
 
 /*
- * 0 for convolution, 1 for multi-loop lifting, 2 for single-loop lifting
+ * 0 for single-loop convolution, 1 for multi-loop lifting, 2 for single-loop lifting
  */
 #define CONFIG_DWT1_MODE 2
 
@@ -22,3 +22,8 @@
  * 0 for separable mode, 1 for line-based mode, 2 for single-loop mode
  */
 #define CONFIG_DWT2_MODE 2
+
+/*
+ * 0 for processing transform levels sequentially, 1 for interleaving the individual levels
+ */
+#define CONFIG_DWT_MS_MODE 1
