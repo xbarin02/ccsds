@@ -581,7 +581,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 #endif
 #if (CONFIG_DWT1_MODE == 0)
-        void *line_;
+        int *line_;
         size_t n, N;
 
         assert( is_even(size) );
@@ -598,8 +598,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
         /* convolution (using float32) */
 
-#       define c(n) ((int *)line_)[2*(n)+0]
-#       define d(n) ((int *)line_)[2*(n)+1]
+#       define c(n) line_[2*(n)+0]
+#       define d(n) line_[2*(n)+1]
 #       define x(m) ( (m) & (size_t)1<<(sizeof(size_t)*CHAR_BIT-1) ? line[stride*-(m)] : \
                 ( (m) > (size-1) ? line[stride*(2*(size-1)-(m))] : \
                 line[stride*(m)] ) )
