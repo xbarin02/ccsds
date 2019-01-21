@@ -12,7 +12,7 @@ int dwtint_encode_line(int *line, size_t size, size_t stride)
 
 	assert( is_even(size) );
 
-	N = size/2;
+	N = size / 2;
 
 	/* lifting */
 
@@ -506,7 +506,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	assert( is_even(size) );
 
-	N = size/2;
+	N = size / 2;
 
 	dwtfloat_encode_line_segment(line, size, stride, buff, 0, N+2);
 
@@ -518,7 +518,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	assert( is_even(size) );
 
-	N = size/2;
+	N = size / 2;
 
 	line_ = malloc( size * sizeof(float) );
 
@@ -586,7 +586,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
         assert( is_even(size) );
 
-        N = size/2;
+        N = size / 2;
 
         line_ = malloc( size * sizeof(int) );
 
@@ -596,7 +596,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
         assert( line );
 
-        /* convolution (using float64) */
+        /* convolution (using float32) */
 
 #       define c(n) ((int *)line_)[2*(n)+0]
 #       define d(n) ((int *)line_)[2*(n)+1]
@@ -650,7 +650,7 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 
 	assert( is_even(size) );
 
-	N = size/2;
+	N = size / 2;
 
 #define c(n) line[stride*(2*(n)+0)]
 #define d(n) line[stride*(2*(n)+1)]
@@ -703,7 +703,7 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 
 	assert( is_even(size) );
 
-	N = size/2;
+	N = size / 2;
 
 	line_ = malloc( size * sizeof(float) );
 
