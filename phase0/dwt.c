@@ -333,6 +333,8 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 #define signal_defined(n, s, N) ( (n) >= (s) && (n) < (N) + (s) )
 #define signal_define0(n, s, N) (               (n) < (N)       )
 
+#define signal_mirror(n, N) ( (n) < 0 ? -(n) : ( (n) >= (N) ? (2*((N)-1)-(n)) : (n) ) )
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -602,9 +604,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 #	define c(n) line_[2*(n)+0]
 #	define d(n) line_[2*(n)+1]
-#	define x(m) ( (m) < 0 ? line[stride_*-(m)] : \
-	            ( (m) >= size_ ? line[stride_*(2*(size_-1)-(m))] : \
-	            line[stride_*(m)] ) )
+#	define x(n) line[ stride_ * signal_mirror(n, size_) ]
 
 	for (n = 0; n < N; ++n) {
 		c(n) = (int) roundf_ (
