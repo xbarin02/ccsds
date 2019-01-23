@@ -326,12 +326,15 @@ static void decode_adjust_levers(int lever[4], ptrdiff_t n, ptrdiff_t N)
 }
 
 /*
- * Predicate: Is a signal defined at the position 'n-s'?
+ * Predicate: Is a signal defined at the position 'n'?
  *
  * Note that a signal is defined on [0; N).
  */
 #define signal_defined(n, N) ( (n) >= 0 && (n) < (N) )
 
+/*
+ * mirror symmetric signal extension
+ */
 #define signal_mirror(n, N) ( (n) < 0 ? -(n) : ( (n) >= (N) ? (2*((N)-1)-(n)) : (n) ) )
 
 #pragma GCC diagnostic push
