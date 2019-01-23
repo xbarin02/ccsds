@@ -882,7 +882,7 @@ int dwtfloat_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	float *buff_y, *buff_x;
 
 	buff_y = malloc( (size_t) (height+4) * 4 * sizeof(float) );
-	buff_x = malloc( (size_t) (width+4) * 4 * sizeof(float) );
+	buff_x = malloc( (size_t) (width +4) * 4 * sizeof(float) );
 
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -946,7 +946,7 @@ int dwtint_encode(struct frame *frame)
 	assert( frame );
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
-	width = (ptrdiff_t) ceil_multiple8(frame->width);
+	width  = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -1007,7 +1007,7 @@ int dwtfloat_encode(struct frame *frame)
 	assert( frame );
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
-	width = (ptrdiff_t) ceil_multiple8(frame->width);
+	width  = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -1046,7 +1046,7 @@ int dwtfloat_encode(struct frame *frame)
 		dwtfloat_encode_band_strip(data, stride_y_[0], stride_x_[0], height_[0], width_[0], buff_y_[0], buff_x_[0], y/1-2, y/1+8-2);
 		/* j = 1, y_j = 2..height/2+16-2 */
 		dwtfloat_encode_band_strip(data, stride_y_[1], stride_x_[1], height_[1], width_[1], buff_y_[1], buff_x_[1], y/2-2, y/2+4-2);
-		/* j = 2, y_j = 0..height/4+8-2 */
+		/* j = 2, y_j = 0..height/4+ 8-2 */
 		dwtfloat_encode_band_strip(data, stride_y_[2], stride_x_[2], height_[2], width_[2], buff_y_[2], buff_x_[2], y/4-2, y/4+2-2);
 	}
 
@@ -1068,7 +1068,7 @@ int dwtint_decode(struct frame *frame)
 	assert( frame );
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
-	width = (ptrdiff_t) ceil_multiple8(frame->width);
+	width  = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -1120,7 +1120,7 @@ int dwtfloat_decode(struct frame *frame)
 	assert( frame );
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
-	width = (ptrdiff_t) ceil_multiple8(frame->width);
+	width  = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
