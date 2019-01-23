@@ -6,11 +6,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
-int dwtint_encode_line(int *line, size_t size, size_t stride)
+int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 {
-	size_t n, N;
+	ptrdiff_t n, N;
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
 
@@ -224,12 +224,12 @@ static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4
  * The n0 is the initial coordinate and n1 is the smallest coordinate behind the signal segment.
  * Valid coordinates are in range [0, N+2) with N = size/2 (the signal length must be even).
  */
-void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *buff, size_t n0, size_t n1)
+void dwtfloat_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, float *buff, ptrdiff_t n0, ptrdiff_t n1)
 {
-	size_t n, N;
+	ptrdiff_t n, N;
 	float data[2];
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
 
@@ -309,7 +309,7 @@ void dwtfloat_encode_line_segment(int *line, size_t size, size_t stride, float *
  * c(0) d(0) c(1) d(1) c(2) d(N-1)
  */
 
-static void encode_adjust_levers(int lever[4], size_t n, size_t N)
+static void encode_adjust_levers(int lever[4], ptrdiff_t n, ptrdiff_t N)
 {
 	lever[2] = n ==   1 ? -1 : 0;
 	lever[0] = n ==   2 ? -1 : 0;
@@ -317,7 +317,7 @@ static void encode_adjust_levers(int lever[4], size_t n, size_t N)
 	lever[1] = n == N+1 ? +1 : 0;
 }
 
-static void decode_adjust_levers(int lever[4], size_t n, size_t N)
+static void decode_adjust_levers(int lever[4], ptrdiff_t n, ptrdiff_t N)
 {
 	lever[3] = n ==   0 ? -1 : 0;
 	lever[1] = n ==   1 ? -1 : 0;
@@ -341,7 +341,7 @@ static void decode_adjust_levers(int lever[4], size_t n, size_t N)
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
-void dwtfloat_encode_step(int *line, size_t N, size_t stride, float *buff, size_t n)
+void dwtfloat_encode_step(int *line, ptrdiff_t N, ptrdiff_t stride, float *buff, ptrdiff_t n)
 {
 	float data[2];
 	int lever[4] = { 0, 0, 0, 0 };
@@ -394,7 +394,7 @@ static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, i
 /*
  * encode 2x2 coefficients
  */
-void dwtfloat_encode_patch(int *data, size_t N_y, size_t N_x, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t n_y, size_t n_x)
+void dwtfloat_encode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, float *buff_y, float *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
 {
 	/* vertical lever at [0], horizontal at [1] */
 	int lever[2][4];
@@ -446,7 +446,7 @@ static void dwtfloat_decode_core2(float core[4], float *buff_y, float *buff_x, i
 	transpose(core);
 }
 
-void dwtfloat_decode_patch(int *data, size_t N_y, size_t N_x, size_t stride_y, size_t stride_x, float *buff_y, float *buff_x, size_t n_y, size_t n_x)
+void dwtfloat_decode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, float *buff_y, float *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
 {
 	/* vertical lever at [0], horizontal at [1] */
 	int lever[2][4];
@@ -485,28 +485,13 @@ void dwtfloat_decode_patch(int *data, size_t N_y, size_t N_x, size_t stride_y, s
 #	undef dd
 }
 
-int dwtfloat_encode_line(int *line, size_t size, size_t stride)
+int dwtfloat_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 {
-#if 0
-	size_t n, N;
-	float buff[4] = { .0f, .0f, .0f, .0f };
-
-	assert( is_even(size) );
-
-	N = size / 2;
-
-	/* loop over the input signal */
-	for (n = 0; n < N+2; ++n) {
-		dwtfloat_encode_step(line, N, stride, buff, n);
-	}
-
-	return RET_SUCCESS;
-#endif
 #if (CONFIG_DWT1_MODE == 2)
-	size_t N;
+	ptrdiff_t N;
 	float buff[4] = { .0f, .0f, .0f, .0f };
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
 
@@ -515,15 +500,14 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 #endif
 #if (CONFIG_DWT1_MODE == 1)
-	ptrdiff_t stride_ = (ptrdiff_t) stride;
 	float *line_;
 	ptrdiff_t n, N;
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
-	N = (ptrdiff_t) size / 2;
+	N = size / 2;
 
-	line_ = malloc( size * sizeof(float) );
+	line_ = malloc( (size_t) size * sizeof(float) );
 
 	if (NULL == line_) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -537,8 +521,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 #	define d(n) line_[2*(n)+1]
 
 	for (n = 0; n < N; ++n) {
-		c(n) = (float) line[stride_*(2*n+0)];
-		d(n) = (float) line[stride_*(2*n+1)];
+		c(n) = (float) line[stride*(2*n+0)];
+		d(n) = (float) line[stride*(2*n+1)];
 	}
 
 	/* alpha: predict D from C */
@@ -572,8 +556,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	}
 
 	for (n = 0; n < N; ++n) {
-		line[stride_*(2*n+0)] = roundf_( c(n) );
-		line[stride_*(2*n+1)] = roundf_( d(n) );
+		line[stride*(2*n+0)] = roundf_( c(n) );
+		line[stride*(2*n+1)] = roundf_( d(n) );
 	}
 
 #	undef c
@@ -584,15 +568,14 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 #endif
 #if (CONFIG_DWT1_MODE == 0)
-	ptrdiff_t stride_ = (ptrdiff_t) stride;
 	int *line_;
 	ptrdiff_t n, N;
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
-	N = (ptrdiff_t) size / 2;
+	N = size / 2;
 
-	line_ = malloc( size * sizeof(int) );
+	line_ = malloc( (size_t) size * sizeof(int) );
 
 	if (NULL == line_) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -604,19 +587,19 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 #	define c(n) line_[2*(n)+0]
 #	define d(n) line_[2*(n)+1]
-#	define x(n) line[ stride_ * signal_mirror(n, (ptrdiff_t) size) ]
+#	define x(n) line[ stride * signal_mirror((n), size) ]
 
 	for (n = 0; n < N; ++n) {
 		c(n) = (int) roundf_ (
-			+0.037828455507f * (float) x(2*n-4)
-			-0.023849465020f * (float) x(2*n-3)
-			-0.110624404418f * (float) x(2*n-2)
-			+0.377402855613f * (float) x(2*n-1)
-			+0.852698679009f * (float) x(2*n+0)
-			+0.377402855613f * (float) x(2*n+1)
-			-0.110624404418f * (float) x(2*n+2)
-			-0.023849465020f * (float) x(2*n+3)
-			+0.037828455507f * (float) x(2*n+4)
+			+0.037828455507f * (float) x(2*n+0-4)
+			-0.023849465020f * (float) x(2*n+0-3)
+			-0.110624404418f * (float) x(2*n+0-2)
+			+0.377402855613f * (float) x(2*n+0-1)
+			+0.852698679009f * (float) x(2*n+0+0)
+			+0.377402855613f * (float) x(2*n+0+1)
+			-0.110624404418f * (float) x(2*n+0+2)
+			-0.023849465020f * (float) x(2*n+0+3)
+			+0.037828455507f * (float) x(2*n+0+4)
 		);
 
 		d(n) = (int) roundf_ (
@@ -632,8 +615,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	/* keep interleaved */
 	for (n = 0; n < N; ++n) {
-		line[stride_*(2*n+0)] = c(n);
-		line[stride_*(2*n+1)] = d(n);
+		line[stride*(2*n+0)] = c(n);
+		line[stride*(2*n+1)] = d(n);
 	}
 
 #	undef c
@@ -646,11 +629,11 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 #endif
 }
 
-int dwtint_decode_line(int *line, size_t size, size_t stride)
+int dwtint_decode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 {
-	size_t n, N;
+	ptrdiff_t n, N;
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
 
@@ -698,16 +681,16 @@ int dwtint_decode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-int dwtfloat_decode_line(int *line, size_t size, size_t stride)
+int dwtfloat_decode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 {
 	int *line_;
-	size_t n, N;
+	ptrdiff_t n, N;
 
-	assert( is_even(size) );
+	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
 
-	line_ = malloc( size * sizeof(float) );
+	line_ = malloc( (size_t) size * sizeof(float) );
 
 	if (NULL == line_) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -768,9 +751,9 @@ int dwtfloat_decode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 }
 
-void dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
+void dwtint_weight_line(int *line, ptrdiff_t size, ptrdiff_t stride, int weight)
 {
-	size_t n;
+	ptrdiff_t n;
 
 	assert( line );
 
@@ -782,9 +765,9 @@ void dwtint_weight_line(int *line, size_t size, size_t stride, int weight)
 /*
  * inverse function to dwt_weight_line
  */
-void dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
+void dwtint_unweight_line(int *line, ptrdiff_t size, ptrdiff_t stride, int weight)
 {
-	size_t n;
+	ptrdiff_t n;
 
 	assert( line );
 
@@ -793,9 +776,9 @@ void dwtint_unweight_line(int *line, size_t size, size_t stride, int weight)
 	}
 }
 
-int dwtint_encode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
 {
-	size_t y, x;
+	ptrdiff_t y, x;
 
 	/* for each row */
 	for (y = 0; y < height; ++y) {
@@ -811,9 +794,9 @@ int dwtint_encode_band(int *band, size_t stride_y, size_t stride_x, size_t heigh
 	return RET_SUCCESS;
 }
 
-int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
 {
-	size_t y, x;
+	ptrdiff_t y, x;
 
 #if (CONFIG_DWT2_MODE == 0)
 	/* for each row */
@@ -830,7 +813,7 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 #if (CONFIG_DWT2_MODE == 1)
 	float *buff;
 
-	buff = malloc( width * 4 * sizeof(float) );
+	buff = malloc( (size_t) width * 4 * sizeof(float) );
 
 	if (NULL == buff) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -858,8 +841,8 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 #if (CONFIG_DWT2_MODE == 2)
 	float *buff_y, *buff_x;
 
-	buff_y = malloc( (height+4) * 4 * sizeof(float) );
-	buff_x = malloc( (width+4) * 4 * sizeof(float) );
+	buff_y = malloc( (size_t) (height+4) * 4 * sizeof(float) );
+	buff_x = malloc( (size_t) (width+4) * 4 * sizeof(float) );
 
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -877,9 +860,9 @@ int dwtfloat_encode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 	return RET_SUCCESS;
 }
 
-void dwtfloat_encode_band_part(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width, float *buff_y, float *buff_x, size_t y0, size_t y1)
+void dwtfloat_encode_band_part(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, float *buff_y, float *buff_x, ptrdiff_t y0, ptrdiff_t y1)
 {
-	size_t y, x;
+	ptrdiff_t y, x;
 
 	assert( is_even(y0) );
 
@@ -890,9 +873,10 @@ void dwtfloat_encode_band_part(int *band, size_t stride_y, size_t stride_x, size
 	}
 }
 
-int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+int dwtfloat_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
 {
-	size_t y, x;
+	ptrdiff_t y, x;
+
 #if (CONFIG_DWT2_MODE == 0) || (CONFIG_DWT2_MODE == 1)
 	/* for each column */
 	for (x = 0; x < width; ++x) {
@@ -908,8 +892,8 @@ int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 #if (CONFIG_DWT2_MODE == 2)
 	float *buff_y, *buff_x;
 
-	buff_y = malloc( (height+4) * 4 * sizeof(float) );
-	buff_x = malloc( (width+4) * 4 * sizeof(float) );
+	buff_y = malloc( (size_t) (height+4) * 4 * sizeof(float) );
+	buff_x = malloc( (size_t) (width+4) * 4 * sizeof(float) );
 
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -924,12 +908,13 @@ int dwtfloat_decode_band(int *band, size_t stride_y, size_t stride_x, size_t hei
 	free(buff_x);
 	free(buff_y);
 #endif
+
 	return RET_SUCCESS;
 }
 
-int dwtint_decode_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width)
+int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
 {
-	size_t y, x;
+	ptrdiff_t y, x;
 
 	/* for each column */
 	for (x = 0; x < width; ++x) {
@@ -945,18 +930,18 @@ int dwtint_decode_band(int *band, size_t stride_y, size_t stride_x, size_t heigh
 	return RET_SUCCESS;
 }
 
-void dwtint_weight_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width, int weight)
+void dwtint_weight_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight)
 {
-	size_t y;
+	ptrdiff_t y;
 
 	for (y = 0; y < height; ++y) {
 		dwtint_weight_line(band + y*stride_y, width, stride_x, weight);
 	}
 }
 
-void dwtint_unweight_band(int *band, size_t stride_y, size_t stride_x, size_t height, size_t width, int weight)
+void dwtint_unweight_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight)
 {
-	size_t y;
+	ptrdiff_t y;
 
 	for (y = 0; y < height; ++y) {
 		dwtint_unweight_line(band + y*stride_y, width, stride_x, weight);
@@ -966,13 +951,13 @@ void dwtint_unweight_band(int *band, size_t stride_y, size_t stride_x, size_t he
 int dwtint_encode(struct frame *frame)
 {
 	int j;
-	size_t height, width;
+	ptrdiff_t height, width;
 	int *data;
 
 	assert( frame );
 
-	height = ceil_multiple8(frame->height);
-	width = ceil_multiple8(frame->width);
+	height = (ptrdiff_t) ceil_multiple8(frame->height);
+	width = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -985,10 +970,10 @@ int dwtint_encode(struct frame *frame)
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
 		/* number of elements for input */
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
 		/* stride of input data (for level j) */
-		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
+		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
@@ -996,9 +981,9 @@ int dwtint_encode(struct frame *frame)
 	/* (2.3) apply Subband Weights */
 
 	for (j = 1; j < 4; ++j) {
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
-		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
+		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		int *band_ll = data +          0 +          0;
 		int *band_hl = data +          0 + stride_x/2;
@@ -1021,19 +1006,19 @@ int dwtint_encode(struct frame *frame)
 int dwtfloat_encode(struct frame *frame)
 {
 	int j;
-	size_t height, width;
+	ptrdiff_t height, width;
 	int *data;
 #if (CONFIG_DWT_MS_MODE == 1)
 	float *buff_x_[3], *buff_y_[3];
-	size_t height_[3], width_[3];
-	size_t stride_y_[3], stride_x_[3];
-	size_t y;
+	ptrdiff_t height_[3], width_[3];
+	ptrdiff_t stride_y_[3], stride_x_[3];
+	ptrdiff_t y;
 #endif
 
 	assert( frame );
 
-	height = ceil_multiple8(frame->height);
-	width = ceil_multiple8(frame->width);
+	height = (ptrdiff_t) ceil_multiple8(frame->height);
+	width = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -1047,20 +1032,20 @@ int dwtfloat_encode(struct frame *frame)
 	/* for each level */
 	for (j = 0; j < 3; ++j) {
 		/* number of elements for input */
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
 		/* stride of input data (for level j) */
-		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
+		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		dwtfloat_encode_band(data, stride_y, stride_x, height_j, width_j);
 	}
 #endif
 #if (CONFIG_DWT_MS_MODE == 1)
 	for (j = 0; j < 3; ++j) {
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
-		buff_y_[j] = malloc( (height_j + (32U>>j) - 2U) * 4 * sizeof(float) );
-		buff_x_[j] = malloc( (width_j + (32U>>j) - 2U) * 4 * sizeof(float) );
+		buff_y_[j] = malloc( (size_t) (height_j + (32>>j) - 2) * 4 * sizeof(float) );
+		buff_x_[j] = malloc( (size_t) (width_j + (32>>j) - 2) * 4 * sizeof(float) );
 	}
 
 	for (j = 0; j < 3; ++j) {
@@ -1068,7 +1053,7 @@ int dwtfloat_encode(struct frame *frame)
 		width_ [j] = width  >> j;
 
 		stride_y_[j] = width << j;
-		stride_x_[j] =    1U << j;
+		stride_x_[j] =     1 << j;
 	}
 
 	/* j = 0, y_j = 0..6 */
@@ -1097,13 +1082,13 @@ int dwtfloat_encode(struct frame *frame)
 int dwtint_decode(struct frame *frame)
 {
 	int j;
-	size_t height, width;
+	ptrdiff_t height, width;
 	int *data;
 
 	assert( frame );
 
-	height = ceil_multiple8(frame->height);
-	width = ceil_multiple8(frame->width);
+	height = (ptrdiff_t) ceil_multiple8(frame->height);
+	width = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -1114,9 +1099,9 @@ int dwtint_decode(struct frame *frame)
 	/* undo Subband Weights */
 
 	for (j = 1; j < 4; ++j) {
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
-		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
+		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		int *band_ll = data +          0 +          0;
 		int *band_hl = data +          0 + stride_x/2;
@@ -1136,9 +1121,9 @@ int dwtint_decode(struct frame *frame)
 	/* inverse two-dimensional transform */
 
 	for (j = 2; j >= 0; --j) {
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
-		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
+		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		dwtint_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
@@ -1149,13 +1134,13 @@ int dwtint_decode(struct frame *frame)
 int dwtfloat_decode(struct frame *frame)
 {
 	int j;
-	size_t height, width;
+	ptrdiff_t height, width;
 	int *data;
 
 	assert( frame );
 
-	height = ceil_multiple8(frame->height);
-	width = ceil_multiple8(frame->width);
+	height = (ptrdiff_t) ceil_multiple8(frame->height);
+	width = (ptrdiff_t) ceil_multiple8(frame->width);
 
 	assert( is_multiple8(width) && is_multiple8(height) );
 
@@ -1166,9 +1151,9 @@ int dwtfloat_decode(struct frame *frame)
 	/* inverse two-dimensional transform */
 
 	for (j = 2; j >= 0; --j) {
-		size_t height_j = height>>j, width_j = width>>j;
+		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
-		size_t stride_y = (1U << j) * width, stride_x = (1U << j) * 1;
+		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		dwtfloat_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
