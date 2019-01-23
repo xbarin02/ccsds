@@ -386,6 +386,10 @@ void dwtfloat_encode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 	/* order on input: 0=HH, 1=LH, 2=HH, 3=LL */
 	float core[4];
 
+	/* we cannot access buff_x[] and buff_y[] at negative indices */
+	if ( n_y < 0 || n_x < 0 )
+		return;
+
 	encode_adjust_levers(lever[0], n_y, N_y);
 	encode_adjust_levers(lever[1], n_x, N_x);
 
@@ -1041,12 +1045,7 @@ int dwtfloat_encode(struct frame *frame)
 		stride_x_[j] =     1 << j;
 	}
 
-	/* j = 0, y_j = 0..6 */
-	dwtfloat_encode_band_part(data, stride_y_[0], stride_x_[0], height_[0], width_[0], buff_y_[0], buff_x_[0], 0, 6);
-	/* j = 1, y_j = 0..2 */
-	dwtfloat_encode_band_part(data, stride_y_[1], stride_x_[1], height_[1], width_[1], buff_y_[1], buff_x_[1], 0, 2);
-
-	for (y = 8; y < height+24; y += 8) {
+	for (y = 0; y < height+24; y += 8) {
 		/* j = 0, y_j = 6..height/1+32-2 */
 		dwtfloat_encode_band_part(data, stride_y_[0], stride_x_[0], height_[0], width_[0], buff_y_[0], buff_x_[0], y/1-2, y/1+8-2);
 		/* j = 1, y_j = 2..height/2+16-2 */
