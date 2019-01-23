@@ -1031,18 +1031,14 @@ int dwtfloat_encode(struct frame *frame)
 #endif
 #if (CONFIG_DWT_MS_MODE == 1)
 	for (j = 0; j < 3; ++j) {
-		ptrdiff_t height_j = height >> j, width_j = width >> j;
-
-		buff_y_[j] = malloc( (size_t) (height_j + (32>>j) - 2) * 4 * sizeof(float) );
-		buff_x_[j] = malloc( (size_t) (width_j + (32>>j) - 2) * 4 * sizeof(float) );
-	}
-
-	for (j = 0; j < 3; ++j) {
 		height_[j] = height >> j;
 		width_ [j] = width  >> j;
 
 		stride_y_[j] = width << j;
 		stride_x_[j] =     1 << j;
+
+		buff_y_[j] = malloc( (size_t) (height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
+		buff_x_[j] = malloc( (size_t) (width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
 	}
 
 	for (y = 0; y < height+24; y += 8) {
