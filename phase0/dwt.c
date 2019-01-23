@@ -515,12 +515,13 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	return RET_SUCCESS;
 #endif
 #if (CONFIG_DWT1_MODE == 1)
-	void *line_;
-	size_t n, N;
+	ptrdiff_t stride_ = (ptrdiff_t) stride;
+	float *line_;
+	ptrdiff_t n, N;
 
 	assert( is_even(size) );
 
-	N = size / 2;
+	N = (ptrdiff_t) size / 2;
 
 	line_ = malloc( size * sizeof(float) );
 
@@ -532,12 +533,12 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 	/* lifting */
 
-#	define c(n) ((float *)line_)[2*(n)+0]
-#	define d(n) ((float *)line_)[2*(n)+1]
+#	define c(n) line_[2*(n)+0]
+#	define d(n) line_[2*(n)+1]
 
 	for (n = 0; n < N; ++n) {
-		c(n) = (float) line[stride*(2*n+0)];
-		d(n) = (float) line[stride*(2*n+1)];
+		c(n) = (float) line[stride_*(2*n+0)];
+		d(n) = (float) line[stride_*(2*n+1)];
 	}
 
 	/* alpha: predict D from C */
@@ -571,8 +572,8 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 	}
 
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = roundf_( c(n) );
-		line[stride*(2*n+1)] = roundf_( d(n) );
+		line[stride_*(2*n+0)] = roundf_( c(n) );
+		line[stride_*(2*n+1)] = roundf_( d(n) );
 	}
 
 #	undef c
@@ -584,13 +585,12 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 #endif
 #if (CONFIG_DWT1_MODE == 0)
 	ptrdiff_t stride_ = (ptrdiff_t) stride;
-	ptrdiff_t size_ = (ptrdiff_t) size;
 	int *line_;
 	ptrdiff_t n, N;
 
 	assert( is_even(size) );
 
-	N = size_ / 2;
+	N = (ptrdiff_t) size / 2;
 
 	line_ = malloc( size * sizeof(int) );
 
@@ -604,7 +604,7 @@ int dwtfloat_encode_line(int *line, size_t size, size_t stride)
 
 #	define c(n) line_[2*(n)+0]
 #	define d(n) line_[2*(n)+1]
-#	define x(n) line[ stride_ * signal_mirror(n, size_) ]
+#	define x(n) line[ stride_ * signal_mirror(n, (ptrdiff_t) size) ]
 
 	for (n = 0; n < N; ++n) {
 		c(n) = (int) roundf_ (
