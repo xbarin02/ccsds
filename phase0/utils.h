@@ -265,18 +265,18 @@ static int round_div_pow2(int numerator, int log2_denominator)
 /**
  * \brief Is the number \p n even predicate
  */
-static int is_even(size_t n)
+static int is_even(ptrdiff_t n)
 {
 	/* size_t is unsigned integer type */
-	return !(n & 1);
+	return !((size_t) n & 1);
 }
 
 /**
  * \brief Is the number \p n multiple of 8 predicate
  */
-static int is_multiple8(size_t n)
+static int is_multiple8(ptrdiff_t n)
 {
-	return !(n & 7);
+	return !((size_t) n & 7);
 }
 
 /**
