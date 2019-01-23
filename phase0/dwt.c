@@ -330,7 +330,7 @@ static void decode_adjust_levers(int lever[4], ptrdiff_t n, ptrdiff_t N)
  *
  * Note that a signal is defined on [0; N).
  */
-#define signal_defined(n, s, N) ( (n) - (s) >= 0 && (n) - (s) < (N) )
+#define signal_defined(n, N) ( (n) >= 0 && (n) < (N) )
 
 #define signal_mirror(n, N) ( (n) < 0 ? -(n) : ( (n) >= (N) ? (2*((N)-1)-(n)) : (n) ) )
 
@@ -350,14 +350,14 @@ void dwtfloat_encode_step(int *line, ptrdiff_t N, ptrdiff_t stride, float *buff,
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
-	if (signal_defined(n, 1, N))
+	if (signal_defined(n-1, N))
 		data[0] = (float) d(n-1);
-	if (signal_defined(n, 0, N))
+	if (signal_defined(n-0, N))
 		data[1] = (float) c(n-0);
 
 	dwtfloat_encode_core(data, buff, lever);
 
-	if (signal_defined(n, 2, N)) {
+	if (signal_defined(n-2, N)) {
 		c(n-2) = roundf_( data[0] * (    +zeta) );
 		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
 	}
@@ -408,18 +408,18 @@ void dwtfloat_encode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
-	if (signal_defined(n_y, 1, N_y) && signal_defined(n_x, 1, N_x)) /* HH */
+	if (signal_defined(n_y-1, N_y) && signal_defined(n_x-1, N_x)) /* HH */
 		core[0] = (float) dd(n_y-1, n_x-1);
-	if (signal_defined(n_y, 1, N_y) && signal_defined(n_x, 0, N_x)) /* LH */
+	if (signal_defined(n_y-1, N_y) && signal_defined(n_x-0, N_x)) /* LH */
 		core[1] = (float) cd(n_y-1, n_x-0);
-	if (signal_defined(n_y, 0, N_y) && signal_defined(n_x, 1, N_x)) /* HL */
+	if (signal_defined(n_y-0, N_y) && signal_defined(n_x-1, N_x)) /* HL */
 		core[2] = (float) dc(n_y-0, n_x-1);
-	if (signal_defined(n_y, 0, N_y) && signal_defined(n_x, 0, N_x)) /* LL */
+	if (signal_defined(n_y-0, N_y) && signal_defined(n_x-0, N_x)) /* LL */
 		core[3] = (float) cc(n_y-0, n_x-0);
 
 	dwtfloat_encode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
 
-	if (signal_defined(n_y, 2, N_y) && signal_defined(n_x, 2, N_x)) {
+	if (signal_defined(n_y-2, N_y) && signal_defined(n_x-2, N_x)) {
 		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
 		dc(n_y-2, n_x-2) = roundf_( core[1] * -1           ); /* HL */
 		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
@@ -460,7 +460,7 @@ void dwtfloat_decode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
-	if ( signal_defined(n_y, 0, N_y) && signal_defined(n_x, 0, N_x) ) {
+	if ( signal_defined(n_y-0, N_y) && signal_defined(n_x-0, N_x) ) {
 		core[0] = (float) cc(n_y, n_x) * rcp_sqr_zeta; /* LL */
 		core[1] = (float) dc(n_y, n_x) * -1;           /* HL */
 		core[2] = (float) cd(n_y, n_x) * -1;           /* LH */
@@ -469,13 +469,13 @@ void dwtfloat_decode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 
 	dwtfloat_decode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
 
-	if ( signal_defined(n_y, 1, N_y) && signal_defined(n_x, 1, N_x) )
+	if ( signal_defined(n_y-1, N_y) && signal_defined(n_x-1, N_x) )
 		cc(n_y-1, n_x-1) = roundf_( core[3] ); /* LL */
-	if ( signal_defined(n_y, 1, N_y) && signal_defined(n_x, 2, N_x) )
+	if ( signal_defined(n_y-1, N_y) && signal_defined(n_x-2, N_x) )
 		dc(n_y-1, n_x-2) = roundf_( core[2] ); /* HL */
-	if ( signal_defined(n_y, 2, N_y) && signal_defined(n_x, 1, N_x) )
+	if ( signal_defined(n_y-2, N_y) && signal_defined(n_x-1, N_x) )
 		cd(n_y-2, n_x-1) = roundf_( core[1] ); /* LH */
-	if ( signal_defined(n_y, 2, N_y) && signal_defined(n_x, 2, N_x) )
+	if ( signal_defined(n_y-2, N_y) && signal_defined(n_x-2, N_x) )
 		dd(n_y-2, n_x-2) = roundf_( core[0] ); /* HH */
 
 #	undef cc
