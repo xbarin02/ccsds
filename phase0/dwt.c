@@ -116,9 +116,6 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
  * intentionally. This is actually a sort of IIR filter. The results become
  * valid after few iterations.
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = +delta;
@@ -165,11 +162,7 @@ static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4
 	buff[2] = l2;
 	buff[3] = l3;
 }
-#pragma GCC diagnostic pop
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = -alpha;
@@ -216,7 +209,6 @@ static void dwtfloat_decode_core(float data[2], float buff[4], const int lever[4
 	buff[2] = l2;
 	buff[3] = l3;
 }
-#pragma GCC diagnostic pop
 
 /*
  * Compute a part of one-dimensional wavelet transform.
@@ -337,9 +329,6 @@ static void decode_adjust_levers(int lever[4], ptrdiff_t n, ptrdiff_t N)
  */
 #define signal_mirror(n, N) ( (n) < 0 ? -(n) : ( (n) >= (N) ? (2*((N)-1)-(n)) : (n) ) )
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 /*
  * consume line[stride*(k-1)] and line[stride*(k)]
  */
@@ -353,10 +342,8 @@ void dwtfloat_encode_step(int *line, ptrdiff_t N, ptrdiff_t stride, float *buff,
 #	define c(n) line[stride*(2*(n)+0)]
 #	define d(n) line[stride*(2*(n)+1)]
 
-	if (signal_defined(n-1, N))
-		data[0] = (float) d(n-1);
-	if (signal_defined(n-0, N))
-		data[1] = (float) c(n-0);
+	data[0] = signal_defined(n-1, N) ? (float) d(n-1) : 0;
+	data[1] = signal_defined(n-0, N) ? (float) c(n-0) : 0;
 
 	dwtfloat_encode_core(data, buff, lever);
 
@@ -368,7 +355,6 @@ void dwtfloat_encode_step(int *line, ptrdiff_t N, ptrdiff_t stride, float *buff,
 #	undef c
 #	undef d
 }
-#pragma GCC diagnostic pop
 
 /* transpose 2x2 matrix */
 static void transpose(float core[4])
@@ -390,9 +376,6 @@ static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, i
 	transpose(core);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 /*
  * encode 2x2 coefficients
  */
@@ -411,14 +394,10 @@ void dwtfloat_encode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 #	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
 #	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
 
-	if (signal_defined(n_y-1, N_y) && signal_defined(n_x-1, N_x)) /* HH */
-		core[0] = (float) dd(n_y-1, n_x-1);
-	if (signal_defined(n_y-1, N_y) && signal_defined(n_x-0, N_x)) /* LH */
-		core[1] = (float) cd(n_y-1, n_x-0);
-	if (signal_defined(n_y-0, N_y) && signal_defined(n_x-1, N_x)) /* HL */
-		core[2] = (float) dc(n_y-0, n_x-1);
-	if (signal_defined(n_y-0, N_y) && signal_defined(n_x-0, N_x)) /* LL */
-		core[3] = (float) cc(n_y-0, n_x-0);
+	core[0] = signal_defined(n_y-1, N_y) && signal_defined(n_x-1, N_x) ? (float) dd(n_y-1, n_x-1) : 0; /* HH */
+	core[1] = signal_defined(n_y-1, N_y) && signal_defined(n_x-0, N_x) ? (float) cd(n_y-1, n_x-0) : 0; /* LH */
+	core[2] = signal_defined(n_y-0, N_y) && signal_defined(n_x-1, N_x) ? (float) dc(n_y-0, n_x-1) : 0; /* HL */
+	core[3] = signal_defined(n_y-0, N_y) && signal_defined(n_x-0, N_x) ? (float) cc(n_y-0, n_x-0) : 0; /* LL */
 
 	dwtfloat_encode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
 
@@ -434,7 +413,6 @@ void dwtfloat_encode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 #	undef cd
 #	undef dd
 }
-#pragma GCC diagnostic pop
 
 static void dwtfloat_decode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
 {
@@ -468,6 +446,11 @@ void dwtfloat_decode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t st
 		core[1] = (float) dc(n_y, n_x) * -1;           /* HL */
 		core[2] = (float) cd(n_y, n_x) * -1;           /* LH */
 		core[3] = (float) dd(n_y, n_x) * sqr_zeta;     /* HH */
+	} else {
+		core[0] = 0;
+		core[1] = 0;
+		core[2] = 0;
+		core[3] = 0;
 	}
 
 	dwtfloat_decode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
