@@ -849,7 +849,7 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	return RET_SUCCESS;
 }
 
-void dwtfloat_encode_band_part(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, float *buff_y, float *buff_x, ptrdiff_t y0, ptrdiff_t y1)
+void dwtfloat_encode_band_strip(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, float *buff_y, float *buff_x, ptrdiff_t y0, ptrdiff_t y1)
 {
 	ptrdiff_t y, x;
 
@@ -1047,11 +1047,11 @@ int dwtfloat_encode(struct frame *frame)
 
 	for (y = 0; y < height+24; y += 8) {
 		/* j = 0, y_j = 6..height/1+32-2 */
-		dwtfloat_encode_band_part(data, stride_y_[0], stride_x_[0], height_[0], width_[0], buff_y_[0], buff_x_[0], y/1-2, y/1+8-2);
+		dwtfloat_encode_band_strip(data, stride_y_[0], stride_x_[0], height_[0], width_[0], buff_y_[0], buff_x_[0], y/1-2, y/1+8-2);
 		/* j = 1, y_j = 2..height/2+16-2 */
-		dwtfloat_encode_band_part(data, stride_y_[1], stride_x_[1], height_[1], width_[1], buff_y_[1], buff_x_[1], y/2-2, y/2+4-2);
+		dwtfloat_encode_band_strip(data, stride_y_[1], stride_x_[1], height_[1], width_[1], buff_y_[1], buff_x_[1], y/2-2, y/2+4-2);
 		/* j = 2, y_j = 0..height/4+8-2 */
-		dwtfloat_encode_band_part(data, stride_y_[2], stride_x_[2], height_[2], width_[2], buff_y_[2], buff_x_[2], y/4-2, y/4+2-2);
+		dwtfloat_encode_band_strip(data, stride_y_[2], stride_x_[2], height_[2], width_[2], buff_y_[2], buff_x_[2], y/4-2, y/4+2-2);
 	}
 
 	for (j = 0; j < 3; ++j) {
