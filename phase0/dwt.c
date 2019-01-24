@@ -1006,6 +1006,31 @@ int dwtint_encode(struct frame *frame)
 	return RET_SUCCESS;
 }
 
+/* process 8x8 block using multi-scale transform */
+void dwtfloat_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], float *buff_y[3], float *buff_x[3], ptrdiff_t y, ptrdiff_t x)
+{
+	ptrdiff_t y_, x_;
+
+	/* j = 0 */
+	for (y_ = (y/1-2)/2; y_ < (y/1-2+8)/2; ++y_) {
+		for (x_ = (x/1-2)/2; x_ < (x/1-2+8)/2; ++x_) {
+			dwtfloat_encode_patch(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_, x_);
+		}
+	}
+	/* j = 1 */
+	for (y_ = (y/2-2)/2; y_ < (y/2-2+4)/2; ++y_) {
+		for (x_ = (x/2-2)/2; x_ < (x/2+4-2)/2; ++x_) {
+			dwtfloat_encode_patch(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_, x_);
+		}
+	}
+	/* j = 2 */
+	for (y_ = (y/4-2)/2; y_ < (y/4-2+2)/2; ++y_) {
+		for (x_ = (x/4-2)/2; x_ < (x/4+2-2)/2; ++x_) {
+			dwtfloat_encode_patch(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_, x_);
+		}
+	}
+}
+
 int dwtfloat_encode(struct frame *frame)
 {
 	int j;
@@ -1074,24 +1099,19 @@ int dwtfloat_encode(struct frame *frame)
 #endif
 #if (CONFIG_DWT_MS_MODE == 2)
 	for (j = 0; j < 3; ++j) {
-		height_[j] = height >> j;
-		width_ [j] = width  >> j;
+		height_[j] = (height >> j) >> 1;
+		width_ [j] = (width  >> j) >> 1;
 
 		stride_y_[j] = width << j;
 		stride_x_[j] =     1 << j;
 
-		buff_y_[j] = malloc( (size_t) (height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
-		buff_x_[j] = malloc( (size_t) (width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
+		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
+		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
 	}
 
 	for (y = 0; y < height+24; y += 8) {
 		for (x = 0; x < width+24; x += 8) {
-			/* j = 0 */
-			dwtfloat_encode_band_part(data, stride_y_[0], stride_x_[0], height_[0], width_[0], buff_y_[0], buff_x_[0], y/1-2, y/1+8-2, x/1-2, x/1+8-2);
-			/* j = 1 */
-			dwtfloat_encode_band_part(data, stride_y_[1], stride_x_[1], height_[1], width_[1], buff_y_[1], buff_x_[1], y/2-2, y/2+4-2, x/2-2, x/2+4-2);
-			/* j = 2 */
-			dwtfloat_encode_band_part(data, stride_y_[2], stride_x_[2], height_[2], width_[2], buff_y_[2], buff_x_[2], y/4-2, y/4+2-2, x/4-2, x/4+2-2);
+			dwtfloat_encode_block(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y, x);
 		}
 	}
 
