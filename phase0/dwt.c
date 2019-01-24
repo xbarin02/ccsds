@@ -849,33 +849,6 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	return RET_SUCCESS;
 }
 
-void dwtfloat_encode_band_strip(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, float *buff_y, float *buff_x, ptrdiff_t y0, ptrdiff_t y1)
-{
-	ptrdiff_t y, x;
-
-	assert( is_even(y0) );
-
-	for (y = y0; y < y1; y += 2) {
-		for (x = 0; x < width+4; x += 2) {
-			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
-		}
-	}
-}
-
-void dwtfloat_encode_band_part(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, float *buff_y, float *buff_x, ptrdiff_t y0, ptrdiff_t y1, ptrdiff_t x0, ptrdiff_t x1)
-{
-	ptrdiff_t y, x;
-
-	assert( is_even(y0) );
-	assert( is_even(x0) );
-
-	for (y = y0; y < y1; y += 2) {
-		for (x = x0; x < x1; x += 2) {
-			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
-		}
-	}
-}
-
 int dwtfloat_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
 {
 	ptrdiff_t y, x;
