@@ -379,7 +379,7 @@ static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, i
 /*
  * encode 2x2 coefficients
  */
-void dwtfloat_encode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, float *buff_y, float *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
+void dwtfloat_encode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, float *buff_y, float *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
 {
 	/* vertical lever at [0], horizontal at [1] */
 	int lever[2][4];
@@ -839,7 +839,7 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 
 	for (y = 0; y < height+4; y += 2) {
 		for (x = 0; x < width+4; x += 2) {
-			dwtfloat_encode_patch(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
+			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
 		}
 	}
 
@@ -857,7 +857,7 @@ void dwtfloat_encode_band_strip(int *band, ptrdiff_t stride_y, ptrdiff_t stride_
 
 	for (y = y0; y < y1; y += 2) {
 		for (x = 0; x < width+4; x += 2) {
-			dwtfloat_encode_patch(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
+			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
 		}
 	}
 }
@@ -871,7 +871,7 @@ void dwtfloat_encode_band_part(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x
 
 	for (y = y0; y < y1; y += 2) {
 		for (x = x0; x < x1; x += 2) {
-			dwtfloat_encode_patch(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
+			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
 		}
 	}
 }
@@ -1014,19 +1014,19 @@ void dwtfloat_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[
 	/* j = 0 */
 	for (y_ = y/2-1; y_ < y/2-1+4; ++y_) {
 		for (x_ = x/2-1; x_ < x/2-1+4; ++x_) {
-			dwtfloat_encode_patch(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_, x_);
+			dwtfloat_encode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_, x_);
 		}
 	}
 	/* j = 1 */
 	for (y_ = y/4-1; y_ < y/4-1+2; ++y_) {
 		for (x_ = x/4-1; x_ < x/4-1+2; ++x_) {
-			dwtfloat_encode_patch(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_, x_);
+			dwtfloat_encode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_, x_);
 		}
 	}
 	/* j = 2 */
 	for (y_ = y/8-1; y_ < y/8-1+1; ++y_) {
 		for (x_ = x/8-1; x_ < x/8-1+1; ++x_) {
-			dwtfloat_encode_patch(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_, x_);
+			dwtfloat_encode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_, x_);
 		}
 	}
 }
