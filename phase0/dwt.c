@@ -1012,20 +1012,20 @@ void dwtfloat_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[
 	ptrdiff_t y_, x_;
 
 	/* j = 0 */
-	for (y_ = (y/1-2)/2; y_ < (y/1-2+8)/2; ++y_) {
-		for (x_ = (x/1-2)/2; x_ < (x/1-2+8)/2; ++x_) {
+	for (y_ = y/2-1; y_ < y/2-1+4; ++y_) {
+		for (x_ = x/2-1; x_ < x/2-1+4; ++x_) {
 			dwtfloat_encode_patch(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_, x_);
 		}
 	}
 	/* j = 1 */
-	for (y_ = (y/2-2)/2; y_ < (y/2-2+4)/2; ++y_) {
-		for (x_ = (x/2-2)/2; x_ < (x/2+4-2)/2; ++x_) {
+	for (y_ = y/4-1; y_ < y/4-1+2; ++y_) {
+		for (x_ = x/4-1; x_ < x/4-1+2; ++x_) {
 			dwtfloat_encode_patch(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_, x_);
 		}
 	}
 	/* j = 2 */
-	for (y_ = (y/4-2)/2; y_ < (y/4-2+2)/2; ++y_) {
-		for (x_ = (x/4-2)/2; x_ < (x/4+2-2)/2; ++x_) {
+	for (y_ = y/8-1; y_ < y/8-1+1; ++y_) {
+		for (x_ = x/8-1; x_ < x/8-1+1; ++x_) {
 			dwtfloat_encode_patch(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_, x_);
 		}
 	}
