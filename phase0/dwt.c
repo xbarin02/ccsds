@@ -831,7 +831,7 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	float *buff_y, *buff_x;
 
 	buff_y = malloc( (size_t) (height+4) * 4 * sizeof(float) );
-	buff_x = malloc( (size_t) (width+4) * 4 * sizeof(float) );
+	buff_x = malloc( (size_t) (width +4) * 4 * sizeof(float) );
 
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -846,6 +846,7 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	free(buff_x);
 	free(buff_y);
 #endif
+
 	return RET_SUCCESS;
 }
 
