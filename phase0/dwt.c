@@ -837,9 +837,9 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
-	for (y = 0; y < height+4; y += 2) {
-		for (x = 0; x < width+4; x += 2) {
-			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
+	for (y = 0; y < height/2+2; ++y) {
+		for (x = 0; x < width/2+2; ++x) {
+			dwtfloat_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y, x);
 		}
 	}
 
