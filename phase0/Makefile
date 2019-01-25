@@ -1,6 +1,6 @@
-CFLAGS=-std=c89 -pedantic -Wall -Wextra -Wconversion -ftrapv -Wfloat-equal -g -march=native -O3
-LDFLAGS=-g -rdynamic
-LDLIBS=
+CFLAGS=-std=c89 -pedantic -Wall -Wextra -Wconversion -ftrapv -Wfloat-equal -g -march=native -O3 $(EXTRA_CFLAGS)
+LDFLAGS=-g -rdynamic $(EXTRA_LDFLAGS)
+LDLIBS=$(EXTRA_LDLIBS)
 
 .PHONY: all clean
 
