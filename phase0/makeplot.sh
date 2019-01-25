@@ -8,7 +8,10 @@ function config
 	sed "s/^\s*#\s*define\s*$1\s*[0-9]\+\s*$/#define $1 $2/" -i config.h
 }
 
-# 4:3
+config CONFIG_DWT1_MODE 2
+config CONFIG_DWT2_MODE 2
+config CONFIG_DWT_MS_MODE 2
+# 0 for 4:3, 1 for strip
 config CONFIG_PERFTEST_TYPE 0
 config CONFIG_PERFTEST_NUM 16
 
@@ -21,4 +24,4 @@ config CONFIG_PERFTEST_NUM 64
 make clean
 make perftest EXTRA_CFLAGS=-fprofile-use
 
-./perftest
+./perftest | tee plot.txt
