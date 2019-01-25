@@ -27,3 +27,8 @@
  * 0 for processing transform levels sequentially, 1 for interleaving the individual levels in strips, 2 for interleaving the individual levels in blocks
  */
 #define CONFIG_DWT_MS_MODE 2
+
+/*
+ * 0 for 4:3 aspect ratio, 1 for 1024 pixels wide strip
+ */
+#define CONFIG_PERFTEST_TYPE 0
