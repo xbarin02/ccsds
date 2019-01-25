@@ -109,13 +109,6 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 #define rcp_sqr_zeta \
               +0.75666416420211528747583823019750f
 
-/*
- * Suppress the "... may be used uninitialized in this function" warning.
- *
- * Well, GCC is right here. I however use these variables uninitialized
- * intentionally. This is actually a sort of IIR filter. The results become
- * valid after few iterations.
- */
 static void dwtfloat_encode_core(float data[2], float buff[4], const int lever[4])
 {
 	const float w0 = +delta;
@@ -364,7 +357,7 @@ static void transpose(float core[4])
 	core[2] = t;
 }
 
-static void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
+/*static*/ void dwtfloat_encode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
 {
 	/* horizontal filtering */
 	dwtfloat_encode_core(&core[0], buff_y + 4*(0), lever[1]);
@@ -418,7 +411,7 @@ void dwtfloat_encode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t str
 #	undef dd
 }
 
-static void dwtfloat_decode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
+/*static*/ void dwtfloat_decode_core2(float core[4], float *buff_y, float *buff_x, int lever[2][4])
 {
 	/* horizontal filtering */
 	dwtfloat_decode_core(&core[0], buff_y + 4*(0), lever[1]);
