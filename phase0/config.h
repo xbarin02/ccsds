@@ -32,3 +32,8 @@
  * 0 for 4:3 aspect ratio, 1 for 1024 pixels wide strip
  */
 #define CONFIG_PERFTEST_TYPE 0
+
+/*
+ * number of measurement points
+ */
+#define CONFIG_PERFTEST_NUM 64

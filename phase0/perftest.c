@@ -5,6 +5,7 @@
 #include <math.h>
 #include <float.h>
 
+#include "config.h"
 #include "frame.h"
 #include "common.h"
 #include "dwt.h"
@@ -74,7 +75,7 @@ int measurement_dwt_encode()
 {
 	size_t k;
 
-	for (k = 1; k < 64; ++k) {
+	for (k = 1; k < CONFIG_PERFTEST_NUM; ++k) {
 #if (CONFIG_PERFTEST_TYPE == 0)
 		size_t width = k * 160;
 		size_t height = k * 120;
