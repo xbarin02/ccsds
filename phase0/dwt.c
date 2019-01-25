@@ -430,7 +430,7 @@ static void dwtfloat_decode_core2(float core[4], float *buff_y, float *buff_x, i
 	transpose(core);
 }
 
-void dwtfloat_decode_patch(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, float *buff_y, float *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
+void dwtfloat_decode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, float *buff_y, float *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
 {
 	/* vertical lever at [0], horizontal at [1] */
 	int lever[2][4];
@@ -877,7 +877,7 @@ int dwtfloat_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 
 	for (y = 0; y < height+4; y += 2) {
 		for (x = 0; x < width+4; x += 2) {
-			dwtfloat_decode_patch(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
+			dwtfloat_decode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y/2, x/2);
 		}
 	}
 
