@@ -77,12 +77,16 @@ int measurement_dwt_encode()
 
 	for (k = 1; k < CONFIG_PERFTEST_NUM; ++k) {
 #if (CONFIG_PERFTEST_TYPE == 0)
-		size_t width = k * 160;
-		size_t height = k * 120;
+		size_t width = 160 * k;
+		size_t height = 120 * k;
 #endif
 #if (CONFIG_PERFTEST_TYPE == 1)
 		size_t width = 1024;
 		size_t height = 1024 * k;
+#endif
+#if (CONFIG_PERFTEST_TYPE == 2)
+		size_t width = 256 * k;
+		size_t height = 144 * k;
 #endif
 
 		size_t resolution = height * width;
