@@ -51,7 +51,7 @@ for name in "${!CONFIG[@]}"; do
 	config CONFIG_DWT_MS_MODE ${ARG[3]}
 	config CONFIG_PERFTEST_NUM ${ARG[4]}
 
-	make clean
+	make distclean
 	make perftest EXTRA_CFLAGS=-fprofile-generate EXTRA_LDLIBS=-lgcov
 
 	./perftest

@@ -2,7 +2,7 @@ CFLAGS=-std=c89 -pedantic -Wall -Wextra -Wconversion -ftrapv -Wfloat-equal -g -m
 LDFLAGS=-g -rdynamic $(EXTRA_LDFLAGS)
 LDLIBS=$(EXTRA_LDLIBS)
 
-.PHONY: all clean
+.PHONY: all clean distclean
 
 all: compress perftest
 
@@ -17,4 +17,7 @@ dwt.o: dwt.c frame.h common.h utils.h config.h
 perftest: perftest.o frame.o dwt.o
 
 clean:
-	$(RM) -- *.o *.gcda compress perftest
+	$(RM) -- *.o compress perftest
+
+distclean: clean
+	$(RM) -- *.gcda
