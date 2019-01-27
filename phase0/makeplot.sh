@@ -34,10 +34,16 @@ CONFIG[stripmap-sequential-separable-sl]="1 2 0 0 16 128"
 CONFIG[stripmap-sequential-separable-ml]="1 1 0 0 16 128"
 CONFIG[stripmap-sequential-separable-conv]="1 0 0 0 16 128"
 
-for i in "${!CONFIG[@]}"; do
-	echo "measurement: $i"
+for name in "${!CONFIG[@]}"; do
+	echo "measurement: $name"
 
-	ARG=(${CONFIG[$i]})
+	PLOTFILE=plot-$name.txt
+
+	if test -e $PLOTFILE; then
+		continue;
+	fi
+
+	ARG=(${CONFIG[$name]})
 
 	config CONFIG_PERFTEST_TYPE ${ARG[0]}
 	config CONFIG_DWT1_MODE ${ARG[1]}
@@ -54,5 +60,5 @@ for i in "${!CONFIG[@]}"; do
 	make clean
 	make perftest EXTRA_CFLAGS=-fprofile-use
 
-	./perftest | tee plot-$i.txt
+	./perftest | tee $PLOTFILE
 done
