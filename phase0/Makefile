@@ -17,4 +17,4 @@ dwt.o: dwt.c frame.h common.h utils.h config.h
 perftest: perftest.o frame.o dwt.o
 
 clean:
-	$(RM) -- *.o compress perftest
+	$(RM) -- *.o *.gcda compress perftest
