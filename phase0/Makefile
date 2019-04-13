@@ -6,7 +6,7 @@ LDLIBS=$(EXTRA_LDLIBS)
 
 all: compress perftest
 
-compress: compress.o frame.o dwt.o
+compress: compress.o frame.o dwt.o dwtfloat.o
 
 compress.o: compress.c utils.h config.h
 
@@ -14,7 +14,9 @@ frame.o: frame.c frame.h utils.h
 
 dwt.o: dwt.c frame.h common.h utils.h config.h
 
-perftest: perftest.o frame.o dwt.o
+dwtfloat.o: dwtfloat.c frame.h common.h utils.h config.h
+
+perftest: perftest.o frame.o dwt.o dwtfloat.o
 
 clean:
 	$(RM) -- *.o compress perftest

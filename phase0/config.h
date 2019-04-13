@@ -29,9 +29,9 @@
 #define CONFIG_DWT_MS_MODE 2
 
 /*
- * 0 for 4:3 aspect ratio, 1 for 1024 pixels wide strip
+ * 0 for 4:3 aspect ratio, 1 for 1024 pixels wide strip, 2 for 16:9 ratio
  */
-#define CONFIG_PERFTEST_TYPE 0
+#define CONFIG_PERFTEST_TYPE 2
 
 /*
  * number of measurement points
