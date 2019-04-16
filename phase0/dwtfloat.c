@@ -377,6 +377,10 @@ void dwtfloat_decode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t str
 	/* order on input: 0=LL, 1=HL, 2=LH, 3=HH */
 	float core[4];
 
+	/* we cannot access buff_x[] and buff_y[] at negative indices */
+	if ( n_y < 0 || n_x < 0 )
+		return;
+
 	decode_adjust_levers(lever[0], n_y, N_y);
 	decode_adjust_levers(lever[1], n_x, N_x);
 
@@ -784,6 +788,30 @@ void dwtfloat_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[
 	}
 }
 
+void dwtfloat_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], float *buff_y[3], float *buff_x[3], ptrdiff_t y)
+{
+	ptrdiff_t y_, x_;
+
+	/* j = 2 */
+	for (y_ = y/8-1; y_ < y/8-1+1; ++y_) {
+		for (x_ = 0; x_ < width[2]+2; ++x_) {
+			dwtfloat_decode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_-0*0+1+0, x_); /* FIXME */
+		}
+	}
+	/* j = 1 */
+	for (y_ = y/4-1; y_ < y/4-1+2; ++y_) {
+		for (x_ = 0; x_ < width[1]+2; ++x_) {
+			dwtfloat_decode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_-4*1+1+1, x_); /* FIXME */
+		}
+	}
+	/* j = 0 */
+	for (y_ = y/2-1; y_ < y/2-1+4; ++y_) {
+		for (x_ = 0; x_ < width[0]+2; ++x_) {
+			dwtfloat_decode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_-8*2+1+6, x_); /* FIXME */
+		}
+	}
+}
+
 int dwtfloat_encode(struct frame *frame)
 {
 	int j;
@@ -837,7 +865,7 @@ int dwtfloat_encode(struct frame *frame)
 	}
 
 	for (y = 0; y < height+24; y += 8) {
-		dwtfloat_encode_strip(data,  stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y);
+		dwtfloat_encode_strip(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y);
 	}
 
 	for (j = 0; j < 3; ++j) {
@@ -877,6 +905,12 @@ int dwtfloat_decode(struct frame *frame)
 	int j;
 	ptrdiff_t height, width;
 	int *data;
+#if (CONFIG_DWT_MS_MODE == 1) || (CONFIG_DWT_MS_MODE == 2)
+	float *buff_x_[3], *buff_y_[3];
+	ptrdiff_t height_[3], width_[3];
+	ptrdiff_t stride_y_[3], stride_x_[3];
+	ptrdiff_t y;
+#endif
 
 	assert( frame );
 
@@ -891,6 +925,7 @@ int dwtfloat_decode(struct frame *frame)
 
 	/* inverse two-dimensional transform */
 
+#if (CONFIG_DWT_MS_MODE == 0)
 	for (j = 2; j >= 0; --j) {
 		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
@@ -898,6 +933,28 @@ int dwtfloat_decode(struct frame *frame)
 
 		dwtfloat_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
+#endif
+#if (CONFIG_DWT_MS_MODE == 1)
+	for (j = 0; j < 3; ++j) {
+		height_[j] = (height >> j) >> 1;
+		width_ [j] = (width  >> j) >> 1;
+
+		stride_y_[j] = width << j;
+		stride_x_[j] =     1 << j;
+
+		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
+		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
+	}
+
+	for (y = 0; y < height+24; y += 8) {
+		dwtfloat_decode_strip(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y);
+	}
+
+	for (j = 0; j < 3; ++j) {
+		free(buff_y_[j]);
+		free(buff_x_[j]);
+	}
+#endif
 
 	return RET_SUCCESS;
 }
