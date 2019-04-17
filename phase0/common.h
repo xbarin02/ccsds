@@ -38,70 +38,6 @@ enum {
 };
 
 /**
- * \brief Largest integral value not greater than argument
- *
- * The result of this function is similar to casting the result of floor() to \c int.
- * Unlike floor(), this function does not require linking with \c -lm.
- */
-int floor_(double x);
-
-/**
- * \brief Round to nearest integer
- *
- * The result of this macro is similar to casting the result of round() to \c int.
- * The round() function is not present in C89.
- */
-int round_(double x);
-
-/**
- * \brief Round to nearest integer
- *
- * The result of this macro is similar to casting the result of roundf() to \c int.
- * The roundf() function is not present in C89.
- */
-int roundf_(float x);
-
-/**
- * \brief Base-2 logarithm
- *
- * The result is undefined for zero \p n.
- */
-static unsigned long floor_log2_l(unsigned long n)
-{
-	unsigned long r = 0;
-
-	while (n >>= 1) {
-		r++;
-	}
-
-	return r;
-}
-
-/**
- * \brief Find the smallest bit depth needed to hold the \p maxval
- */
-static size_t convert_maxval_to_bpp(unsigned long maxval)
-{
-	if (maxval) {
-		return floor_log2_l(maxval) + 1;
-	}
-
-	return 0;
-}
-
-/**
- * \brief Get the maximum value that can be represented on \p bpp bit word
- */
-static unsigned long convert_bpp_to_maxval(size_t bpp)
-{
-	if (bpp) {
-		return (1UL << bpp) - 1;
-	}
-
-	return 0;
-}
-
-/**
  * \brief Round \p n up to the nearest multiple of 8
  */
 static size_t ceil_multiple8(size_t n)
@@ -110,40 +46,16 @@ static size_t ceil_multiple8(size_t n)
 }
 
 /**
- * \brief Convert \p bpp into the number of bytes required by the smallest type that can hold the \p bpp bit samples
- *
- * If no suitable type can be found, returns zero.
- */
-static size_t convert_bpp_to_depth(size_t bpp)
-{
-	return bpp <= CHAR_BIT ? 1
-		: ( bpp <= CHAR_BIT * sizeof(short) ? sizeof(short)
-			: 0);
-}
-
-/**
  * \brief Returns the value of \p v constrained to the range \p lo to \p hi
  */
-static int clamp(int v, int lo, int hi)
-{
-	return v < lo ? lo : ( hi < v ? hi : v );
-}
+int clamp(int v, int lo, int hi);
 
 /**
  * \brief Compute the absolute value of an integer
  *
  * Unlike abs(), the absolute value of the most negative integer is defined to be \c INT_MAX.
  */
-static int abs_(int j)
-{
-	int r = abs(j);
-
-	if (r < 0) {
-		return INT_MAX;
-	}
-
-	return r;
-}
+int safe_abs(int j);
 
 /**
  * \brief Round integer the fraction \f$ a/2^b \f$ to nearest integer
@@ -158,7 +70,7 @@ static int round_div_pow2(int numerator, int log2_denominator)
 }
 
 /**
- * \brief Is the number \p n even predicate
+ * \brief Checks whether the number \p n is even
  */
 static int is_even(ptrdiff_t n)
 {
@@ -167,7 +79,7 @@ static int is_even(ptrdiff_t n)
 }
 
 /**
- * \brief Is the number \p n multiple of 8 predicate
+ * \brief Checks whether the number \p n is multiple of 8
  */
 static int is_multiple8(ptrdiff_t n)
 {
@@ -178,7 +90,8 @@ static int is_multiple8(ptrdiff_t n)
  * \brief Debugging \c printf
  *
  * If the macro \c NDEBUG is defined, this macro generates no code, and hence
- * does nothing at all.
+ * does nothing at all. Otherwise, the macro acts as the fprintf function and
+ * writes its output to stderr.
  */
 #ifdef NDEBUG
 #	define dprint(arg)
@@ -189,17 +102,7 @@ static int is_multiple8(ptrdiff_t n)
 /**
  * \brief Formatted output, write output to \c stderr
  */
-static int eprintf(const char *format, ...)
-{
-	va_list ap;
-	int n;
-
-	va_start(ap, format);
-	n = vfprintf(stderr, format, ap);
-	va_end(ap);
-
-	return n;
-}
+int eprintf(const char *format, ...);
 
 /**
  * \brief Compression parameters

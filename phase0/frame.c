@@ -9,6 +9,58 @@
 #include <assert.h>
 
 /**
+ * \brief Base-2 logarithm
+ *
+ * The result is undefined for zero \p n.
+ */
+static unsigned long floor_log2_l(unsigned long n)
+{
+	unsigned long r = 0;
+
+	while (n >>= 1) {
+		r++;
+	}
+
+	return r;
+}
+
+/**
+ * \brief Find the smallest bit depth needed to hold the \p maxval
+ */
+static size_t convert_maxval_to_bpp(unsigned long maxval)
+{
+	if (maxval) {
+		return floor_log2_l(maxval) + 1;
+	}
+
+	return 0;
+}
+
+/**
+ * \brief Get the maximum value that can be represented on \p bpp bit word
+ */
+static unsigned long convert_bpp_to_maxval(size_t bpp)
+{
+	if (bpp) {
+		return (1UL << bpp) - 1;
+	}
+
+	return 0;
+}
+
+/**
+ * \brief Convert \p bpp into the number of bytes required by the smallest type that can hold the \p bpp bit samples
+ *
+ * If no suitable type can be found, returns zero.
+ */
+static size_t convert_bpp_to_depth(size_t bpp)
+{
+	return bpp <= CHAR_BIT ? 1
+		: ( bpp <= CHAR_BIT * sizeof(short) ? sizeof(short)
+			: 0);
+}
+
+/**
  * \brief Convert big-endian to native byte order
  *
  * This function is similar to htons(). However the htons() is not present in C89.
@@ -490,7 +542,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
 			int sample = data [y*width + x];
-			int magnitude = abs_(sample) / factor;
+			int magnitude = safe_abs(sample) / factor;
 
 			switch (depth) {
 				case sizeof(char): {
@@ -786,7 +838,7 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 			/* error */
 			e = pixB - pixA;
 
-			data[y*width + x] = abs_(e) * (1 << 5);
+			data[y*width + x] = safe_abs(e) * (1 << 5);
 		}
 	}
 

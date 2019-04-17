@@ -6,6 +6,37 @@
 #include <assert.h>
 #include <stdlib.h>
 
+/**
+ * \brief Round to nearest integer
+ *
+ * The result of this macro is similar to casting the result of roundf() to \c int.
+ * The roundf() function is not present in C89.
+ */
+static int int_roundf(float x)
+{
+	int i;
+
+	/* convert round to floor */
+	x = x + .5f;
+
+	/*
+	 * per C89 standard, 6.2.1.3 Floating and integral:
+	 *
+	 * When a value of floating type is convened to integral type,
+	 * the fractional part is discarded. If the value of the integral part
+	 * cannot be represented by the integral type, the behavior is
+	 * undetined.
+	 *
+	 * "... discarded", i.e., the value is truncated toward zero
+	 */
+
+	/* truncate */
+	i = (int) x;
+
+	/* convert trunc to floor */
+	return i - (int) ( (float) i > x );
+}
+
 /*
  * The CCSDS standard states that pixel bit depth shall not exceed the limit
  * of 28 bits for the signed pixel type (sign bit + 27 bit magnitude).
@@ -240,8 +271,8 @@ void dwtfloat_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, f
 		data[0] = (float) d(n-1);
 		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (    +zeta) );
-		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
+		c(n-2) = int_roundf( data[0] * (    +zeta) );
+		d(n-2) = int_roundf( data[1] * (-rcp_zeta) );
 	}
 	/* regular */
 	for (; n < n1 && n < N; n++) {
@@ -250,8 +281,8 @@ void dwtfloat_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, f
 		data[0] = (float) d(n-1);
 		data[1] = (float) c(n);
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (    +zeta) );
-		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
+		c(n-2) = int_roundf( data[0] * (    +zeta) );
+		d(n-2) = int_roundf( data[1] * (-rcp_zeta) );
 	}
 	/* epilogue */
 	for (; n < n1 && n == N; n++) {
@@ -260,8 +291,8 @@ void dwtfloat_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, f
 		data[0] = (float) d(n-1);
 		data[1] = 0.f;
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (    +zeta) );
-		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
+		c(n-2) = int_roundf( data[0] * (    +zeta) );
+		d(n-2) = int_roundf( data[1] * (-rcp_zeta) );
 	}
 	for (; n < n1 && n == N+1; n++) {
 		int lever[4] = { 0, +1, 0, 0 };
@@ -269,8 +300,8 @@ void dwtfloat_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, f
 		data[0] = 0.f;
 		data[1] = 0.f;
 		dwtfloat_encode_core(data, buff, lever);
-		c(n-2) = roundf_( data[0] * (    +zeta) );
-		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
+		c(n-2) = int_roundf( data[0] * (    +zeta) );
+		d(n-2) = int_roundf( data[1] * (-rcp_zeta) );
 	}
 
 #undef c
@@ -296,8 +327,8 @@ void dwtfloat_encode_step(int *line, ptrdiff_t N, ptrdiff_t stride, float *buff,
 	dwtfloat_encode_core(data, buff, lever);
 
 	if (signal_defined(n-2, N)) {
-		c(n-2) = roundf_( data[0] * (    +zeta) );
-		d(n-2) = roundf_( data[1] * (-rcp_zeta) );
+		c(n-2) = int_roundf( data[0] * (    +zeta) );
+		d(n-2) = int_roundf( data[1] * (-rcp_zeta) );
 	}
 
 #	undef c
@@ -346,10 +377,10 @@ void dwtfloat_encode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t str
 	dwtfloat_encode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
 
 	if (signal_defined(n_y-2, N_y) && signal_defined(n_x-2, N_x)) {
-		cc(n_y-2, n_x-2) = roundf_( core[0] * sqr_zeta     ); /* LL */
-		dc(n_y-2, n_x-2) = roundf_( core[1] * -1           ); /* HL */
-		cd(n_y-2, n_x-2) = roundf_( core[2] * -1           ); /* LH */
-		dd(n_y-2, n_x-2) = roundf_( core[3] * rcp_sqr_zeta ); /* HH */
+		cc(n_y-2, n_x-2) = int_roundf( core[0] * sqr_zeta     ); /* LL */
+		dc(n_y-2, n_x-2) = int_roundf( core[1] * -1           ); /* HL */
+		cd(n_y-2, n_x-2) = int_roundf( core[2] * -1           ); /* LH */
+		dd(n_y-2, n_x-2) = int_roundf( core[3] * rcp_sqr_zeta ); /* HH */
 	}
 
 #	undef cc
@@ -404,13 +435,13 @@ void dwtfloat_decode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t str
 	dwtfloat_decode_core2(core, buff_y + 4*(2*n_y+0), buff_x + 4*(2*n_x+0), lever);
 
 	if ( signal_defined(n_y-1, N_y) && signal_defined(n_x-1, N_x) )
-		cc(n_y-1, n_x-1) = roundf_( core[3] ); /* LL */
+		cc(n_y-1, n_x-1) = int_roundf( core[3] ); /* LL */
 	if ( signal_defined(n_y-1, N_y) && signal_defined(n_x-2, N_x) )
-		dc(n_y-1, n_x-2) = roundf_( core[2] ); /* HL */
+		dc(n_y-1, n_x-2) = int_roundf( core[2] ); /* HL */
 	if ( signal_defined(n_y-2, N_y) && signal_defined(n_x-1, N_x) )
-		cd(n_y-2, n_x-1) = roundf_( core[1] ); /* LH */
+		cd(n_y-2, n_x-1) = int_roundf( core[1] ); /* LH */
 	if ( signal_defined(n_y-2, N_y) && signal_defined(n_x-2, N_x) )
-		dd(n_y-2, n_x-2) = roundf_( core[0] ); /* HH */
+		dd(n_y-2, n_x-2) = int_roundf( core[0] ); /* HH */
 
 #	undef cc
 #	undef dc
@@ -489,8 +520,8 @@ int dwtfloat_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 	}
 
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = roundf_( c(n) );
-		line[stride*(2*n+1)] = roundf_( d(n) );
+		line[stride*(2*n+0)] = int_roundf( c(n) );
+		line[stride*(2*n+1)] = int_roundf( d(n) );
 	}
 
 #	undef c
@@ -620,8 +651,8 @@ int dwtfloat_decode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 		d(N-1) -= alpha * (c(N-1) + c(N-1));
 
 	for (n = 0; n < N; ++n) {
-		line[stride*(2*n+0)] = roundf_( c(n) );
-		line[stride*(2*n+1)] = roundf_( d(n) );
+		line[stride*(2*n+0)] = int_roundf( c(n) );
+		line[stride*(2*n+1)] = int_roundf( d(n) );
 	}
 
 #	undef c

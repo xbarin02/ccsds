@@ -1,71 +1,29 @@
 #include "common.h"
 
-int floor_(double x)
+int safe_abs(int j)
 {
-	/*
-	 * per C89 standard, 6.2.1.3 Floating and integral:
-	 *
-	 * When a value of floating type is convened to integral type,
-	 * the fractional part is discarded. If the value of the integral part
-	 * cannot be represented by the integral type, the behavior is
-	 * undetined.
-	 *
-	 * "... discarded", i.e., the value is truncated toward zero
-	 */
+	int r = abs(j);
 
-	/* truncate */
-	int i = (int) x;
+	if (r < 0) {
+		return INT_MAX;
+	}
 
-	/* convert trunc to floor */
-	return i - (int) ( (double) i > x );
+	return r;
 }
 
-int roundf_(float x)
+int clamp(int v, int lo, int hi)
 {
-	int i;
-
-	/* convert round to floor */
-	x = x + .5f;
-
-	/*
-	 * per C89 standard, 6.2.1.3 Floating and integral:
-	 *
-	 * When a value of floating type is convened to integral type,
-	 * the fractional part is discarded. If the value of the integral part
-	 * cannot be represented by the integral type, the behavior is
-	 * undetined.
-	 *
-	 * "... discarded", i.e., the value is truncated toward zero
-	 */
-
-	/* truncate */
-	i = (int) x;
-
-	/* convert trunc to floor */
-	return i - (int) ( (float) i > x );
+	return v < lo ? lo : ( hi < v ? hi : v );
 }
 
-int round_(double x)
+int eprintf(const char *format, ...)
 {
-	int i;
+	va_list ap;
+	int n;
 
-	/* convert round to floor */
-	x = x + .5;
+	va_start(ap, format);
+	n = vfprintf(stderr, format, ap);
+	va_end(ap);
 
-	/*
-	 * per C89 standard, 6.2.1.3 Floating and integral:
-	 *
-	 * When a value of floating type is convened to integral type,
-	 * the fractional part is discarded. If the value of the integral part
-	 * cannot be represented by the integral type, the behavior is
-	 * undetined.
-	 *
-	 * "... discarded", i.e., the value is truncated toward zero
-	 */
-
-	/* truncate */
-	i = (int) x;
-
-	/* convert trunc to floor */
-	return i - (int) ( (double) i > x );
+	return n;
 }
