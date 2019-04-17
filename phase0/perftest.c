@@ -16,10 +16,11 @@
 #define BPP 8
 
 /* single measurement */
-double measure_dwt_encode_secs(struct frame *frame)
+double measure_dwt_secs(struct frame *frame)
 {
 	struct parameters parameters;
 	clock_t begin, end;
+	int err;
 
 	if (frame_create_random(frame)) {
 		fprintf(stderr, "[ERROR] frame allocation failed\n");
@@ -30,7 +31,14 @@ double measure_dwt_encode_secs(struct frame *frame)
 
 	begin = clock();
 
-	if (dwt_encode(frame, &parameters)) {
+#if (CONFIG_PERFTEST_DIR == 0)
+	err = dwt_encode(frame, &parameters);
+#endif
+#if (CONFIG_PERFTEST_DIR == 1)
+	err = dwt_decode(frame, &parameters);
+#endif
+
+	if (err) {
 		fprintf(stderr, "[ERROR] transform failed\n");
 		return 0.;
 	}
@@ -47,7 +55,7 @@ double measure_dwt_encode_secs(struct frame *frame)
 }
 
 /* multiple measurements */
-double measure_dwt_encode_secs_point(size_t height, size_t width)
+double measure_dwt_secs_point(size_t height, size_t width)
 {
 	struct frame frame;
 	double min_t = HUGE_VAL;
@@ -58,7 +66,7 @@ double measure_dwt_encode_secs_point(size_t height, size_t width)
 	frame.bpp = BPP;
 
 	for (i = 0; i < MEASUREMENTS_NO; ++i) {
-		double t = measure_dwt_encode_secs(&frame);
+		double t = measure_dwt_secs(&frame);
 
 		if (t < DBL_MIN) {
 			return 0.;
@@ -71,7 +79,7 @@ double measure_dwt_encode_secs_point(size_t height, size_t width)
 	return min_t;
 }
 
-int measurement_dwt_encode()
+int measurement_dwt()
 {
 	size_t k;
 
@@ -91,7 +99,7 @@ int measurement_dwt_encode()
 
 		size_t resolution = height * width;
 
-		double secs = measure_dwt_encode_secs_point(height, width);
+		double secs = measure_dwt_secs_point(height, width);
 		double nsecs_per_pel = secs / (double) resolution * 1e9;
 
 		fprintf(stdout, "# %lu %lu\n", (unsigned long) width, (unsigned long) height);
@@ -104,7 +112,7 @@ int measurement_dwt_encode()
 
 int main()
 {
-	measurement_dwt_encode();
+	measurement_dwt();
 
 	return EXIT_SUCCESS;
 }
