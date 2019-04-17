@@ -793,21 +793,21 @@ void dwtfloat_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[
 	ptrdiff_t y_, x_;
 
 	/* j = 2 */
-	for (y_ = y/8-1; y_ < y/8-1+1; ++y_) {
+	for (y_ = y/8; y_ < y/8+1; ++y_) {
 		for (x_ = 0; x_ < width[2]+2; ++x_) {
-			dwtfloat_decode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_-0*0+1+0, x_); /* FIXME */
+			dwtfloat_decode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_ -  0, x_);
 		}
 	}
 	/* j = 1 */
-	for (y_ = y/4-1; y_ < y/4-1+2; ++y_) {
+	for (y_ = y/4; y_ < y/4+2; ++y_) {
 		for (x_ = 0; x_ < width[1]+2; ++x_) {
-			dwtfloat_decode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_-4*1+1+1, x_); /* FIXME */
+			dwtfloat_decode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_ -  3, x_);
 		}
 	}
 	/* j = 0 */
-	for (y_ = y/2-1; y_ < y/2-1+4; ++y_) {
+	for (y_ = y/2; y_ < y/2+4; ++y_) {
 		for (x_ = 0; x_ < width[0]+2; ++x_) {
-			dwtfloat_decode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_-8*2+1+6, x_); /* FIXME */
+			dwtfloat_decode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_ - 10, x_);
 		}
 	}
 }
