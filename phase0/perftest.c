@@ -6,10 +6,9 @@
 #include <float.h>
 
 #include "config.h"
-#include "frame.h"
 #include "common.h"
+#include "frame.h"
 #include "dwt.h"
-#include "utils.h"
 
 /* number of measurements */
 #define MEASUREMENTS_NO 5

@@ -1,6 +1,6 @@
 #include "config.h"
+#include "common.h"
 #include "dwtfloat.h"
-#include "utils.h"
 
 #include <stddef.h>
 #include <assert.h>

@@ -1,11 +1,46 @@
+#include "config.h"
 #include "frame.h"
-#include "utils.h"
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
 #include <assert.h>
+
+/**
+ * \brief Convert big-endian to native byte order
+ *
+ * This function is similar to htons(). However the htons() is not present in C89.
+ */
+static unsigned short be_to_native_s(unsigned short a)
+{
+#if (CONFIG_SWAP_BYTE_ORDER == 1)
+	return (unsigned short) (
+		((a & 0xff00U) >> 8U) |
+		((a & 0x00ffU) << 8U)
+	);
+#else
+	return a;
+#endif
+}
+
+/**
+ * \brief Convert native byte order to big endian
+ *
+ * This function is similar to ntohs(). However the ntohs() is not present in C89.
+ */
+static unsigned short native_to_be_s(unsigned short a)
+{
+#if (CONFIG_SWAP_BYTE_ORDER == 1)
+	return (unsigned short) (
+		((a & 0xff00U) >> 8U) |
+		((a & 0x00ffU) << 8U)
+	);
+#else
+	return a;
+#endif
+}
 
 int frame_write_pgm_header(const struct frame *frame, FILE *stream)
 {

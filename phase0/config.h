@@ -3,6 +3,13 @@
  * \brief Global parameters
  */
 
+/**
+ * \brief Indicates the layout of multi-byte integers
+ *
+ * The macro should be set to 1 on little endian architectures.
+ */
+#define CONFIG_SWAP_BYTE_ORDER 1
+
 /*
  * int can be either 16-bit or 32-bit quantity
  */
@@ -36,7 +43,7 @@
 /*
  * 0 for 4:3 aspect ratio, 1 for 1024 pixels wide strip, 2 for 16:9 ratio
  */
-#define CONFIG_PERFTEST_TYPE 2
+#define CONFIG_PERFTEST_TYPE 0
 
 /*
  * number of measurement points

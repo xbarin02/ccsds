@@ -6,21 +6,23 @@ LDLIBS=$(EXTRA_LDLIBS)
 
 all: compress perftest
 
-compress: compress.o frame.o dwt.o dwtfloat.o dwtint.o
+compress: compress.o frame.o dwt.o dwtfloat.o dwtint.o common.o
 
-compress.o: compress.c utils.h config.h
+compress.o: compress.c common.h config.h
 
-frame.o: frame.c frame.h utils.h
+frame.o: frame.c frame.h common.h
 
-dwt.o: dwt.c frame.h common.h utils.h config.h
+dwt.o: dwt.c frame.h common.h config.h
 
-dwtfloat.o: dwtfloat.c frame.h common.h utils.h config.h
+dwtfloat.o: dwtfloat.c frame.h common.h config.h
 
-dwtint.o: dwtint.c frame.h common.h utils.h config.h
+dwtint.o: dwtint.c frame.h common.h config.h
 
-perftest: perftest.o frame.o dwt.o dwtfloat.o dwtint.o
+perftest: perftest.o frame.o dwt.o dwtfloat.o dwtint.o common.o
 
-perftest.o: perftest.c utils.h config.h frame.h common.h dwt.h
+perftest.o: perftest.c common.h config.h frame.h dwt.h
+
+common.o: common.c common.h
 
 clean:
 	$(RM) -- *.o compress perftest

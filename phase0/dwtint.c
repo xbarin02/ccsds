@@ -1,6 +1,6 @@
 #include "config.h"
+#include "common.h"
 #include "dwt.h"
-#include "utils.h"
 #include "dwtint.h"
 
 #include <stddef.h>

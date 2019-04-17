@@ -1,5 +1,5 @@
+#include "common.h"
 #include "dwt.h"
-#include "utils.h"
 #include "dwtfloat.h"
 #include "dwtint.h"
 

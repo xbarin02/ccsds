@@ -14,9 +14,8 @@
 #include <stdlib.h>
 
 #include "config.h"
-#include "utils.h"
-#include "frame.h"
 #include "common.h"
+#include "frame.h"
 #include "dwt.h"
 
 #if 0
