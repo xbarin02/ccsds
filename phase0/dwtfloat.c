@@ -37,12 +37,12 @@
 /*
  * Lifting constants for the CDF 9/7 wavelet
  *
- * The CCSDS standard defines low-pass filter coefficients for the CDF 9/7 wavelet.
- * These cofficients were factored into the lifting scheme using the equations in
- * Daubechies, I. & Sweldens, W. The Journal of Fourier Analysis and Applications
- * (1998) 4: 247. DOI: 10.1007/BF02476026. Note that the paper also provides similar
- * lifting coefficients for the CDF 9/7 wavelet, but these differ in some rounding
- * errors.
+ * The CCSDS standard defines low-pass filter coefficients for the CDF 9/7
+ * wavelet. These cofficients were factored into the lifting scheme using the
+ * equations in Daubechies, I. & Sweldens, W. The Journal of Fourier Analysis
+ * and Applications (1998) 4: 247. DOI: 10.1007/BF02476026. Note that the paper
+ * also provides similar lifting coefficients for the CDF 9/7 wavelet, but
+ * these differ in some rounding errors.
  */
 #define alpha -1.58613434201888022056773162788538f
 #define beta  -0.05298011857604780601431779000503f
@@ -817,7 +817,7 @@ void dwtfloat_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[
 {
 	ptrdiff_t y_, x_;
 
-	/* 0, 3. 10 .. hexagonal numbers? */
+	/* 0, 3, 10 .. hexagonal numbers? */
 
 	/* j = 2 */
 	for (y_ = y/8; y_ < y/8+1; ++y_) {
@@ -910,6 +910,10 @@ int dwtfloat_encode(struct frame *frame)
 
 		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
 		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -974,6 +978,10 @@ int dwtfloat_decode(struct frame *frame)
 
 		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
 		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
 	}
 
 	for (y = 0; y < height+24; y += 8) {
