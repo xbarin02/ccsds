@@ -13,3 +13,6 @@ perftest
 
 # image files
 *.pgm
+
+# Makefile overlay
+Makefile.local
