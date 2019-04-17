@@ -20,6 +20,8 @@ dwtint.o: dwtint.c frame.h common.h utils.h config.h
 
 perftest: perftest.o frame.o dwt.o dwtfloat.o dwtint.o
 
+perftest.o: perftest.c utils.h config.h frame.h common.h dwt.h
+
 clean:
 	$(RM) -- *.o compress perftest
 
