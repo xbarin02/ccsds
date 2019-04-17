@@ -11,9 +11,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-/* FIXME */
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 /**
  * \brief Error codes
  *
@@ -40,51 +37,17 @@ enum {
 /**
  * \brief Round \p n up to the nearest multiple of 8
  */
-static size_t ceil_multiple8(size_t n)
-{
-	return (n + 7) / 8 * 8;
-}
-
-/**
- * \brief Returns the value of \p v constrained to the range \p lo to \p hi
- */
-int clamp(int v, int lo, int hi);
-
-/**
- * \brief Compute the absolute value of an integer
- *
- * Unlike abs(), the absolute value of the most negative integer is defined to be \c INT_MAX.
- */
-int safe_abs(int j);
-
-/**
- * \brief Round integer the fraction \f$ a/2^b \f$ to nearest integer
- *
- * Returns \f$ \mathrm{round} ( \mathrm{numerator} / 2^\mathrm{log2\_denominator} ) \f$.
- * The result is undefined for \p log2_denominator smaller than 1.
- */
-static int round_div_pow2(int numerator, int log2_denominator)
-{
-	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
-	return (numerator + (1 << (log2_denominator - 1)) ) >> log2_denominator;
-}
+size_t ceil_multiple8(size_t n);
 
 /**
  * \brief Checks whether the number \p n is even
  */
-static int is_even(ptrdiff_t n)
-{
-	/* size_t is unsigned integer type */
-	return !((size_t) n & 1);
-}
+int is_even(ptrdiff_t n);
 
 /**
  * \brief Checks whether the number \p n is multiple of 8
  */
-static int is_multiple8(ptrdiff_t n)
-{
-	return !((size_t) n & 7);
-}
+int is_multiple8(ptrdiff_t n);
 
 /**
  * \brief Debugging \c printf

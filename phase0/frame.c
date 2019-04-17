@@ -9,6 +9,30 @@
 #include <assert.h>
 
 /**
+ * \brief Compute the absolute value of an integer
+ *
+ * Unlike abs(), the absolute value of the most negative integer is defined to be \c INT_MAX.
+ */
+static int safe_abs(int j)
+{
+	int r = abs(j);
+
+	if (r < 0) {
+		return INT_MAX;
+	}
+
+	return r;
+}
+
+/**
+ * \brief Returns the value of \p v constrained to the range \p lo to \p hi
+ */
+static int clamp(int v, int lo, int hi)
+{
+	return v < lo ? lo : ( hi < v ? hi : v );
+}
+
+/**
  * \brief Base-2 logarithm
  *
  * The result is undefined for zero \p n.

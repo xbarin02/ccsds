@@ -1,21 +1,5 @@
 #include "common.h"
 
-int safe_abs(int j)
-{
-	int r = abs(j);
-
-	if (r < 0) {
-		return INT_MAX;
-	}
-
-	return r;
-}
-
-int clamp(int v, int lo, int hi)
-{
-	return v < lo ? lo : ( hi < v ? hi : v );
-}
-
 int eprintf(const char *format, ...)
 {
 	va_list ap;
@@ -26,4 +10,20 @@ int eprintf(const char *format, ...)
 	va_end(ap);
 
 	return n;
+}
+
+size_t ceil_multiple8(size_t n)
+{
+	return (n + 7) / 8 * 8;
+}
+
+int is_even(ptrdiff_t n)
+{
+	/* size_t is unsigned integer type */
+	return !((size_t) n & 1);
+}
+
+int is_multiple8(ptrdiff_t n)
+{
+	return !((size_t) n & 7);
 }
