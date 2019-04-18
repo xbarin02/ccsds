@@ -6,6 +6,15 @@
 #include <stddef.h>
 #include <assert.h>
 
+static int floor_div_pow2(int numerator, int log2_denominator)
+{
+	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
+	if (numerator < 0)
+		return ~(~numerator >> log2_denominator);
+	else
+		return numerator >> log2_denominator;
+}
+
 /**
  * \brief Round integer the fraction \f$ a/2^b \f$ to nearest integer
  *
@@ -14,8 +23,7 @@
  */
 static int round_div_pow2(int numerator, int log2_denominator)
 {
-	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
-	return (numerator + (1 << (log2_denominator - 1)) ) >> log2_denominator;
+	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)), log2_denominator);
 }
 
 int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
