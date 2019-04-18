@@ -64,15 +64,6 @@ int main(int argc, char *argv[])
 	 * signed integer representation is two's complement. */
 	assert( ~-1 == 0 );
 
-	/*
-	 * NOTE The C standard states that the result of the >> operator is
-	 * implementation-defined if the left operand has a signed type and
-	 * a negative value. I have never seen the compiler that would
-	 * implement this differently than using an arithmetic right shift.
-	 * However, the following assert checks the sanity of this assumption.
-	 */
-	assert( -1 >> 1 == -1 );
-
 	if (argc < 2) {
 		fprintf(stderr, "[ERROR] argument expected\n");
 		return EXIT_FAILURE;
