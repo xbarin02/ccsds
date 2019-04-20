@@ -112,13 +112,13 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 	}
 
 	d(N-1) = d(N-1) + antiround_div_pow2(
-		2*c_[N-1],
-		4
+		c_[N-1],
+		3
 	);
 
 	c(0) = c(0) - round_div_pow2(
-		-2*d(0),
-		2
+		-d(0),
+		1
 	);
 
 	for (n = 1; n < N; ++n) {
