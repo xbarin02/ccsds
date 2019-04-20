@@ -26,10 +26,18 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)), log2_denominator);
 }
 
+static int antiround_div_pow2(int numerator, int log2_denominator)
+{
+	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)) - 1, log2_denominator);
+}
+
 int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 {
 	ptrdiff_t n, N;
 
+#if (CONFIG_DWT1_MODE == 3)
+	int *d_, *c_;
+#endif
 	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
@@ -42,6 +50,7 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 
 	assert( line );
 
+#if (CONFIG_DWT1_MODE == 1)
 	d(0) = d(0) - round_div_pow2(
 		-1*c(1) +9*c(0) +9*c(1) -1*c(2),
 		4
@@ -72,6 +81,56 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 			2
 		);
 	}
+#endif
+#if (CONFIG_DWT1_MODE == 3)
+	/* experimental implementation */
+
+	c_ = malloc( (size_t) N * sizeof(float) );
+	d_ = malloc( (size_t) N * sizeof(float) );
+
+	if (NULL == c_ || NULL == d_) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	for (n = 0; n < N-1; ++n) {
+		d_[n] = c(n) + c(n+1);
+	}
+
+	d_[N-1] = 2*c(n);
+
+	c_[0] = -12*c(0) + 2*d_[0];
+
+	for (n = 1; n < N; ++n) {
+		c_[n] = -12*c(n) + (d_[n-1] + d_[n]);
+	}
+
+	for (n = 0; n < N-1; ++n) {
+		d(n) = d(n) + antiround_div_pow2(
+			c_[n] + c_[n+1],
+			4
+		);
+	}
+
+	d(N-1) = d(N-1) + antiround_div_pow2(
+		2*c_[N-1],
+		4
+	);
+
+	c(0) = c(0) - round_div_pow2(
+		-2*d(0),
+		2
+	);
+
+	for (n = 1; n < N; ++n) {
+		c(n) = c(n) - round_div_pow2(
+			-1*d(n-1) -1*d(n),
+			2
+		);
+	}
+
+	free(c_);
+	free(d_);
+#endif
 
 #undef c
 #undef d
