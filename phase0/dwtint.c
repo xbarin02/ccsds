@@ -26,7 +26,7 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)), log2_denominator);
 }
 
-static void dwtint_encode_core(int data[2], int buff[5], const int lever[2])
+static void dwtint_encode_core(int data[2], int buff[5], int lever)
 {
 	int c0 = buff[0];
 	int c1 = buff[1];
@@ -37,7 +37,7 @@ static void dwtint_encode_core(int data[2], int buff[5], const int lever[2])
 	int x0 = data[0];
 	int x1 = data[1];
 
-	switch (lever[0]) {
+	switch (lever) {
 		case -1:
 			d3 = d3 - round_div_pow2(
 				-1*c0 +9*c1 +9*c0 -1*x1,
@@ -69,7 +69,7 @@ static void dwtint_encode_core(int data[2], int buff[5], const int lever[2])
 	buff[3] = x0;
 	buff[4] = d3;
 
-	switch (lever[1]) {
+	switch (lever) {
 		case -1:
 			c1 = c1 - round_div_pow2(
 				-1*d3 -1*d3,
@@ -103,21 +103,21 @@ void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int
 
 	/* prologue */
 	for (; n < n1 && n < 1; n++) {
-		int lever[2] = { 0, 0 };
+		int lever = -3;
 
 		data[0] = 0;
 		data[1] = (int) c(n);
 		dwtint_encode_core(data, buff, lever);
 	}
 	for (; n < n1 && n < 2; n++) {
-		int lever[2] = { 0, 0 };
+		int lever = -2;
 
 		data[0] = (int) d(n-1);
 		data[1] = (int) c(n);
 		dwtint_encode_core(data, buff, lever);
 	}
 	for (; n < n1 && n < 3; n++) {
-		int lever[2] = { -1, -1 };
+		int lever = -1;
 
 		data[0] = (int) d(n-1);
 		data[1] = (int) c(n);
@@ -127,7 +127,7 @@ void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int
 	}
 	/* regular */
 	for (; n < n1 && n < N; n++) {
-		int lever[2] = { 0, 0 };
+		int lever = 0;
 
 		data[0] = (int) d(n-1);
 		data[1] = (int) c(n);
@@ -137,7 +137,7 @@ void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int
 	}
 	/* epilogue */
 	for (; n < n1 && n == N; n++) {
-		int lever[2] = { +1, 0 };
+		int lever = +1;
 
 		data[0] = (int) d(n-1);
 		data[1] = 0;
@@ -146,7 +146,7 @@ void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int
 		d(n-2) = ( data[1] );
 	}
 	for (; n < n1 && n == N+1; n++) {
-		int lever[2] = { +2, 0 };
+		int lever = +2;
 
 		data[0] = 0;
 		data[1] = 0;
