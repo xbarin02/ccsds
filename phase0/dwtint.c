@@ -26,18 +26,128 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)), log2_denominator);
 }
 
-static int antiround_div_pow2(int numerator, int log2_denominator)
+/* FIXME treat signal boundaries */
+static void dwtint_encode_core(int data[2], int buff[5], const int lever[5])
 {
-	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)) - 1, log2_denominator);
+	int c0 = buff[0];
+	int c1 = buff[1];
+	int c2 = buff[2];
+	int d3 = buff[3];
+	int d4 = buff[4];
+
+	int x0 = data[0];
+	int x1 = data[1];
+
+	d3 = d3 - round_div_pow2(
+		-1*c2 +9*c1 +9*c0 -1*x1,
+		4
+	);
+
+	buff[0] = x1;
+	buff[1] = c0;
+	buff[2] = c1;
+	buff[3] = x0;
+	buff[4] = d3;
+
+	c1 = c1 - round_div_pow2(
+		-1*d4 -1*d3,
+		2
+	);
+
+	data[0] = c1;
+	data[1] = d3;
+}
+
+/* FIXME treat signal boundaries */
+void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int *buff, ptrdiff_t n0, ptrdiff_t n1)
+{
+	ptrdiff_t n, N;
+	int data[2];
+
+	assert( size > 0 && is_even(size) );
+
+	N = size / 2;
+
+#	define c(n) line[stride*(2*(n)+0)]
+#	define d(n) line[stride*(2*(n)+1)]
+
+	n = n0;
+
+	/* prologue */
+	for (; n < n1 && n < 1; n++) {
+		int lever[5] = { 0, 0, 0, 0 };
+
+		data[0] = 0;
+		data[1] = (int) c(n);
+		dwtint_encode_core(data, buff, lever);
+	}
+	for (; n < n1 && n < 2; n++) {
+		int lever[5] = { 0, 0, -1, 0 };
+
+		data[0] = (int) d(n-1);
+		data[1] = (int) c(n);
+		dwtint_encode_core(data, buff, lever);
+	}
+	for (; n < n1 && n < 3; n++) {
+		int lever[5] = { -1, 0, 0, 0 };
+
+		data[0] = (int) d(n-1);
+		data[1] = (int) c(n);
+		dwtint_encode_core(data, buff, lever);
+		c(n-2) = ( data[0] );
+		d(n-2) = ( data[1] );
+	}
+	/* regular */
+	for (; n < n1 && n < N; n++) {
+		int lever[5] = { 0, 0, 0, 0 };
+
+		data[0] = (int) d(n-1);
+		data[1] = (int) c(n);
+		dwtint_encode_core(data, buff, lever);
+		c(n-2) = ( data[0] );
+		d(n-2) = ( data[1] );
+	}
+	/* epilogue */
+	for (; n < n1 && n == N; n++) {
+		int lever[5] = { 0, 0, 0, +1 };
+
+		data[0] = (int) d(n-1);
+		data[1] = 0;
+		dwtint_encode_core(data, buff, lever);
+		c(n-2) = ( data[0] );
+		d(n-2) = ( data[1] );
+	}
+	for (; n < n1 && n == N+1; n++) {
+		int lever[5] = { 0, +1, 0, 0 };
+
+		data[0] = 0;
+		data[1] = 0;
+		dwtint_encode_core(data, buff, lever);
+		c(n-2) = ( data[0] );
+		d(n-2) = ( data[1] );
+	}
+
+#undef c
+#undef d
 }
 
 int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 {
+#if (CONFIG_DWT1_MODE == 2)
+	ptrdiff_t N;
+	int buff[5] = { 0, 0, 0, 0, 0 };
+
+	assert( size > 0 && is_even(size) );
+
+	N = size / 2;
+
+	dwtint_encode_line_segment(line, size, stride, buff, 0, N+2);
+
+	return RET_SUCCESS;
+#endif
+#if (CONFIG_DWT1_MODE == 1)
 	ptrdiff_t n, N;
 
-#if (CONFIG_DWT1_MODE == 3)
-	int *d_, *c_;
-#endif
 	assert( size > 0 && is_even(size) );
 
 	N = size / 2;
@@ -50,7 +160,6 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 
 	assert( line );
 
-#if (CONFIG_DWT1_MODE == 1)
 	d(0) = d(0) - round_div_pow2(
 		-1*c(1) +9*c(0) +9*c(1) -1*c(2),
 		4
@@ -81,61 +190,12 @@ int dwtint_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 			2
 		);
 	}
-#endif
-#if (CONFIG_DWT1_MODE == 3)
-	/* experimental implementation */
-
-	c_ = malloc( (size_t) N * sizeof(float) );
-	d_ = malloc( (size_t) N * sizeof(float) );
-
-	if (NULL == c_ || NULL == d_) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	for (n = 0; n < N-1; ++n) {
-		d_[n] = c(n) + c(n+1);
-	}
-
-	d_[N-1] = 2*c(n);
-
-	c_[0] = -12*c(0) + 2*d_[0];
-
-	for (n = 1; n < N; ++n) {
-		c_[n] = -12*c(n) + (d_[n-1] + d_[n]);
-	}
-
-	for (n = 0; n < N-1; ++n) {
-		d(n) = d(n) + antiround_div_pow2(
-			c_[n] + c_[n+1],
-			4
-		);
-	}
-
-	d(N-1) = d(N-1) + antiround_div_pow2(
-		c_[N-1],
-		3
-	);
-
-	c(0) = c(0) - round_div_pow2(
-		-d(0),
-		1
-	);
-
-	for (n = 1; n < N; ++n) {
-		c(n) = c(n) - round_div_pow2(
-			-1*d(n-1) -1*d(n),
-			2
-		);
-	}
-
-	free(c_);
-	free(d_);
-#endif
 
 #undef c
 #undef d
 
 	return RET_SUCCESS;
+#endif
 }
 
 int dwtint_decode_line(int *line, ptrdiff_t size, ptrdiff_t stride)

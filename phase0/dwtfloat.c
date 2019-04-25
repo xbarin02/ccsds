@@ -554,7 +554,7 @@ int dwtfloat_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 #	define x(n) line[ stride * signal_mirror((n), size) ]
 
 	for (n = 0; n < N; ++n) {
-		c(n) = (int) roundf_ (
+		c(n) = int_roundf (
 			+0.037828455507f * (float) x(2*n+0-4)
 			-0.023849465020f * (float) x(2*n+0-3)
 			-0.110624404418f * (float) x(2*n+0-2)
@@ -566,7 +566,7 @@ int dwtfloat_encode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 			+0.037828455507f * (float) x(2*n+0+4)
 		);
 
-		d(n) = (int) roundf_ (
+		d(n) = int_roundf (
 			-0.064538882629f * (float) x(2*n+1-3)
 			+0.040689417609f * (float) x(2*n+1-2)
 			+0.418092273222f * (float) x(2*n+1-1)
