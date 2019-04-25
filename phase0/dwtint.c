@@ -16,7 +16,7 @@ static int floor_div_pow2(int numerator, int log2_denominator)
 }
 
 /**
- * \brief Round integer the fraction \f$ a/2^b \f$ to nearest integer
+ * \brief Round the integer fraction \f$ a/2^b \f$ to nearest integer
  *
  * Returns \f$ \mathrm{round} ( \mathrm{numerator} / 2^\mathrm{log2\_denominator} ) \f$.
  * The result is undefined for \p log2_denominator smaller than 1.
