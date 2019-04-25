@@ -40,19 +40,19 @@ static void dwtint_encode_core(int data[2], int buff[5], int lever)
 	switch (lever) {
 		case -1:
 			d3 = d3 - round_div_pow2(
-				-1*c0 +9*c1 +9*c0 -1*x1,
+				+9*c1 +8*c0 -1*x1,
 				4
 			);
 			break;
 		case +1:
 			d3 = d3 - round_div_pow2(
-				-1*c2 +9*c1 +9*c0 -1*c0,
+				-1*c2 +9*c1 +8*c0,
 				4
 			);
 			break;
 		case +2:
 			d3 = d3 - round_div_pow2(
-				-1*c2 +9*c1 +9*c1 -1*c2,
+				-2*c2 +9*c1 +9*c1,
 				4
 			);
 			break;
@@ -72,8 +72,8 @@ static void dwtint_encode_core(int data[2], int buff[5], int lever)
 	switch (lever) {
 		case -1:
 			c1 = c1 - round_div_pow2(
-				-1*d3 -1*d3,
-				2
+				-d3,
+				1
 			);
 			break;
 		default:
@@ -85,6 +85,81 @@ static void dwtint_encode_core(int data[2], int buff[5], int lever)
 
 	data[0] = c1;
 	data[1] = d3;
+}
+
+/* FIXME */
+static void encode_adjust_levers(int lever[1], ptrdiff_t n, ptrdiff_t N)
+{
+	lever[0] = 0;
+
+	if (n == 1)
+		lever[0] = -2;
+	if (n == 2)
+		lever[0] = -1;
+	if (n == N)
+		lever[0] = +1;
+	if (n == N+1)
+		lever[0] = +2;
+}
+
+static void transpose(int core[4])
+{
+	int t = core[1];
+	core[1] = core[2];
+	core[2] = t;
+}
+
+/*static*/ void dwtint_encode_core2(int core[4], int *buff_y, int *buff_x, int lever[2])
+{
+	/* horizontal filtering */
+	dwtint_encode_core(&core[0], buff_y + 5*(0), lever[1]);
+	dwtint_encode_core(&core[2], buff_y + 5*(1), lever[1]);
+	transpose(core);
+	/* vertical filtering */
+	dwtint_encode_core(&core[0], buff_x + 5*(0), lever[0]);
+	dwtint_encode_core(&core[2], buff_x + 5*(1), lever[0]);
+	transpose(core);
+}
+
+#define signal_defined(n, N) ( (n) >= 0 && (n) < (N) )
+
+void dwtint_encode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, int *buff_y, int *buff_x, ptrdiff_t n_y, ptrdiff_t n_x)
+{
+	/* vertical lever at [0], horizontal at [1] */
+	int lever[2];
+	/* order on input: 0=HH, 1=LH, 2=HH, 3=LL */
+	int core[4];
+
+	/* we cannot access buff_x[] and buff_y[] at negative indices */
+	if ( n_y < 0 || n_x < 0 )
+		return;
+
+	encode_adjust_levers(lever+0, n_y, N_y);
+	encode_adjust_levers(lever+1, n_x, N_x);
+
+#	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
+#	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
+#	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
+#	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
+
+	core[0] = signal_defined(n_y-1, N_y) && signal_defined(n_x-1, N_x) ? (int) dd(n_y-1, n_x-1) : 0; /* HH */
+	core[1] = signal_defined(n_y-1, N_y) && signal_defined(n_x-0, N_x) ? (int) cd(n_y-1, n_x-0) : 0; /* LH */
+	core[2] = signal_defined(n_y-0, N_y) && signal_defined(n_x-1, N_x) ? (int) dc(n_y-0, n_x-1) : 0; /* HL */
+	core[3] = signal_defined(n_y-0, N_y) && signal_defined(n_x-0, N_x) ? (int) cc(n_y-0, n_x-0) : 0; /* LL */
+
+	dwtint_encode_core2(core, buff_y + 5*(2*n_y+0), buff_x + 5*(2*n_x+0), lever);
+
+	if (signal_defined(n_y-2, N_y) && signal_defined(n_x-2, N_x)) {
+		cc(n_y-2, n_x-2) = ( core[0] ); /* LL */
+		dc(n_y-2, n_x-2) = ( core[1] ); /* HL */
+		cd(n_y-2, n_x-2) = ( core[2] ); /* LH */
+		dd(n_y-2, n_x-2) = ( core[3] ); /* HH */
+	}
+
+#	undef cc
+#	undef dc
+#	undef cd
+#	undef dd
 }
 
 void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int *buff, ptrdiff_t n0, ptrdiff_t n1)
@@ -307,6 +382,7 @@ int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 {
 	ptrdiff_t y, x;
 
+#if (CONFIG_DWT2_MODE == 0)
 	/* for each row */
 	for (y = 0; y < height; ++y) {
 		/* invoke one-dimensional transform */
@@ -317,6 +393,26 @@ int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 		/* invoke one-dimensional transform */
 		dwtint_encode_line(band + x*stride_x, height, stride_y);
 	}
+#endif
+#if (CONFIG_DWT2_MODE == 2)
+	int *buff_y, *buff_x;
+
+	buff_y = malloc( (size_t) (height+4) * 5 * sizeof(int) );
+	buff_x = malloc( (size_t) (width +4) * 5 * sizeof(int) );
+
+	if (NULL == buff_y || NULL == buff_x) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	for (y = 0; y < height/2+2; ++y) {
+		for (x = 0; x < width/2+2; ++x) {
+			dwtint_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y, x);
+		}
+	}
+
+	free(buff_x);
+	free(buff_y);
+#endif
 
 	return RET_SUCCESS;
 }
