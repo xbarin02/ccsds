@@ -69,10 +69,19 @@ static void dwtint_encode_core(int data[2], int buff[5], const int lever[2])
 	buff[3] = x0;
 	buff[4] = d3;
 
-	c1 = c1 - round_div_pow2(
-		-1*(lever[1] < 0 ? d3 : d4) -1*d3,
-		2
-	);
+	switch (lever[1]) {
+		case -1:
+			c1 = c1 - round_div_pow2(
+				-1*d3 -1*d3,
+				2
+			);
+			break;
+		default:
+			c1 = c1 - round_div_pow2(
+				-1*d4 -1*d3,
+				2
+			);
+	}
 
 	data[0] = c1;
 	data[1] = d3;
