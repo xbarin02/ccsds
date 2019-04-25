@@ -26,8 +26,7 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)), log2_denominator);
 }
 
-/* FIXME treat signal boundaries */
-static void dwtint_encode_core(int data[2], int buff[5], const int lever[5])
+static void dwtint_encode_core(int data[2], int buff[5], const int lever[2])
 {
 	int c0 = buff[0];
 	int c1 = buff[1];
@@ -38,10 +37,31 @@ static void dwtint_encode_core(int data[2], int buff[5], const int lever[5])
 	int x0 = data[0];
 	int x1 = data[1];
 
-	d3 = d3 - round_div_pow2(
-		-1*c2 +9*c1 +9*c0 -1*x1,
-		4
-	);
+	switch (lever[0]) {
+		case -1:
+			d3 = d3 - round_div_pow2(
+				-1*c0 +9*c1 +9*c0 -1*x1,
+				4
+			);
+			break;
+		case +1:
+			d3 = d3 - round_div_pow2(
+				-1*c2 +9*c1 +9*c0 -1*c0,
+				4
+			);
+			break;
+		case +2:
+			d3 = d3 - round_div_pow2(
+				-1*c2 +9*c1 +9*c1 -1*c2,
+				4
+			);
+			break;
+		default:
+			d3 = d3 - round_div_pow2(
+				-1*c2 +9*c1 +9*c0 -1*x1,
+				4
+			);
+	}
 
 	buff[0] = x1;
 	buff[1] = c0;
@@ -50,7 +70,7 @@ static void dwtint_encode_core(int data[2], int buff[5], const int lever[5])
 	buff[4] = d3;
 
 	c1 = c1 - round_div_pow2(
-		-1*d4 -1*d3,
+		-1*(lever[1] < 0 ? d3 : d4) -1*d3,
 		2
 	);
 
@@ -58,7 +78,6 @@ static void dwtint_encode_core(int data[2], int buff[5], const int lever[5])
 	data[1] = d3;
 }
 
-/* FIXME treat signal boundaries */
 void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int *buff, ptrdiff_t n0, ptrdiff_t n1)
 {
 	ptrdiff_t n, N;
@@ -75,54 +94,54 @@ void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int
 
 	/* prologue */
 	for (; n < n1 && n < 1; n++) {
-		int lever[5] = { 0, 0, 0, 0 };
+		int lever[2] = { 0, 0 };
 
 		data[0] = 0;
 		data[1] = (int) c(n);
 		dwtint_encode_core(data, buff, lever);
 	}
 	for (; n < n1 && n < 2; n++) {
-		int lever[5] = { 0, 0, -1, 0 };
+		int lever[2] = { 0, 0 };
 
 		data[0] = (int) d(n-1);
 		data[1] = (int) c(n);
 		dwtint_encode_core(data, buff, lever);
 	}
 	for (; n < n1 && n < 3; n++) {
-		int lever[5] = { -1, 0, 0, 0 };
+		int lever[2] = { -1, -1 };
 
 		data[0] = (int) d(n-1);
 		data[1] = (int) c(n);
-		dwtint_encode_core(data, buff, lever);
+		dwtint_encode_core(data, buff, lever); /* 0 */
 		c(n-2) = ( data[0] );
 		d(n-2) = ( data[1] );
 	}
 	/* regular */
 	for (; n < n1 && n < N; n++) {
-		int lever[5] = { 0, 0, 0, 0 };
+		int lever[2] = { 0, 0 };
 
 		data[0] = (int) d(n-1);
 		data[1] = (int) c(n);
-		dwtint_encode_core(data, buff, lever);
+		dwtint_encode_core(data, buff, lever); /* j */
 		c(n-2) = ( data[0] );
 		d(n-2) = ( data[1] );
 	}
 	/* epilogue */
 	for (; n < n1 && n == N; n++) {
-		int lever[5] = { 0, 0, 0, +1 };
+		int lever[2] = { +1, 0 };
 
 		data[0] = (int) d(n-1);
 		data[1] = 0;
-		dwtint_encode_core(data, buff, lever);
+		dwtint_encode_core(data, buff, lever); /* N-2 */
 		c(n-2) = ( data[0] );
 		d(n-2) = ( data[1] );
 	}
 	for (; n < n1 && n == N+1; n++) {
-		int lever[5] = { 0, +1, 0, 0 };
+		int lever[2] = { +2, 0 };
 
 		data[0] = 0;
 		data[1] = 0;
-		dwtint_encode_core(data, buff, lever);
+		dwtint_encode_core(data, buff, lever); /* N-1 */
 		c(n-2) = ( data[0] );
 		d(n-2) = ( data[1] );
 	}
