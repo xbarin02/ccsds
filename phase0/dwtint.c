@@ -450,6 +450,7 @@ void dwtint_unweight_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptr
 	}
 }
 
+/* process 8x8 block using multi-scale transform */
 void dwtint_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x)
 {
 	ptrdiff_t y_, x_;
@@ -469,6 +470,31 @@ void dwtint_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 	/* j = 2 */
 	for (y_ = y/8-1; y_ < y/8-1+1; ++y_) {
 		for (x_ = x/8-1; x_ < x/8-1+1; ++x_) {
+			dwtint_encode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_, x_);
+		}
+	}
+}
+
+/* process strip using multi-scale transform */
+void dwtint_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y)
+{
+	ptrdiff_t y_, x_;
+
+	/* j = 0 */
+	for (y_ = y/2-1; y_ < y/2-1+4; ++y_) {
+		for (x_ = 0; x_ < width[0]+2; ++x_) {
+			dwtint_encode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_, x_);
+		}
+	}
+	/* j = 1 */
+	for (y_ = y/4-1; y_ < y/4-1+2; ++y_) {
+		for (x_ = 0; x_ < width[1]+2; ++x_) {
+			dwtint_encode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_, x_);
+		}
+	}
+	/* j = 2 */
+	for (y_ = y/8-1; y_ < y/8-1+1; ++y_) {
+		for (x_ = 0; x_ < width[2]+2; ++x_) {
 			dwtint_encode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_, x_);
 		}
 	}
@@ -512,6 +538,27 @@ int dwtint_encode(struct frame *frame)
 		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
 		dwtint_encode_band(data, stride_y, stride_x, height_j, width_j);
+	}
+#endif
+#if (CONFIG_DWT_MS_MODE == 1)
+	for (j = 0; j < 3; ++j) {
+		height_[j] = (height >> j) >> 1;
+		width_ [j] = (width  >> j) >> 1;
+
+		stride_y_[j] = width << j;
+		stride_x_[j] =     1 << j;
+
+		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 5 * sizeof(int) );
+		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5 * sizeof(int) );
+	}
+
+	for (y = 0; y < height+24; y += 8) {
+		dwtint_encode_strip(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y);
+	}
+
+	for (j = 0; j < 3; ++j) {
+		free(buff_y_[j]);
+		free(buff_x_[j]);
 	}
 #endif
 #if (CONFIG_DWT_MS_MODE == 2)
