@@ -87,13 +87,10 @@ static void dwtint_encode_core(int data[2], int buff[5], int lever)
 	data[1] = d3;
 }
 
-/* FIXME */
 static void encode_adjust_levers(int lever[1], ptrdiff_t n, ptrdiff_t N)
 {
 	lever[0] = 0;
 
-	if (n == 1)
-		lever[0] = -2;
 	if (n == 2)
 		lever[0] = -1;
 	if (n == N)
