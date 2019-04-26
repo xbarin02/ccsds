@@ -487,31 +487,6 @@ int dwtint_decode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 	return RET_SUCCESS;
 }
 
-void dwtint_weight_line(int *line, ptrdiff_t size, ptrdiff_t stride, int weight)
-{
-	ptrdiff_t n;
-
-	assert( line );
-
-	for (n = 0; n < size; ++n) {
-		line[stride*n] <<= weight;
-	}
-}
-
-/*
- * inverse function to dwt_weight_line
- */
-void dwtint_unweight_line(int *line, ptrdiff_t size, ptrdiff_t stride, int weight)
-{
-	ptrdiff_t n;
-
-	assert( line );
-
-	for (n = 0; n < size; ++n) {
-		line[stride*n] >>= weight;
-	}
-}
-
 int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
 {
 	ptrdiff_t y, x;
@@ -592,19 +567,31 @@ int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 
 void dwtint_weight_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight)
 {
-	ptrdiff_t y;
+	ptrdiff_t y, x;
+
+	assert(band);
 
 	for (y = 0; y < height; ++y) {
-		dwtint_weight_line(band + y*stride_y, width, stride_x, weight);
+		int *line = band + y*stride_y;
+
+		for (x = 0; x < width; ++x) {
+			line[stride_x*x] <<= weight;
+		}
 	}
 }
 
 void dwtint_unweight_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight)
 {
-	ptrdiff_t y;
+	ptrdiff_t y, x;
+
+	assert(band);
 
 	for (y = 0; y < height; ++y) {
-		dwtint_unweight_line(band + y*stride_y, width, stride_x, weight);
+		int *line = band + y*stride_y;
+
+		for (x = 0; x < width; ++x) {
+			line[stride_x*x] >>= weight;
+		}
 	}
 }
 
