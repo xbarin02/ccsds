@@ -106,6 +106,11 @@ static void dwtint_decode_core(int data[2], int buff[5], int lever)
 				2
 			);
 			break;
+		case +1:
+			/* FIXME */
+			x0 = c0;
+			x1 = d4;
+			break;
 		default:
 			x0 = x0 + round_div_pow2(
 				-1*d3 -1*x1,
@@ -117,6 +122,20 @@ static void dwtint_decode_core(int data[2], int buff[5], int lever)
 		case -1:
 			d4 = d4 + round_div_pow2(
 				-1*c0 +9*c1 +9*c0 -1*x0,
+				4
+			);
+			break;
+		case +1:
+			/* FIXME */
+			d4 = d4 + round_div_pow2(
+				-1*c2 +9*c1 +9*c0 -1*c0,
+				4
+			);
+			break;
+		case +2:
+			/* FIXME */
+			d4 = d4 + round_div_pow2(
+				-1*c2 +9*c1 +9*c1 -1*c2,
 				4
 			);
 			break;
@@ -163,7 +182,7 @@ static void decode_adjust_levers(int lever[1], ptrdiff_t n, ptrdiff_t N)
 	if (n == N)
 		lever[0] = +1;
 	if (n == N+1)
-		lever[0] = +1;
+		lever[0] = +2;
 }
 
 static void transpose(int core[4])
