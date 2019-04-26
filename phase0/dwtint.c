@@ -658,6 +658,32 @@ void dwtint_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 	}
 }
 
+void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y)
+{
+	ptrdiff_t y_, x_;
+
+	/* 0, 3, 10 .. hexagonal numbers? */
+
+	/* j = 2 */
+	for (y_ = y/8; y_ < y/8+1; ++y_) {
+		for (x_ = 0; x_ < width[2]+2; ++x_) {
+			dwtint_decode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_ - 0, x_);
+		}
+	}
+	/* j = 1 */
+	for (y_ = y/4; y_ < y/4+2; ++y_) {
+		for (x_ = 0; x_ < width[1]+2; ++x_) {
+			dwtint_decode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_ - 3, x_);
+		}
+	}
+	/* j = 0 */
+	for (y_ = y/2; y_ < y/2+4; ++y_) {
+		for (x_ = 0; x_ < width[0]+2; ++x_) {
+			dwtint_decode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_ - 10, x_);
+		}
+	}
+}
+
 int dwtint_encode(struct frame *frame)
 {
 	int j;
@@ -777,6 +803,15 @@ int dwtint_decode(struct frame *frame)
 	int j;
 	ptrdiff_t height, width;
 	int *data;
+#if (CONFIG_DWT_MS_MODE == 1) || (CONFIG_DWT_MS_MODE == 2)
+	int *buff_x_[3], *buff_y_[3];
+	ptrdiff_t height_[3], width_[3];
+	ptrdiff_t stride_y_[3], stride_x_[3];
+	ptrdiff_t y;
+#endif
+#if (CONFIG_DWT_MS_MODE == 2)
+	ptrdiff_t x;
+#endif
 
 	assert( frame );
 
@@ -813,6 +848,7 @@ int dwtint_decode(struct frame *frame)
 
 	/* inverse two-dimensional transform */
 
+#if (CONFIG_DWT_MS_MODE == 0)
 	for (j = 2; j >= 0; --j) {
 		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
@@ -820,6 +856,32 @@ int dwtint_decode(struct frame *frame)
 
 		dwtint_decode_band(data, stride_y, stride_x, height_j, width_j);
 	}
+#endif
+#if (CONFIG_DWT_MS_MODE == 1)
+	for (j = 0; j < 3; ++j) {
+		height_[j] = (height >> j) >> 1;
+		width_ [j] = (width  >> j) >> 1;
+
+		stride_y_[j] = width << j;
+		stride_x_[j] =     1 << j;
+
+		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 5 * sizeof(int) );
+		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5 * sizeof(int) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
+	}
+
+	for (y = 0; y < height+24; y += 8) {
+		dwtint_decode_strip(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y);
+	}
+
+	for (j = 0; j < 3; ++j) {
+		free(buff_y_[j]);
+		free(buff_x_[j]);
+	}
+#endif
 
 	return RET_SUCCESS;
 }
