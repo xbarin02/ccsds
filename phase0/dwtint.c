@@ -101,8 +101,8 @@ static void dwtint_decode_core(int data[2], int buff[5], int lever)
 	switch (lever) {
 		case -3:
 			x0 = x0 + round_div_pow2(
-				-1*x1 -1*x1,
-				2
+				-x1,
+				1
 			);
 			break;
 		default:
@@ -115,20 +115,20 @@ static void dwtint_decode_core(int data[2], int buff[5], int lever)
 	switch (lever) {
 		case -1:
 			d4 = d4 + round_div_pow2(
-				-1*c0 +9*c1 +9*c0 -1*x0,
+				+9*c1 +8*c0 -1*x0,
 				4
 			);
 			break;
 		case +1:
 			d4 = d4 + round_div_pow2(
-				-1*c2 +9*c1 +9*c0 -1*c0,
+				-1*c2 +9*c1 +8*c0,
 				4
 			);
 			break;
 		case +2:
 			d4 = d4 + round_div_pow2(
-				-1*c2 +9*c1 +9*c1 -1*c2,
-				4
+				-1*c2 +9*c1,
+				3
 			);
 			break;
 		default:
