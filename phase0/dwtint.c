@@ -206,14 +206,14 @@ static void transpose(int core[4])
 
 /*static*/ void dwtint_decode_core2(int core[4], int *buff_y, int *buff_x, int lever[2])
 {
-	/* horizontal filtering */
-	dwtint_decode_core(&core[0], buff_y + 5*(0), lever[1]);
-	dwtint_decode_core(&core[2], buff_y + 5*(1), lever[1]);
 	transpose(core);
 	/* vertical filtering */
 	dwtint_decode_core(&core[0], buff_x + 5*(0), lever[0]);
 	dwtint_decode_core(&core[2], buff_x + 5*(1), lever[0]);
 	transpose(core);
+	/* horizontal filtering */
+	dwtint_decode_core(&core[0], buff_y + 5*(0), lever[1]);
+	dwtint_decode_core(&core[2], buff_y + 5*(1), lever[1]);
 }
 
 #define signal_defined(n, N) ( (n) >= 0 && (n) < (N) )
