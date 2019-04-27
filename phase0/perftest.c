@@ -13,7 +13,6 @@
 /* number of measurements */
 #define MEASUREMENTS_NO 5
 #define BPP 8
-#define DWTTYPE 0
 
 /* single measurement */
 double measure_dwt_secs(struct frame *frame)
@@ -27,7 +26,7 @@ double measure_dwt_secs(struct frame *frame)
 		return 0.;
 	}
 
-	parameters.DWTtype = DWTTYPE;
+	parameters.DWTtype = CONFIG_PERFTEST_DWTTYPE;
 
 	begin = clock();
 

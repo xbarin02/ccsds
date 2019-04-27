@@ -49,3 +49,8 @@
  * number of measurement points
  */
 #define CONFIG_PERFTEST_NUM 64
+
+/*
+ * 0 for Float DWT, 1 for Integer DWT
+ */
+#define CONFIG_PERFTEST_DWTTYPE 1
