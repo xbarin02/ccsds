@@ -316,6 +316,26 @@ void dwtint_decode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t strid
 #	undef dd
 }
 
+void dwtint_unweight_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t n_y, ptrdiff_t n_x, int weight[4])
+{
+#	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
+#	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
+#	define cd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+0) ] /* LH */
+#	define dd(n_y, n_x) data[ stride_y*(2*(n_y)+1) + stride_x*(2*(n_x)+1) ] /* HH */
+
+	if ( signal_defined(n_y-0, N_y) && signal_defined(n_x-0, N_x) ) {
+		cc(n_y, n_x) >>= weight[0]; /* LL */
+		dc(n_y, n_x) >>= weight[1]; /* HL */
+		cd(n_y, n_x) >>= weight[2]; /* LH */
+		dd(n_y, n_x) >>= weight[3]; /* HH */
+	}
+
+#	undef cc
+#	undef dc
+#	undef cd
+#	undef dd
+}
+
 void dwtint_encode_line_segment(int *line, ptrdiff_t size, ptrdiff_t stride, int *buff, ptrdiff_t n0, ptrdiff_t n1)
 {
 	ptrdiff_t n, N;
@@ -548,7 +568,7 @@ int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 	return RET_SUCCESS;
 }
 
-int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width)
+int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight[4])
 {
 	ptrdiff_t y, x;
 
@@ -576,6 +596,8 @@ int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 
 	for (y = 0; y < height/2+2; ++y) {
 		for (x = 0; x < width/2+2; ++x) {
+			dwtint_unweight_quad(band, height/2, width/2, stride_y, stride_x, y, x, weight);
+
 			dwtint_decode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y, x);
 		}
 	}
@@ -649,25 +671,31 @@ void dwtint_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 }
 
 /* process 8x8 block using multi-scale transform */
-void dwtint_decode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x)
+void dwtint_decode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x, int weight[12])
 {
 	ptrdiff_t y_, x_;
 
 	/* j = 2 */
 	for (y_ = y/8; y_ < y/8+1; ++y_) {
 		for (x_ = x/8; x_ < x/8+1; ++x_) {
+			dwtint_unweight_quad(data, height[2], width[2], stride_y[2], stride_x[2], y_ - 0, x_ - 0, weight + 4*2);
+
 			dwtint_decode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_ - 0, x_ - 0);
 		}
 	}
 	/* j = 1 */
 	for (y_ = y/4; y_ < y/4+2; ++y_) {
 		for (x_ = x/4; x_ < x/4+2; ++x_) {
+			dwtint_unweight_quad(data, height[1], width[1], stride_y[1], stride_x[1], y_ - 3, x_ - 3, weight + 4*1);
+
 			dwtint_decode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_ - 3, x_ - 3);
 		}
 	}
 	/* j = 0 */
 	for (y_ = y/2; y_ < y/2+4; ++y_) {
 		for (x_ = x/2; x_ < x/2+4; ++x_) {
+			dwtint_unweight_quad(data, height[0], width[0], stride_y[0], stride_x[0], y_ - 10, x_ - 10, weight + 4*0);
+
 			dwtint_decode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_ - 10, x_ - 10);
 		}
 	}
@@ -704,7 +732,7 @@ void dwtint_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 	}
 }
 
-void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y)
+void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, int weight[12])
 {
 	ptrdiff_t y_, x_;
 
@@ -713,18 +741,24 @@ void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 	/* j = 2 */
 	for (y_ = y/8; y_ < y/8+1; ++y_) {
 		for (x_ = 0; x_ < width[2]+2; ++x_) {
+			dwtint_unweight_quad(data, height[2], width[2], stride_y[2], stride_x[2], y_ - 0, x_, weight + 4*2);
+
 			dwtint_decode_quad(data, height[2], width[2], stride_y[2], stride_x[2], buff_y[2], buff_x[2], y_ - 0, x_);
 		}
 	}
 	/* j = 1 */
 	for (y_ = y/4; y_ < y/4+2; ++y_) {
 		for (x_ = 0; x_ < width[1]+2; ++x_) {
+			dwtint_unweight_quad(data, height[1], width[1], stride_y[1], stride_x[1], y_ - 3, x_, weight + 4*1);
+
 			dwtint_decode_quad(data, height[1], width[1], stride_y[1], stride_x[1], buff_y[1], buff_x[1], y_ - 3, x_);
 		}
 	}
 	/* j = 0 */
 	for (y_ = y/2; y_ < y/2+4; ++y_) {
 		for (x_ = 0; x_ < width[0]+2; ++x_) {
+			dwtint_unweight_quad(data, height[0], width[0], stride_y[0], stride_x[0], y_ - 10, x_, weight + 4*0);
+
 			dwtint_decode_quad(data, height[0], width[0], stride_y[0], stride_x[0], buff_y[0], buff_x[0], y_ - 10, x_);
 		}
 	}
@@ -865,6 +899,11 @@ int dwtint_decode(struct frame *frame)
 #if (CONFIG_DWT_MS_MODE == 2)
 	ptrdiff_t x;
 #endif
+	int weight[12] = {
+		0, 1, 1, 0,
+		0, 2, 2, 1,
+		3, 3, 3, 2
+	};
 
 	assert( frame );
 
@@ -879,6 +918,7 @@ int dwtint_decode(struct frame *frame)
 
 	/* undo Subband Weights */
 
+#if (CONFIG_DWT_MS_MODE == 0) && (CONFIG_DWT2_MODE == 0)
 	for (j = 1; j < 4; ++j) {
 		ptrdiff_t height_j = height >> j, width_j = width >> j;
 
@@ -898,6 +938,7 @@ int dwtint_decode(struct frame *frame)
 
 		dwtint_unweight_band(band_ll, stride_y, stride_x, height_j, width_j, j); /* LL */
 	}
+#endif
 
 	/* inverse two-dimensional transform */
 
@@ -907,7 +948,7 @@ int dwtint_decode(struct frame *frame)
 
 		ptrdiff_t stride_y = width << j, stride_x = 1 << j;
 
-		dwtint_decode_band(data, stride_y, stride_x, height_j, width_j);
+		dwtint_decode_band(data, stride_y, stride_x, height_j, width_j, weight + 4*j);
 	}
 #endif
 #if (CONFIG_DWT_MS_MODE == 1)
@@ -927,7 +968,7 @@ int dwtint_decode(struct frame *frame)
 	}
 
 	for (y = 0; y < height+24; y += 8) {
-		dwtint_decode_strip(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y);
+		dwtint_decode_strip(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y, weight);
 	}
 
 	for (j = 0; j < 3; ++j) {
@@ -949,7 +990,7 @@ int dwtint_decode(struct frame *frame)
 
 	for (y = 0; y < height+24; y += 8) {
 		for (x = 0; x < width+24; x += 8) {
-			dwtint_decode_block(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y, x);
+			dwtint_decode_block(data, stride_y_, stride_x_, height_, width_, buff_y_, buff_x_, y, x, weight);
 		}
 	}
 
