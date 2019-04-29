@@ -26,6 +26,15 @@ static int round_div_pow2(int numerator, int log2_denominator)
 	return floor_div_pow2(numerator + (1 << (log2_denominator - 1)), log2_denominator);
 }
 
+static void zero(int *line, size_t size)
+{
+	size_t n;
+
+	for (n = 0; n < size; ++n) {
+		line[n] = 0;
+	}
+}
+
 static void dwtint_encode_core(int data[2], int buff[5], int lever)
 {
 	int c0 = buff[0];
@@ -553,6 +562,9 @@ int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
+	zero(buff_y, (size_t) (height+4) * 5);
+	zero(buff_x, (size_t) (width +4) * 5);
+
 	for (y = 0; y < height/2+2; ++y) {
 		for (x = 0; x < width/2+2; ++x) {
 			dwtint_encode_quad(band, height/2, width/2, stride_y, stride_x, buff_y, buff_x, y, x);
@@ -593,6 +605,9 @@ int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
+
+	zero(buff_y, (size_t) (height+4) * 5);
+	zero(buff_x, (size_t) (width +4) * 5);
 
 	for (y = 0; y < height/2+2; ++y) {
 		for (x = 0; x < width/2+2; ++x) {
@@ -819,6 +834,13 @@ int dwtint_encode(struct frame *frame)
 
 		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 5 * sizeof(int) );
 		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5 * sizeof(int) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 5);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -844,6 +866,9 @@ int dwtint_encode(struct frame *frame)
 		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
 			return RET_FAILURE_MEMORY_ALLOCATION;
 		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 5);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -965,6 +990,9 @@ int dwtint_decode(struct frame *frame)
 		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
 			return RET_FAILURE_MEMORY_ALLOCATION;
 		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 5);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -986,6 +1014,13 @@ int dwtint_decode(struct frame *frame)
 
 		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 5 * sizeof(int) );
 		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5 * sizeof(int) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 5);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 5);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
