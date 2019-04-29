@@ -3,6 +3,15 @@
 
 #include <assert.h>
 
+int bio_init(struct bio *bio, unsigned char *ptr)
+{
+	assert(bio);
+
+	bio->ptr = ptr;
+
+	return 0;
+}
+
 int bio_write_int(struct bio *bio, int i)
 {
 	int *intptr;
