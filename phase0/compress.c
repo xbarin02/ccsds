@@ -4,7 +4,6 @@
  * supported features:
  * - lossy (Float DWT) and lossless compression (Integer DWT)
  * - frame-based input
- * - Pixel Type: Unsigned Integer
  *
  * @author David Barina <ibarina@fit.vutbr.cz>
  */

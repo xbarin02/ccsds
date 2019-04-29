@@ -793,16 +793,18 @@ int dwtint_encode(struct frame *frame, const int weight[12])
 #if (CONFIG_DWT_MS_MODE == 2)
 	ptrdiff_t x;
 #endif
-	assert( frame );
+	assert(frame);
+
+	assert(weight);
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
 	width  = (ptrdiff_t) ceil_multiple8(frame->width);
 
-	assert( is_multiple8(width) && is_multiple8(height) );
+	assert(is_multiple8(width) && is_multiple8(height));
 
 	data = frame->data;
 
-	assert( data );
+	assert(data);
 
 	/* (2.2) forward two-dimensional transform */
 
@@ -919,16 +921,18 @@ int dwtint_decode(struct frame *frame, const int weight[12])
 	ptrdiff_t x;
 #endif
 
-	assert( frame );
+	assert(frame);
+
+	assert(weight);
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
 	width  = (ptrdiff_t) ceil_multiple8(frame->width);
 
-	assert( is_multiple8(width) && is_multiple8(height) );
+	assert(is_multiple8(width) && is_multiple8(height));
 
 	data = frame->data;
 
-	assert( data );
+	assert(data);
 
 	/* undo Subband Weights */
 
