@@ -257,7 +257,7 @@ void dwtint_encode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t strid
 #	undef dd
 }
 
-void dwtint_weight_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t n_y, ptrdiff_t n_x, int weight[4])
+void dwtint_weight_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t n_y, ptrdiff_t n_x, const int weight[4])
 {
 #	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
 #	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
@@ -325,7 +325,7 @@ void dwtint_decode_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t strid
 #	undef dd
 }
 
-void dwtint_unweight_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t n_y, ptrdiff_t n_x, int weight[4])
+void dwtint_unweight_quad(int *data, ptrdiff_t N_y, ptrdiff_t N_x, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t n_y, ptrdiff_t n_x, const int weight[4])
 {
 #	define cc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+0) ] /* LL */
 #	define dc(n_y, n_x) data[ stride_y*(2*(n_y)+0) + stride_x*(2*(n_x)+1) ] /* HL */
@@ -536,7 +536,7 @@ int dwtint_decode_line(int *line, ptrdiff_t size, ptrdiff_t stride)
 	return RET_SUCCESS;
 }
 
-int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight[4])
+int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, const int weight[4])
 {
 	ptrdiff_t y, x;
 
@@ -580,7 +580,7 @@ int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 	return RET_SUCCESS;
 }
 
-int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, int weight[4])
+int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdiff_t height, ptrdiff_t width, const int weight[4])
 {
 	ptrdiff_t y, x;
 
@@ -655,7 +655,7 @@ void dwtint_unweight_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptr
 }
 
 /* process 8x8 block using multi-scale transform */
-void dwtint_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x, int weight[12])
+void dwtint_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x, const int weight[12])
 {
 	ptrdiff_t y_, x_;
 
@@ -686,7 +686,7 @@ void dwtint_encode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 }
 
 /* process 8x8 block using multi-scale transform */
-void dwtint_decode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x, int weight[12])
+void dwtint_decode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, ptrdiff_t x, const int weight[12])
 {
 	ptrdiff_t y_, x_;
 
@@ -717,7 +717,7 @@ void dwtint_decode_block(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 }
 
 /* process strip using multi-scale transform */
-void dwtint_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, int weight[12])
+void dwtint_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, const int weight[12])
 {
 	ptrdiff_t y_, x_;
 
@@ -747,7 +747,7 @@ void dwtint_encode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 	}
 }
 
-void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, int weight[12])
+void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3], ptrdiff_t height[3], ptrdiff_t width[3], int *buff_y[3], int *buff_x[3], ptrdiff_t y, const int weight[12])
 {
 	ptrdiff_t y_, x_;
 
@@ -779,7 +779,7 @@ void dwtint_decode_strip(int *data, ptrdiff_t stride_y[3], ptrdiff_t stride_x[3]
 	}
 }
 
-int dwtint_encode(struct frame *frame)
+int dwtint_encode(struct frame *frame, const int weight[12])
 {
 	int j;
 	ptrdiff_t height, width;
@@ -793,12 +793,6 @@ int dwtint_encode(struct frame *frame)
 #if (CONFIG_DWT_MS_MODE == 2)
 	ptrdiff_t x;
 #endif
-	int weight[12] = {
-		0, 1, 1, 0,
-		0, 2, 2, 1,
-		3, 3, 3, 2
-	};
-
 	assert( frame );
 
 	height = (ptrdiff_t) ceil_multiple8(frame->height);
@@ -910,7 +904,7 @@ int dwtint_encode(struct frame *frame)
 	return RET_SUCCESS;
 }
 
-int dwtint_decode(struct frame *frame)
+int dwtint_decode(struct frame *frame, const int weight[12])
 {
 	int j;
 	ptrdiff_t height, width;
@@ -924,11 +918,6 @@ int dwtint_decode(struct frame *frame)
 #if (CONFIG_DWT_MS_MODE == 2)
 	ptrdiff_t x;
 #endif
-	int weight[12] = {
-		0, 1, 1, 0,
-		0, 2, 2, 1,
-		3, 3, 3, 2
-	};
 
 	assert( frame );
 

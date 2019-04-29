@@ -88,6 +88,16 @@ struct parameters {
 	  * \f$ 16 \le S \le 2^{20} \f$
 	  */
 	unsigned S;
+
+	/**
+	 * \brief Subband weights for Integer DWT
+	 *
+	 * The order of subbands is LL0, HL0, LH0, HH0, LL1, HL1, LH1, HH1, LL2, HL2, LH2, HH2.
+	 * The LL0 and LL1 weight must be set to zero.
+	 */
+	int weight[12];
 };
+
+int init_parameters(struct parameters *parameters);
 
 #endif /* COMMON_H_ */

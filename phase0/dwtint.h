@@ -8,8 +8,8 @@
 #include "frame.h"
 #include "common.h"
 
-int dwtint_encode(struct frame *frame);
+int dwtint_encode(struct frame *frame, const int weight[12]);
 
-int dwtint_decode(struct frame *frame);
+int dwtint_decode(struct frame *frame, const int weight[12]);
 
 #endif /* DWTINT_H_ */

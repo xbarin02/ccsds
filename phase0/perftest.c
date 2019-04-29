@@ -26,6 +26,8 @@ double measure_dwt_secs(struct frame *frame)
 		return 0.;
 	}
 
+	init_parameters(&parameters);
+
 	parameters.DWTtype = CONFIG_PERFTEST_DWTTYPE;
 
 	begin = clock();

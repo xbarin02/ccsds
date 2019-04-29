@@ -95,8 +95,9 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	init_parameters(&parameters);
+
 	parameters.DWTtype = 0;
-	parameters.S = 16;
 
 	dprint (("[DEBUG] transform...\n"));
 
