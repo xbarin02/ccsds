@@ -27,6 +27,8 @@ perftest.o: perftest.c common.h config.h frame.h dwt.h
 
 common.o: common.c common.h
 
+bio.o: bio.c bio.h common.h
+
 clean:
 	$(RM) -- *.o $(TARGETS)
 
