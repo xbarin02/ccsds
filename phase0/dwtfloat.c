@@ -6,6 +6,15 @@
 #include <assert.h>
 #include <stdlib.h>
 
+static void zero(float *line, size_t size)
+{
+	size_t n;
+
+	for (n = 0; n < size; ++n) {
+		line[n] = 0.f;
+	}
+}
+
 /**
  * \brief Round to nearest integer
  *
@@ -688,6 +697,8 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
+	zero(buff, (size_t) width * 4);
+
 	/* for each row */
 	for (y = 0; y < height; y += 2) {
 		/* invoke one-dimensional transform */
@@ -716,6 +727,9 @@ int dwtfloat_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
+
+	zero(buff_y, (size_t) (height+4) * 4);
+	zero(buff_x, (size_t) (width +4) * 4);
 
 	for (y = 0; y < height/2+2; ++y) {
 		for (x = 0; x < width/2+2; ++x) {
@@ -755,6 +769,9 @@ int dwtfloat_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrd
 	if (NULL == buff_y || NULL == buff_x) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
+
+	zero(buff_y, (size_t) (height+4) * 4);
+	zero(buff_x, (size_t) (width +4) * 4);
 
 	for (y = 0; y < height/2+2; ++y) {
 		for (x = 0; x < width/2+2; ++x) {
@@ -920,6 +937,13 @@ int dwtfloat_encode(struct frame *frame)
 
 		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
 		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 4);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -945,6 +969,9 @@ int dwtfloat_encode(struct frame *frame)
 		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
 			return RET_FAILURE_MEMORY_ALLOCATION;
 		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 4);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -1013,6 +1040,9 @@ int dwtfloat_decode(struct frame *frame)
 		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
 			return RET_FAILURE_MEMORY_ALLOCATION;
 		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 4);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
@@ -1034,6 +1064,13 @@ int dwtfloat_decode(struct frame *frame)
 
 		buff_y_[j] = malloc( (size_t) (2 * height_[j] + (32 >> j) - 2) * 4 * sizeof(float) );
 		buff_x_[j] = malloc( (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4 * sizeof(float) );
+
+		if (NULL == buff_y_[j] || NULL == buff_x_[j]) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
+
+		zero(buff_y_[j], (size_t) (2 * height_[j] + (32 >> j) - 2) * 4);
+		zero(buff_x_[j], (size_t) (2 * width_ [j] + (32 >> j) - 2) * 4);
 	}
 
 	for (y = 0; y < height+24; y += 8) {
