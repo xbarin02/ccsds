@@ -29,6 +29,8 @@ common.o: common.c common.h
 
 bio.o: bio.c bio.h common.h
 
+bpe.o: bpe.c bpe.h frame.h common.h bio.h
+
 clean:
 	$(RM) -- *.o $(TARGETS)
 
