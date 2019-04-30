@@ -9,4 +9,6 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 
 int bpe_decode(struct frame *frame, const struct parameters *parameters, struct bio *bio);
 
+size_t get_maximum_stream_size(struct frame *frame);
+
 #endif /* BPE_H_ */

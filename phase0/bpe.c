@@ -70,3 +70,15 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 	return 0;
 }
+
+size_t get_maximum_stream_size(struct frame *frame)
+{
+	size_t width, height;
+
+	assert(frame);
+
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
+
+	return height * width * sizeof(int);
+}

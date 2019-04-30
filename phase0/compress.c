@@ -16,6 +16,8 @@
 #include "common.h"
 #include "frame.h"
 #include "dwt.h"
+#include "bio.h"
+#include "bpe.h"
 
 #if 0
 int bpe_encode(const struct frame *frame, const struct parameters *parameters)
@@ -57,6 +59,8 @@ int main(int argc, char *argv[])
 {
 	struct frame frame, input_frame;
 	struct parameters parameters;
+	struct bio bio;
+	void *ptr;
 
 	/* NOTE Since we implement the floor function for negative numbers using
 	 * an arithmetic right shift, we must check whether the underlying
@@ -114,6 +118,21 @@ int main(int argc, char *argv[])
 #if 0
 	bpe_encode(&frame, &parameters);
 #endif
+	ptr = malloc(get_maximum_stream_size(&frame));
+
+	if (ptr == NULL) {
+		fprintf(stderr, "[ERROR] malloc failed\n");
+		return EXIT_FAILURE;
+	}
+
+	bio_init(&bio, ptr);
+	bpe_encode(&frame, &parameters, &bio);
+
+	/* rewrite the frame with random data */
+	frame_create_random(&frame);
+
+	bio_init(&bio, ptr);
+	bpe_decode(&frame, &parameters, &bio);
 
 	dprint (("[DEBUG] inverse transform...\n"));
 

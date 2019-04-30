@@ -9,7 +9,7 @@ TARGETS=compress perftest
 
 all: $(TARGETS)
 
-compress: compress.o frame.o dwt.o dwtfloat.o dwtint.o common.o
+compress: compress.o frame.o dwt.o dwtfloat.o dwtint.o common.o bio.o bpe.o
 
 compress.o: compress.c common.h config.h
 
