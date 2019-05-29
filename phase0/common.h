@@ -87,7 +87,7 @@ struct parameters {
 	  * A segment is defined as a group of S consecutive blocks.
 	  * \f$ 16 \le S \le 2^{20} \f$
 	  */
-	unsigned S;
+	size_t S;
 
 	/**
 	 * \brief Subband weights for Integer DWT
