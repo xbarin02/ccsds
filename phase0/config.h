@@ -11,7 +11,7 @@
 #define CONFIG_SWAP_BYTE_ORDER 1
 
 /*
- * int can be either 16-bit or 32-bit quantity
+ * int can be either 16-bit, 32-bit, or 64-bit quantity
  */
 #define CONFIG_HAS_INT32 1
 
