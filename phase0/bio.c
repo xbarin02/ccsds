@@ -2,6 +2,7 @@
 #include "common.h"
 
 #include <assert.h>
+#include <limits.h>
 
 int bio_init(struct bio *bio, unsigned char *ptr)
 {
@@ -9,43 +10,134 @@ int bio_init(struct bio *bio, unsigned char *ptr)
 
 	bio->ptr = ptr;
 
-	return 0;
+	bio->c = 0;
+
+	bio->b = 0;
+
+	return RET_SUCCESS;
 }
 
 int bio_write_int(struct bio *bio, int i)
 {
-	int *intptr;
-
-	assert(bio);
-
-	if (bio->ptr == NULL)
-		return -1;
-
-	intptr = (int *) bio->ptr;
-
-	*intptr = i;
-
-	bio->ptr += sizeof(int);
-
-	return 0;
+	return bio_write(bio, (uint_t) i, sizeof(uint_t) * CHAR_BIT); /* FIXME int -> uint_t */
 }
 
 int bio_read_int(struct bio *bio, int *i)
 {
-	int *intptr;
+	return bio_read(bio, (uint_t *) i, sizeof(uint_t) * CHAR_BIT); /* FIXME uint_t -> int */
+}
 
+int bio_flush_buffer(struct bio *bio)
+{
 	assert(bio);
 
 	if (bio->ptr == NULL)
 		return -1;
 
-	intptr = (int *) bio->ptr;
+	* bio->ptr = bio->b;
 
-	assert(i);
+	bio->ptr++;
 
-	*i = *intptr;
+	return RET_SUCCESS;
+}
 
-	bio->ptr += sizeof(int);
+int bio_reload_buffer(struct bio *bio)
+{
+	assert(bio);
 
-	return 0;
+	if (bio->ptr == NULL)
+		return -1;
+
+	bio->b = * bio->ptr;
+
+	bio->ptr++;
+
+	return RET_SUCCESS;
+}
+
+int bio_put_bit(struct bio *bio, unsigned char b)
+{
+	assert(bio);
+
+	assert(bio->c < CHAR_BIT);
+
+	bio->b |= (unsigned char) (b << bio->c);
+
+	bio->c ++;
+
+	if (bio->c == CHAR_BIT) {
+		if (bio_flush_buffer(bio))
+			return -1;
+
+		bio->b = 0;
+
+		bio->c = 0;
+	}
+
+	return RET_SUCCESS;
+}
+
+int bio_get_bit(struct bio *bio, unsigned char *b)
+{
+	assert(bio);
+
+	if (bio->c == 0) {
+		if (bio_reload_buffer(bio))
+			return -1;
+
+		bio->c = CHAR_BIT;
+	}
+
+	assert(b);
+
+	*b = (bio->b >> (CHAR_BIT - bio->c)) & 1;
+
+	bio->c --;
+
+	return RET_SUCCESS;
+}
+
+int bio_write(struct bio *bio, uint_t b, size_t n)
+{
+	size_t i;
+
+	for (i = 0; i < n; ++i) {
+		if (bio_put_bit(bio, (b >> i) & 1))
+			return -1;
+	}
+
+	return RET_SUCCESS;
+}
+
+int bio_read(struct bio *bio, uint_t *bptr, size_t n)
+{
+	size_t i;
+
+	uint_t b = 0;
+
+	for (i = 0; i < n; ++i) {
+		unsigned char a;
+
+		if (bio_get_bit(bio, &a))
+			return -1;
+
+		b |= (uint_t)a << i;
+	}
+
+	assert(bptr);
+
+	*bptr = b;
+
+	return RET_SUCCESS;
+}
+
+int bio_close(struct bio *bio)
+{
+	assert(bio);
+
+	if (bio->c > 0) {
+		bio_flush_buffer(bio);
+	}
+
+	return RET_SUCCESS;
 }
