@@ -125,14 +125,18 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	bio_init(&bio, ptr);
+	bio_open(&bio, ptr, BIO_MODE_READ);
 	bpe_encode(&frame, &parameters, &bio);
+	bio_close(&bio);
 
 	/* rewrite the frame with random data */
 	frame_create_random(&frame);
 
-	bio_init(&bio, ptr);
+	bio_open(&bio, ptr, BIO_MODE_WRITE);
 	bpe_decode(&frame, &parameters, &bio);
+	bio_close(&bio);
+
+	frame_dump_chunked_as_semiplanar(&frame, "dwt3-decoded.pgm", 8);
 
 	dprint (("[DEBUG] inverse transform...\n"));
 

@@ -3,14 +3,21 @@
 
 #include "common.h"
 
+enum {
+	BIO_MODE_READ,
+	BIO_MODE_WRITE
+};
+
 struct bio {
+	int mode;
+
 	unsigned char *ptr;
 
 	unsigned char b; /* buffer */
 	size_t c; /* counter */
 };
 
-int bio_init(struct bio *bio, unsigned char *ptr);
+int bio_open(struct bio *bio, unsigned char *ptr, int mode);
 int bio_close(struct bio *bio);
 
 int bio_write_int(struct bio *bio, int i);

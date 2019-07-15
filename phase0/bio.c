@@ -4,9 +4,11 @@
 #include <assert.h>
 #include <limits.h>
 
-int bio_init(struct bio *bio, unsigned char *ptr)
+int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 {
 	assert(bio);
+
+	bio->mode = mode;
 
 	bio->ptr = ptr;
 
@@ -75,6 +77,7 @@ int bio_put_bit(struct bio *bio, unsigned char b)
 	return RET_SUCCESS;
 }
 
+/* c' = CHAR_BIT - c */
 int bio_get_bit(struct bio *bio, unsigned char *b)
 {
 	assert(bio);
@@ -133,7 +136,7 @@ int bio_close(struct bio *bio)
 {
 	assert(bio);
 
-	if (bio->c > 0) {
+	if (bio->mode == BIO_MODE_WRITE && bio->c > 0) {
 		bio_flush_buffer(bio);
 	}
 
