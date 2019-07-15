@@ -11,6 +11,16 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "config.h"
+
+#if (CONFIG_HAS_INT32 == 1)
+typedef int sint_t;
+typedef unsigned uint_t;
+#else
+typedef long sint_t;
+typedef unsigned long uint_t;
+#endif
+
 /**
  * \brief Error codes
  *
