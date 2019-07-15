@@ -31,12 +31,11 @@ int bio_flush_buffer(struct bio *bio)
 {
 	assert(bio);
 
-	if (bio->ptr == NULL)
-		return -1;
+	if (bio->ptr == NULL) {
+		return RET_FAILURE_LOGIC_ERROR;
+	}
 
-	* bio->ptr = bio->b;
-
-	bio->ptr++;
+	*bio->ptr++ = bio->b;
 
 	return RET_SUCCESS;
 }
@@ -45,12 +44,11 @@ int bio_reload_buffer(struct bio *bio)
 {
 	assert(bio);
 
-	if (bio->ptr == NULL)
-		return -1;
+	if (bio->ptr == NULL) {
+		return RET_FAILURE_LOGIC_ERROR;
+	}
 
-	bio->b = * bio->ptr;
-
-	bio->ptr++;
+	bio->b = *bio->ptr++;
 
 	return RET_SUCCESS;
 }
