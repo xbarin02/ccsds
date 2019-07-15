@@ -12,7 +12,14 @@ int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 
 	bio->ptr = ptr;
 
-	bio->c = 0;
+	switch (mode) {
+		case BIO_MODE_READ:
+			bio->c = CHAR_BIT;
+			break;
+		case BIO_MODE_WRITE:
+			bio->c = 0;
+			break;
+	}
 
 	bio->b = 0;
 
@@ -82,18 +89,18 @@ int bio_get_bit(struct bio *bio, unsigned char *b)
 {
 	assert(bio);
 
-	if (bio->c == 0) {
+	if (bio->c == CHAR_BIT) {
 		if (bio_reload_buffer(bio))
 			return -1;
 
-		bio->c = CHAR_BIT;
+		bio->c = 0;
 	}
 
 	assert(b);
 
-	*b = (bio->b >> (CHAR_BIT - bio->c)) & 1;
+	*b = (bio->b >> bio->c) & 1;
 
-	bio->c --;
+	bio->c ++;
 
 	return RET_SUCCESS;
 }
