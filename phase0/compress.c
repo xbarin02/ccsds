@@ -115,9 +115,6 @@ int main(int argc, char *argv[])
 	frame_dump_chunked_as_semiplanar(&frame, "dwt3.pgm", 8);
 
 	/** (3) BPE */
-#if 0
-	bpe_encode(&frame, &parameters);
-#endif
 	ptr = malloc(get_maximum_stream_size(&frame));
 
 	if (ptr == NULL) {
@@ -135,6 +132,8 @@ int main(int argc, char *argv[])
 	bio_open(&bio, ptr, BIO_MODE_READ);
 	bpe_decode(&frame, &parameters, &bio);
 	bio_close(&bio);
+
+	free(ptr);
 
 	frame_dump_chunked_as_semiplanar(&frame, "dwt3-decoded.pgm", 8);
 
