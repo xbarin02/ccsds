@@ -83,8 +83,10 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 
 	/* if this is the last block in the segment, serialize the segment into bpe->bio */
 	if (s + 1 == S) {
-		size_t blk;
 		/* encode this segment */
+
+		size_t blk;
+
 		dprint (("BPE: encoding segment %lu\n", (bpe->block_index / S)));
 
 		for (blk = 0; blk < S; ++blk) {
@@ -108,6 +110,8 @@ int bpe_flush(struct bpe *bpe)
 	s = bpe->block_index % S;
 
 	if (s > 0) {
+		/* encode the last (incomplete) segment */
+
 		size_t blk;
 
 		dprint (("BPE: flushing %lu blocks\n", s));
@@ -170,7 +174,7 @@ int block_by_index(struct block *block, struct frame *frame, size_t block_index)
 	block->data = data + y*width + x;
 	block->stride = width;
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int bpe_encode_block_by_index(struct frame *frame, struct bio *bio, size_t block_index)
