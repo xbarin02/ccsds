@@ -4,6 +4,14 @@
 #include <assert.h>
 #include <limits.h>
 
+static void bio_reset_after_flush(struct bio *bio)
+{
+	assert(bio);
+
+	bio->b = 0;
+	bio->c = 0;
+}
+
 int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 {
 	assert(bio);
@@ -12,13 +20,16 @@ int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 
 	bio->ptr = ptr;
 
+	if (ptr == NULL) {
+		return RET_FAILURE_LOGIC_ERROR;
+	}
+
 	switch (mode) {
 		case BIO_MODE_READ:
 			bio->c = CHAR_BIT;
 			break;
 		case BIO_MODE_WRITE:
-			bio->b = 0;
-			bio->c = 0;
+			bio_reset_after_flush(bio);
 			break;
 	}
 
@@ -93,12 +104,13 @@ int bio_put_bit(struct bio *bio, unsigned char b)
 	bio->c ++;
 
 	if (bio->c == CHAR_BIT) {
-		if (bio_flush_buffer(bio))
-			return -1;
+		int err = bio_flush_buffer(bio);
 
-		bio->b = 0;
+		if (err) {
+			return err;
+		}
 
-		bio->c = 0;
+		bio_reset_after_flush(bio);
 	}
 
 	return RET_SUCCESS;
@@ -110,8 +122,11 @@ int bio_get_bit(struct bio *bio, unsigned char *b)
 	assert(bio);
 
 	if (bio->c == CHAR_BIT) {
-		if (bio_reload_buffer(bio))
-			return -1;
+		int err = bio_reload_buffer(bio);
+
+		if (err) {
+			return err;
+		}
 
 		bio->c = 0;
 	}
@@ -119,6 +134,7 @@ int bio_get_bit(struct bio *bio, unsigned char *b)
 	assert(b);
 
 	*b = bio->b & 1;
+
 	bio->b >>= 1;
 
 	bio->c ++;
