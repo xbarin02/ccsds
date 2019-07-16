@@ -47,17 +47,17 @@ int bpe_destroy(struct bpe *bpe)
 	return RET_SUCCESS;
 }
 
-int bpe_encode_block(int *data, size_t stride, struct bio *bio)
+int bpe_encode_block(INT32 *data, size_t stride, struct bio *bio)
 {
 	size_t y, x;
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			bio_write_int(bio, (UINT32) data[y*stride + x]); /* FIXME int -> UINT32 */
+			bio_write_int(bio, (UINT32) data[y*stride + x]); /* FIXME INT32 -> UINT32 */
 		}
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
@@ -77,7 +77,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			local[y*8 + x] = (UINT32) data[y*stride + x]; /* FIXME int -> UINT32 */
+			local[y*8 + x] = (INT32) data[y*stride + x]; /* FIXME int -> INT32 */
 		}
 	}
 
@@ -95,6 +95,8 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 
 	/* next block will be... */
 	bpe->block_index ++;
+
+	return RET_SUCCESS;
 }
 
 int bpe_flush(struct bpe *bpe)
@@ -114,6 +116,8 @@ int bpe_flush(struct bpe *bpe)
 			bpe_encode_block(bpe->segment + blk*8*8, 8, bpe->bio);
 		}
 	}
+
+	return RET_SUCCESS;
 }
 
 int bpe_decode_block(int *data, size_t stride, struct bio *bio)
@@ -126,7 +130,7 @@ int bpe_decode_block(int *data, size_t stride, struct bio *bio)
 		}
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 size_t get_total_no_blocks(struct frame *frame)
@@ -148,13 +152,12 @@ struct block {
 
 int block_by_index(struct block *block, struct frame *frame, size_t block_index)
 {
-	size_t height, width;
+	size_t width;
 	size_t y, x;
 	int *data;
 
 	assert(frame);
 
-	height = ceil_multiple8(frame->height);
 	width  = ceil_multiple8(frame->width);
 
 	y = block_index / (width / 8) * 8;
@@ -208,7 +211,7 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 		bpe_encode_block_by_index(frame, bio, block_index);
 	}
 
-	return 0;
+	return RET_SUCCESS;
 #else
 	size_t block_index;
 	size_t total_no_blocks;
@@ -230,6 +233,8 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	bpe_flush(&bpe);
 
 	bpe_destroy(&bpe);
+
+	return RET_SUCCESS;
 #endif
 }
 
@@ -244,7 +249,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		bpe_decode_block_by_index(frame, bio, block_index);
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 size_t get_maximum_stream_size(struct frame *frame)
