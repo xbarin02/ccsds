@@ -24,9 +24,9 @@ int bio_write_int(struct bio *bio, int i);
 int bio_read_int(struct bio *bio, int *i);
 
 /* write n least-significant bits in b */
-int bio_write(struct bio *bio, uint_t b, size_t n);
+int bio_write_bits(struct bio *bio, uint_t b, size_t n);
 /* read n least-significant bits into *b */
-int bio_read(struct bio *bio, uint_t *b, size_t n);
+int bio_read_bits(struct bio *bio, uint_t *b, size_t n);
 
 int bio_put_bit(struct bio *bio, unsigned char b);
 int bio_get_bit(struct bio *bio, unsigned char *b);
