@@ -99,6 +99,7 @@ int bio_put_bit(struct bio *bio, unsigned char b)
 
 	assert(bio->c < CHAR_BIT);
 
+	/* do not trust the input, mask the LSB here */
 	bio->b = (unsigned char) ( (bio->b << 1) | (b & 1) );
 
 	bio->c ++;
@@ -147,31 +148,40 @@ int bio_write(struct bio *bio, uint_t b, size_t n)
 	size_t i;
 
 	for (i = 0; i < n; ++i) {
-		if (bio_put_bit(bio, (b >> i) & 1))
-			return -1;
+		/* masking the LSB omitted */
+		int err = bio_put_bit(bio, (unsigned char)b);
+
+		b >>= 1;
+
+		if (err) {
+			return err;
+		}
 	}
 
 	return RET_SUCCESS;
 }
 
-int bio_read(struct bio *bio, uint_t *bptr, size_t n)
+int bio_read(struct bio *bio, uint_t *b, size_t n)
 {
 	size_t i;
 
-	uint_t b = 0;
+	uint_t word = 0;
 
 	for (i = 0; i < n; ++i) {
-		unsigned char a;
+		unsigned char bit;
 
-		if (bio_get_bit(bio, &a))
-			return -1;
+		int err = bio_get_bit(bio, &bit);
 
-		b |= (uint_t)a << i;
+		if (err) {
+			return err;
+		}
+
+		word |= (uint_t)bit << i;
 	}
 
-	assert(bptr);
+	assert(b);
 
-	*bptr = b;
+	*b = word;
 
 	return RET_SUCCESS;
 }
