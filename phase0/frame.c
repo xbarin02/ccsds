@@ -902,19 +902,12 @@ int frame_scale_pixels(struct frame *frame, size_t bpp)
 	return RET_SUCCESS;
 }
 
-int frame_create_random(struct frame *frame)
+void frame_randomize(struct frame *frame)
 {
 	size_t height, width;
 	size_t y, x;
 	int maxval;
 	int *data;
-	int err;
-
-	err = frame_alloc_data(frame);
-
-	if (err) {
-		return err;
-	}
 
 	assert( frame );
 
@@ -931,6 +924,19 @@ int frame_create_random(struct frame *frame)
 			data[y*width + x] = sample;
 		}
 	}
+}
+
+int frame_create_random(struct frame *frame)
+{
+	int err;
+
+	err = frame_alloc_data(frame);
+
+	if (err) {
+		return err;
+	}
+
+	frame_randomize(frame);
 
 	return RET_SUCCESS;
 }

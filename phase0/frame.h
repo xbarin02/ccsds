@@ -129,4 +129,6 @@ int frame_alloc_data(struct frame *frame);
 
 int frame_create_random(struct frame *frame);
 
+void frame_randomize(struct frame *frame);
+
 #endif /* FRAME_H_ */

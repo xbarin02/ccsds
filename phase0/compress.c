@@ -127,8 +127,7 @@ int main(int argc, char *argv[])
 	bio_close(&bio);
 
 	/* rewrite the frame with random data */
-	/* NOTE this will cause a memory leak */
-	frame_create_random(&frame);
+	frame_randomize(&frame);
 
 	bio_open(&bio, ptr, BIO_MODE_READ);
 	bpe_decode(&frame, &parameters, &bio);
