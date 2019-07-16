@@ -38,6 +38,15 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	return RET_SUCCESS;
 }
 
+int bpe_destroy(struct bpe *bpe)
+{
+	assert(bpe);
+
+	free(bpe->segment);
+
+	return RET_SUCCESS;
+}
+
 int bpe_encode_block(int *data, size_t stride, struct bio *bio)
 {
 	size_t y, x;
@@ -219,6 +228,8 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	}
 
 	bpe_flush(&bpe);
+
+	bpe_destroy(&bpe);
 #endif
 }
 
