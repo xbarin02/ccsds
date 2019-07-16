@@ -20,15 +20,19 @@ struct bio {
 int bio_open(struct bio *bio, unsigned char *ptr, int mode);
 int bio_close(struct bio *bio);
 
-int bio_write_int(struct bio *bio, int i);
-int bio_read_int(struct bio *bio, int *i);
+/* write entire uint_t */
+int bio_write_int(struct bio *bio, uint_t i);
+/* read entire uint_t */
+int bio_read_int(struct bio *bio, uint_t *i);
 
 /* write n least-significant bits in b */
 int bio_write_bits(struct bio *bio, uint_t b, size_t n);
 /* read n least-significant bits into *b */
 int bio_read_bits(struct bio *bio, uint_t *b, size_t n);
 
+/* write a single bit */
 int bio_put_bit(struct bio *bio, unsigned char b);
+/* read a single bit */
 int bio_get_bit(struct bio *bio, unsigned char *b);
 
 #endif /* BIO_H_ */

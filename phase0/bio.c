@@ -36,14 +36,14 @@ int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 	return RET_SUCCESS;
 }
 
-int bio_write_int(struct bio *bio, int i)
+int bio_write_int(struct bio *bio, uint_t i)
 {
-	return bio_write_bits(bio, (uint_t) i, sizeof(uint_t) * CHAR_BIT); /* FIXME int -> uint_t */
+	return bio_write_bits(bio, (uint_t) i, sizeof(uint_t) * CHAR_BIT);
 }
 
-int bio_read_int(struct bio *bio, int *i)
+int bio_read_int(struct bio *bio, uint_t *i)
 {
-	return bio_read_bits(bio, (uint_t *) i, sizeof(uint_t) * CHAR_BIT); /* FIXME uint_t -> int */
+	return bio_read_bits(bio, (uint_t *) i, sizeof(uint_t) * CHAR_BIT);
 }
 
 static const unsigned char lut_reverse_char[256] = {
