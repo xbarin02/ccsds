@@ -60,6 +60,32 @@ int bpe_encode_block(INT32 *data, size_t stride, struct bio *bio)
 	return RET_SUCCESS;
 }
 
+int bpe_encode_segment(struct bpe *bpe)
+{
+	size_t S;
+	size_t s;
+	size_t blk;
+
+	assert(bpe);
+
+	S = bpe->S;
+	s = bpe->block_index % S;
+
+	if (s == 0) {
+		s = S;
+		dprint (("BPE: encoding segment %lu\n", ((bpe->block_index - 1) / S)));
+	} else {
+		dprint (("BPE: flushing %lu blocks\n", s));
+	}
+
+	for (blk = 0; blk < s; ++blk) {
+		/* encode the block */
+		bpe_encode_block(bpe->segment + blk*8*8, 8, bpe->bio);
+	}
+
+	return RET_SUCCESS;
+}
+
 int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 {
 	size_t S;
@@ -81,22 +107,16 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 		}
 	}
 
-	/* if this is the last block in the segment, serialize the segment into bpe->bio */
-	if (s + 1 == S) {
-		/* encode this segment */
-
-		size_t blk;
-
-		dprint (("BPE: encoding segment %lu\n", (bpe->block_index / S)));
-
-		for (blk = 0; blk < S; ++blk) {
-			/* encode the block */
-			bpe_encode_block(bpe->segment + blk*8*8, 8, bpe->bio);
-		}
-	}
-
 	/* next block will be... */
 	bpe->block_index ++;
+
+	s = bpe->block_index % S;
+
+	/* if this is the last block in the segment, serialize the segment into bpe->bio */
+	if (s == 0) {
+		/* encode this segment */
+		bpe_encode_segment(bpe);
+	}
 
 	return RET_SUCCESS;
 }
@@ -111,14 +131,7 @@ int bpe_flush(struct bpe *bpe)
 
 	if (s > 0) {
 		/* encode the last (incomplete) segment */
-
-		size_t blk;
-
-		dprint (("BPE: flushing %lu blocks\n", s));
-
-		for (blk = 0; blk < s; ++blk) {
-			bpe_encode_block(bpe->segment + blk*8*8, 8, bpe->bio);
-		}
+		bpe_encode_segment(bpe);
 	}
 
 	return RET_SUCCESS;
