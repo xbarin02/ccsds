@@ -7,7 +7,7 @@ int bpe_encode_block(int *data, size_t stride, struct bio *bio)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			bio_write_int(bio, (uint_t) data[y*stride + x]); /* FIXME int -> uint_t */
+			bio_write_int(bio, (UINT32) data[y*stride + x]); /* FIXME int -> UINT32 */
 		}
 	}
 
@@ -20,7 +20,7 @@ int bpe_decode_block(int *data, size_t stride, struct bio *bio)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			bio_read_int(bio, (uint_t *) &data[y*stride + x]); /* FIXME uint_t -> int */
+			bio_read_int(bio, (UINT32 *) &data[y*stride + x]); /* FIXME UINT32 -> int */
 		}
 	}
 

@@ -36,14 +36,14 @@ int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 	return RET_SUCCESS;
 }
 
-int bio_write_int(struct bio *bio, uint_t i)
+int bio_write_int(struct bio *bio, UINT32 i)
 {
-	return bio_write_bits(bio, (uint_t) i, sizeof(uint_t) * CHAR_BIT);
+	return bio_write_bits(bio, i, sizeof(UINT32) * CHAR_BIT);
 }
 
-int bio_read_int(struct bio *bio, uint_t *i)
+int bio_read_int(struct bio *bio, UINT32 *i)
 {
-	return bio_read_bits(bio, (uint_t *) i, sizeof(uint_t) * CHAR_BIT);
+	return bio_read_bits(bio, i, sizeof(UINT32) * CHAR_BIT);
 }
 
 static const unsigned char lut_reverse_char[256] = {
@@ -143,7 +143,7 @@ int bio_get_bit(struct bio *bio, unsigned char *b)
 	return RET_SUCCESS;
 }
 
-int bio_write_bits(struct bio *bio, uint_t b, size_t n)
+int bio_write_bits(struct bio *bio, UINT32 b, size_t n)
 {
 	size_t i;
 
@@ -161,11 +161,11 @@ int bio_write_bits(struct bio *bio, uint_t b, size_t n)
 	return RET_SUCCESS;
 }
 
-int bio_read_bits(struct bio *bio, uint_t *b, size_t n)
+int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 {
 	size_t i;
 
-	uint_t word = 0;
+	UINT32 word = 0;
 
 	for (i = 0; i < n; ++i) {
 		unsigned char bit;
@@ -176,7 +176,7 @@ int bio_read_bits(struct bio *bio, uint_t *b, size_t n)
 			return err;
 		}
 
-		word |= (uint_t)bit << i;
+		word |= (UINT32)bit << i;
 	}
 
 	assert(b);

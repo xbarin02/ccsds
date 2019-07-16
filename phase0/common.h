@@ -13,12 +13,17 @@
 
 #include "config.h"
 
-#if (CONFIG_HAS_INT32 == 1)
-typedef int sint_t;
-typedef unsigned uint_t;
+#if (USHRT_MAX == 4294967295)
+#define INT32 short
+#define UINT32 unsigned short
+#elif (UINT_MAX == 4294967295)
+#define INT32 int
+#define UINT32 unsigned
+#elif (ULONG_MAX == 4294967295)
+#define INT32 long
+#define UINT32 unsigned long
 #else
-typedef long sint_t;
-typedef unsigned long uint_t;
+#error "Unable to find 32-bit type"
 #endif
 
 /**
