@@ -86,6 +86,46 @@ int bpe_encode_segment(struct bpe *bpe)
 	return RET_SUCCESS;
 }
 
+int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
+{
+	size_t y, x;
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			bio_read_int(bio, (UINT32 *) &data[y*stride + x]); /* FIXME UINT32 -> INT32 */
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
+{
+	size_t S;
+	size_t s;
+	size_t blk;
+
+	assert(bpe);
+
+	S = bpe->S;
+	s = bpe->block_index % S;
+
+	if (s == 0) {
+		s = S;
+	}
+
+	/* FIXME correct the number of block in the last segment */
+
+	dprint (("BPE: decoding segment %lu (%lu blocks)\n", ((bpe->block_index) / S), s));
+
+	for (blk = 0; blk < s; ++blk) {
+		/* decode the block */
+		bpe_decode_block(bpe->segment + blk*8*8, 8, bpe->bio);
+	}
+
+	return RET_SUCCESS;
+}
+
 int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 {
 	size_t S;
@@ -103,7 +143,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			local[y*8 + x] = (INT32) data[y*stride + x]; /* FIXME int -> INT32 */
+			local[y*8 + x] = (INT32) data[y*stride + x]; /* FIXME INT32 */
 		}
 	}
 
@@ -121,6 +161,35 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 	return RET_SUCCESS;
 }
 
+int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks)
+{
+	size_t S;
+	size_t s;
+	INT32 *local;
+	size_t y, x;
+
+	S = bpe->S;
+	s = bpe->block_index % S;
+
+	/* if this is the first block in the segment, deserialize it */
+	if (s == 0) {
+		bpe_decode_segment(bpe, total_no_blocks);
+	}
+
+	/* pop the block from bpe->segment[] */
+	local = bpe->segment + s*8*8;
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			data[y*stride + x] = (INT32) local[y*8 + x]; /* FIXME INT32 */
+		}
+	}
+
+	bpe->block_index ++;
+
+	return 0;
+}
+
 int bpe_flush(struct bpe *bpe)
 {
 	size_t S;
@@ -132,19 +201,6 @@ int bpe_flush(struct bpe *bpe)
 	if (s > 0) {
 		/* encode the last (incomplete) segment */
 		bpe_encode_segment(bpe);
-	}
-
-	return RET_SUCCESS;
-}
-
-int bpe_decode_block(int *data, size_t stride, struct bio *bio)
-{
-	size_t y, x;
-
-	for (y = 0; y < 8; ++y) {
-		for (x = 0; x < 8; ++x) {
-			bio_read_int(bio, (UINT32 *) &data[y*stride + x]); /* FIXME UINT32 -> int */
-		}
 	}
 
 	return RET_SUCCESS;
@@ -257,6 +313,7 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 
 int bpe_decode(struct frame *frame, const struct parameters *parameters, struct bio *bio)
 {
+#if 0
 	size_t total_no_blocks;
 	size_t block_index;
 
@@ -267,6 +324,30 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	}
 
 	return RET_SUCCESS;
+#else
+	size_t block_index;
+	size_t total_no_blocks;
+	struct bpe bpe;
+
+	total_no_blocks = get_total_no_blocks(frame);
+
+	bpe_init(&bpe, parameters, bio);
+
+	/* push all blocks into the BPE engine */
+	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
+		struct block block;
+
+		block_by_index(&block, frame, block_index);
+
+		bpe_pop_block(&bpe, block.data, block.stride, total_no_blocks);
+	}
+
+	/* FIXME decode the last segment */
+
+	bpe_destroy(&bpe);
+
+	return RET_SUCCESS;
+#endif
 }
 
 size_t get_maximum_stream_size(struct frame *frame)
