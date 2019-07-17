@@ -3,10 +3,11 @@
 #include <stdlib.h>
 
 struct bpe {
+	/* the number of block in the segment,
+	 * the S is given in struct parameters */
 	size_t S;
 
-	/* local copy of S blocks (the S is given in struct parameters) */
-	/* the size is 64*S = 8*8*S 32-bit integers */
+	/* local copy of S blocks, the size is 64*S = 8*8*S 32-bit integers */
 	INT32 *segment;
 
 	size_t block_index;

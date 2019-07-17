@@ -1,3 +1,7 @@
+/**
+ * \file bio.h
+ * \brief Bit input/output routines
+ */
 #ifndef BIO_H_
 #define BIO_H_
 

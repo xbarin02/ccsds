@@ -1,3 +1,7 @@
+/**
+ * \file bpe.h
+ * \brief Bit-plane encoder and decoder
+ */
 #ifndef BPE_H_
 #define BPE_H_
 
