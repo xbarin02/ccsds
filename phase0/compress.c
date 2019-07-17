@@ -62,11 +62,6 @@ int main(int argc, char *argv[])
 	struct bio bio;
 	void *ptr;
 
-	/* NOTE Since we implement the floor function for negative numbers using
-	 * an arithmetic right shift, we must check whether the underlying
-	 * signed integer representation is two's complement. */
-	assert( ~-1 == 0 );
-
 	if (argc < 2) {
 		fprintf(stderr, "[ERROR] argument expected\n");
 		return EXIT_FAILURE;
@@ -100,7 +95,7 @@ int main(int argc, char *argv[])
 
 	init_parameters(&parameters);
 
-	parameters.DWTtype = 0;
+	parameters.DWTtype = 1;
 
 	dprint (("[DEBUG] transform...\n"));
 

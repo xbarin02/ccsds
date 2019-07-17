@@ -8,6 +8,11 @@
 
 static int floor_div_pow2(int numerator, int log2_denominator)
 {
+	/* NOTE Since we implement the floor function for negative numbers using
+	 * an arithmetic right shift, we must check whether the underlying
+	 * signed integer representation is two's complement. */
+	assert( ~-1 == 0 );
+
 	/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
 	if (numerator < 0)
 		return ~(~numerator >> log2_denominator);
