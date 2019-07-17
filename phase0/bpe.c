@@ -5,8 +5,8 @@
 struct bpe {
 	size_t S;
 
-	/* S blocks (the S is given in struct parameters) */
-	/* i.e. Sx8x8 32-bit integers */
+	/* local copy of S blocks (the S is given in struct parameters) */
+	/* the size is 64*S = 8*8*S 32-bit integers */
 	INT32 *segment;
 
 	size_t block_index;
@@ -147,7 +147,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			local[y*8 + x] = (INT32) data[y*stride + x]; /* FIXME INT32 */
+			local[y*8 + x] = data[y*stride + x];
 		}
 	}
 
@@ -185,13 +185,13 @@ int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_b
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			data[y*stride + x] = (INT32) local[y*8 + x]; /* FIXME INT32 */
+			data[y*stride + x] = local[y*8 + x];
 		}
 	}
 
 	bpe->block_index ++;
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int bpe_flush(struct bpe *bpe)
@@ -273,18 +273,10 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 #if 0
 	size_t total_no_blocks;
 	size_t block_index;
-	size_t S;
 
 	total_no_blocks = get_total_no_blocks(frame);
 
-	assert(parameters);
-
-	S = parameters->S;
-
 	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
-		if (block_index % S == 0) {
-			dprint (("segment %lu\n", (unsigned long)(block_index / S)));
-		}
 		bpe_encode_block_by_index(frame, bio, block_index);
 	}
 
