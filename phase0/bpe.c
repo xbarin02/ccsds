@@ -114,7 +114,11 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		s = S;
 	}
 
-	/* FIXME correct the number of block in the last segment */
+	/* correct the number of block in the last segment */
+	if (bpe->block_index + S > total_no_blocks) {
+		dprint (("shortened segment (%lu blocks)\n", total_no_blocks - bpe->block_index));
+		s = total_no_blocks - bpe->block_index;
+	}
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", ((bpe->block_index) / S), s));
 
@@ -341,8 +345,6 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 		bpe_pop_block(&bpe, block.data, block.stride, total_no_blocks);
 	}
-
-	/* FIXME decode the last segment */
 
 	bpe_destroy(&bpe);
 
