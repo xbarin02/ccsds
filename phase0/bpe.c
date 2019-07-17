@@ -2,19 +2,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-struct bpe {
-	/* the number of block in the segment,
-	 * the S is given in struct parameters */
-	size_t S;
-
-	/* local copy of S blocks, the size is 64*S = 8*8*S 32-bit integers */
-	INT32 *segment;
-
-	size_t block_index;
-
-	struct bio *bio;
-};
-
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio)
 {
 	size_t S;
@@ -271,18 +258,6 @@ int bpe_decode_block_by_index(struct frame *frame, struct bio *bio, size_t block
 
 int bpe_encode(struct frame *frame, const struct parameters *parameters, struct bio *bio)
 {
-#if 0
-	size_t total_no_blocks;
-	size_t block_index;
-
-	total_no_blocks = get_total_no_blocks(frame);
-
-	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
-		bpe_encode_block_by_index(frame, bio, block_index);
-	}
-
-	return RET_SUCCESS;
-#else
 	size_t block_index;
 	size_t total_no_blocks;
 	struct bpe bpe;
@@ -305,23 +280,10 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	bpe_destroy(&bpe);
 
 	return RET_SUCCESS;
-#endif
 }
 
 int bpe_decode(struct frame *frame, const struct parameters *parameters, struct bio *bio)
 {
-#if 0
-	size_t total_no_blocks;
-	size_t block_index;
-
-	total_no_blocks = get_total_no_blocks(frame);
-
-	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
-		bpe_decode_block_by_index(frame, bio, block_index);
-	}
-
-	return RET_SUCCESS;
-#else
 	size_t block_index;
 	size_t total_no_blocks;
 	struct bpe bpe;
@@ -342,7 +304,6 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	bpe_destroy(&bpe);
 
 	return RET_SUCCESS;
-#endif
 }
 
 size_t get_maximum_stream_size(struct frame *frame)
