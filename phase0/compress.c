@@ -8,7 +8,6 @@
  * @author David Barina <ibarina@fit.vutbr.cz>
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
