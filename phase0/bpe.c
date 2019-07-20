@@ -2,9 +2,18 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define M2 3
+#define M3 7
+#define M4 15
+#define M5 31
+#define M8 255
+#define M20 1048575
+#define M27 134217727
+
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio)
 {
 	size_t S;
+	int i;
 
 	assert(bpe);
 	assert(parameters);
@@ -22,6 +31,12 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->bio = bio;
 
 	bpe->block_index = 0;
+
+	bpe->DWTtype = parameters->DWTtype;
+
+	for (i = 0; i < 12; ++i) {
+		bpe->weight[i] = parameters->weight[i];
+	}
 
 	return RET_SUCCESS;
 }
@@ -46,6 +61,356 @@ int bpe_encode_block(INT32 *data, size_t stride, struct bio *bio)
 	}
 
 	return RET_SUCCESS;
+}
+
+#define SET_UINT_INTO_UINT32(var, bit_index, bit_mask) ((UINT32)((var) & (bit_mask)) << (bit_index))
+#define SET_BOOL_INTO_UINT32(var, bit_index) ((UINT32)((var) ? 1 : 0) << (bit_index))
+
+/* Part 1A (3 bytes) -- Mandatory */
+int bpe_write_segment_header_part1a(struct bpe *bpe)
+{
+	UINT32 word = 0;
+
+	assert(bpe);
+
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.StartImgFlag, 0); /* +0 Flags initial segment in an image */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.EndImgFlag, 1); /* +1 Flags final segment in an image */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.SegmentCount, 2, M8); /* +2 Segment counter value */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.BitDepthDC, 10, M5); /* +10 value of BitDepthDC (mod 32) */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.BitDepthAC, 15, M5); /* +15 value of BitDepthAC */
+	/* +20 Reserved : 1 -- shall be set to ‘0’ */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.Part2Flag, 21); /* +21 Part2Flag */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.Part3Flag, 22); /* +22 Part3Flag */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.Part4Flag, 23); /* +23 Part4Flag */
+
+	return bio_write_bits(bpe->bio, word, 24);
+}
+
+/* Part 1B (1 byte) -- Mandatory for the last segment of image, not included otherwise */
+int bpe_write_segment_header_part1b(struct bpe *bpe)
+{
+	UINT32 word = 0;
+
+	assert(bpe);
+
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.PadRows, 0, M3); /* Number of ‘padding’ rows to delete after inverse DWT */
+	/*  +3 Reserved : 5 */
+
+	return bio_write_bits(bpe->bio, word, 8);
+}
+
+/* Part 2 (5 bytes) -- Optional */
+int bpe_write_segment_header_part2(struct bpe *bpe)
+{
+	UINT32 word = 0;
+	int err;
+
+	assert(bpe);
+
+	/* SegByteLimit (27 bits) */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.SegByteLimit, 0, M27);
+
+	err = bio_write_bits(bpe->bio, word, 27);
+
+	if (err) {
+		return err;
+	}
+
+	/* all other fields (13 bits) */
+	word = 0; /* reset word */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.DCStop, 0);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.BitPlaneStop, 1, M5);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.StageStop, 6, M2);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.UseFill, 8);
+	/* Reserved : 4 */
+
+	return bio_write_bits(bpe->bio, word, 13);
+}
+
+/* Part 3 (3 bytes) */
+int bpe_write_segment_header_part3(struct bpe *bpe)
+{
+	UINT32 word = 0;
+
+	assert(bpe);
+
+	word |= SET_UINT_INTO_UINT32(bpe->S, 0, M20);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.OptDCSelect, 20);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.OptACSelect, 21);
+	/* Reserved : 2 */
+
+	return bio_write_bits(bpe->bio, word, 24);
+}
+
+/* Part 4 (8 bytes) */
+int bpe_write_segment_header_part4(struct bpe *bpe)
+{
+	UINT32 word = 0;
+	int err;
+
+	assert(bpe);
+
+	word |= SET_BOOL_INTO_UINT32(bpe->DWTtype, 0);
+	/* Reserved : 1 */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.ExtendedPixelBitDepthFlag, 2);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.SignedPixels, 3);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.PixelBitDepth, 4);
+	word |= SET_UINT_INTO_UINT32(bpe->width, 8, M20);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.TransposeImg, 28);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.CodeWordLength, 29, M3);
+
+	err = bio_write_bits(bpe->bio, word, 32);
+
+	if (err) {
+		return err;
+	}
+
+	 word = 0;
+	 word |= SET_BOOL_INTO_UINT32(bpe->segment_info.CustomWtFlag, 0);
+	 if (bpe->segment_info.CustomWtFlag) {
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 3] - 1, 1, M2); /* CustomWtHH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 1] - 1, 3, M2); /* CustomWtHL1 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 2] - 1, 5, M2); /* CustomWtLH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 7] - 1, 7, M2); /* CustomWtHH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 5] - 1, 9, M2); /* CustomWtHL2 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[11] - 1, 13, M2); /* CustomWtHH3 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[10] - 1, 17, M2); /* CustomWtLH3 */
+		word |= SET_UINT_INTO_UINT32(bpe->weight[ 8] - 1, 19, M2); /* CustomWtLL3 */
+	 }
+	 /* +21 Reserved : 11 */
+
+	 return bio_write_bits(bpe->bio, word, 32);
+}
+
+#define GET_UINT_FROM_UINT32(word, bit_index, bit_mask) (((word) >> (bit_index)) & (bit_mask))
+#define GET_BOOL_FROM_UINT32(word, bit_index) ((((word) >> (bit_index)) & 1) == 1)
+
+/* Part 1A (3 bytes) */
+int bpe_read_segment_header_part1a(struct bpe *bpe)
+{
+	UINT32 word;
+	int err;
+
+	assert(bpe);
+
+	err = bio_read_bits(bpe->bio, &word, 24);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->segment_info.StartImgFlag = GET_BOOL_FROM_UINT32(word, 0);
+	bpe->segment_info.EndImgFlag = GET_BOOL_FROM_UINT32(word, 1);
+	bpe->segment_info.SegmentCount = GET_UINT_FROM_UINT32(word, 2, M8);
+	bpe->segment_info.BitDepthDC = GET_UINT_FROM_UINT32(word, 10, M5);
+	bpe->segment_info.BitDepthAC = GET_UINT_FROM_UINT32(word, 15, M5);
+	bpe->segment_info.Part2Flag = GET_BOOL_FROM_UINT32(word, 21);
+	bpe->segment_info.Part3Flag = GET_BOOL_FROM_UINT32(word, 22);
+	bpe->segment_info.Part4Flag = GET_BOOL_FROM_UINT32(word, 23);
+
+	return RET_SUCCESS;
+}
+
+/* Part 1B (1 byte) */
+int bpe_read_segment_header_part1b(struct bpe *bpe)
+{
+	UINT32 word;
+	int err;
+
+	assert(bpe);
+
+	err = bio_read_bits(bpe->bio, &word, 8);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->segment_info.PadRows = GET_UINT_FROM_UINT32(word, 0, M3);
+
+	return RET_SUCCESS;
+}
+
+/* Part 2 (5 bytes) */
+int bpe_read_segment_header_part2(struct bpe *bpe)
+{
+	UINT32 word;
+	int err;
+
+	assert(bpe);
+
+	err = bio_read_bits(bpe->bio, &word, 27);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->segment_info.SegByteLimit = GET_UINT_FROM_UINT32(word, 0, M27); /* SegByteLimit : 27 */
+
+	err = bio_read_bits(bpe->bio, &word, 13);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->segment_info.DCStop = GET_BOOL_FROM_UINT32(word, 0);
+	bpe->segment_info.BitPlaneStop = GET_UINT_FROM_UINT32(word, 1, M5);
+	bpe->segment_info.StageStop = GET_UINT_FROM_UINT32(word, 6, M2);
+	bpe->segment_info.UseFill = GET_BOOL_FROM_UINT32(word, 8);
+
+	return RET_SUCCESS;
+}
+
+/* Part 3 (3 bytes) */
+int bpe_read_segment_header_part3(struct bpe *bpe)
+{
+	UINT32 word;
+	int err;
+
+	assert(bpe);
+
+	err = bio_read_bits(bpe->bio, &word, 24);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->S = GET_UINT_FROM_UINT32(word, 0, M20); /* FIXME: reallocate struct bpe */
+	bpe->segment_info.OptDCSelect = GET_BOOL_FROM_UINT32(word, 20);
+	bpe->segment_info.OptACSelect = GET_BOOL_FROM_UINT32(word, 21);
+
+	return RET_SUCCESS;
+}
+
+/* Part 4 (8 bytes) */
+int bpe_read_segment_header_part4(struct bpe *bpe)
+{
+	UINT32 word;
+	int err;
+
+	assert(bpe);
+
+	err = bio_read_bits(bpe->bio, &word, 32);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->DWTtype = GET_BOOL_FROM_UINT32(word, 0);
+	/* Reserved : 1 */
+	bpe->segment_info.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2);
+	bpe->segment_info.SignedPixels = GET_BOOL_FROM_UINT32(word, 3);
+	bpe->segment_info.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4);
+	bpe->width = GET_UINT_FROM_UINT32(word, 8, M20);
+	bpe->segment_info.TransposeImg = GET_BOOL_FROM_UINT32(word, 28);
+	bpe->segment_info.CodeWordLength = GET_UINT_FROM_UINT32(word, 29, M3);
+
+	err = bio_read_bits(bpe->bio, &word, 32);
+
+	if (err) {
+		return err;
+	}
+
+	bpe->segment_info.CustomWtFlag = GET_BOOL_FROM_UINT32(word, 0);
+	if (bpe->segment_info.CustomWtFlag) {
+		bpe->weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word, 1, M2); /* CustomWtHH1 */
+		bpe->weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word, 3, M2); /* CustomWtHL1 */
+		bpe->weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word, 5, M2); /* CustomWtLH1 */
+		bpe->weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word, 7, M2); /* CustomWtHH2 */
+		bpe->weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word, 9, M2); /* CustomWtHL2 */
+		bpe->weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
+		bpe->weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
+		bpe->weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
+		bpe->weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 */
+		bpe->weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 */
+	}
+	/* +21 Reserved : 11 */
+
+	return RET_SUCCESS;
+}
+
+int bpe_write_segment_header(struct bpe *bpe)
+{
+	size_t S;
+	int err;
+
+	assert(bpe);
+
+	S = bpe->S;
+
+	bpe->segment_info.StartImgFlag = (bpe->block_index == S);
+	bpe->segment_info.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
+	/* TODO EndImgFlag */
+
+	/* Segment Header Part 1A (mandatory) */
+	bpe_write_segment_header_part1a(bpe);
+
+	/* Segment Header Part 1B */
+	if (bpe->segment_info.EndImgFlag != 0) {
+		err = bpe_write_segment_header_part1b(bpe);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	/* Segment Header Part 2 */
+	if (bpe->segment_info.Part2Flag) {
+		err = bpe_write_segment_header_part2(bpe);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	/* Segment Header Part 3 */
+	if (bpe->segment_info.Part3Flag) {
+		err = bpe_write_segment_header_part3(bpe);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	/* Segment Header Part 4 */
+	if (bpe->segment_info.Part4Flag) {
+		err = bpe_write_segment_header_part4(bpe);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+int bpe_read_segment_header(struct bpe *bpe)
+{
+	/* Segment Header Part 1A (mandatory) */
+	bpe_read_segment_header_part1a(bpe);
+
+	/* Segment Header Part 1B */
+	if (bpe->segment_info.EndImgFlag != 0) {
+		bpe_read_segment_header_part1b(bpe);
+	}
+
+	/* Segment Header Part 2 */
+	if (bpe->segment_info.Part2Flag) {
+		bpe_read_segment_header_part2(bpe);
+	}
+
+	/* Segment Header Part 3 */
+	if (bpe->segment_info.Part3Flag) {
+		bpe_read_segment_header_part3(bpe);
+	}
+
+	/* Segment Header Part 4 */
+	if (bpe->segment_info.Part4Flag) {
+		bpe_read_segment_header_part4(bpe);
+	}
+
+	return 0;
 }
 
 int bpe_encode_segment(struct bpe *bpe)
@@ -262,6 +627,16 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	size_t total_no_blocks;
 	struct bpe bpe;
 
+	assert(frame);
+
+	/* HACK until the library is fully implemented, write the image
+	 * dimensions at the beginning of the bitstream
+	 */
+	bio_write_int(bio, (UINT32) frame->width);
+	bio_write_int(bio, (UINT32) frame->height);
+	bpe.width = frame->width;
+	bpe.height = frame->height;
+
 	total_no_blocks = get_total_no_blocks(frame);
 
 	bpe_init(&bpe, parameters, bio);
@@ -287,6 +662,14 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	size_t block_index;
 	size_t total_no_blocks;
 	struct bpe bpe;
+
+	assert(frame);
+
+	/* HACK */
+	bio_read_int(bio, (UINT32 *) &frame->width);
+	bio_read_int(bio, (UINT32 *) &frame->height);
+	bpe.width = frame->width;
+	bpe.height = frame->height;
 
 	total_no_blocks = get_total_no_blocks(frame);
 

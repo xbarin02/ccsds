@@ -9,6 +9,36 @@
 #include "frame.h"
 #include "bio.h"
 
+struct segment_info {
+	/* Segment Header Part 1A */
+	int StartImgFlag;
+	int EndImgFlag;
+	UINT32 SegmentCount;
+	UINT32 BitDepthDC;
+	UINT32 BitDepthAC;
+	int Part2Flag;
+	int Part3Flag;
+	int Part4Flag;
+	/* Segment Header Part 1B */
+	UINT32 PadRows;
+	/* Segment Header Part 2 */
+	UINT32 SegByteLimit;
+	int DCStop;
+	UINT32 BitPlaneStop;
+	UINT32 StageStop;
+	int UseFill;
+	/* Segment Header Part 3 */
+	int OptDCSelect;
+	int OptACSelect;
+	/* Segment Header Part 4 */
+	int ExtendedPixelBitDepthFlag;
+	int SignedPixels;
+	UINT32 PixelBitDepth;
+	int TransposeImg;
+	UINT32 CodeWordLength;
+	int CustomWtFlag;
+};
+
 struct bpe {
 	/* the number of block in the segment,
 	 * the S is given in struct parameters */
@@ -20,6 +50,15 @@ struct bpe {
 	size_t block_index;
 
 	struct bio *bio;
+
+	struct segment_info segment_info;
+
+	int DWTtype;
+
+	size_t height; /**< \brief number of rows, range [17; infty) */
+	size_t width;  /**< \brief number of columns, range [17; 1<<20] */
+
+	int weight[12];
 };
 
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio);
