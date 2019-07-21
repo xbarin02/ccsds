@@ -22,21 +22,25 @@ struct segment_info {
 	/* Segment Header Part 1B */
 	UINT32 PadRows;
 	/* Segment Header Part 2 */
-	UINT32 SegByteLimit;
+	UINT32 SegByteLimit; /* The value of SegByteLimit must be an integer multiple of the word size specified by CodeWordLength */
 	int DCStop;
 	UINT32 BitPlaneStop;
 	UINT32 StageStop;
 	int UseFill;
 	/* Segment Header Part 3 */
+	UINT32 S;
 	int OptDCSelect;
 	int OptACSelect;
 	/* Segment Header Part 4 */
-	int ExtendedPixelBitDepthFlag;
+	int DWTtype;
+	int ExtendedPixelBitDepthFlag; /* Indicates an input pixel bit depth larger than 16. */
 	int SignedPixels;
-	UINT32 PixelBitDepth;
+	UINT32 PixelBitDepth; /* Input pixel bit depth value encoded, mod 16 */
+	UINT32 ImageWidth;
 	int TransposeImg;
 	UINT32 CodeWordLength;
 	int CustomWtFlag;
+	int weight[12];
 };
 
 struct bpe {
@@ -53,12 +57,7 @@ struct bpe {
 
 	struct segment_info segment_info;
 
-	int DWTtype;
-
-	size_t height; /**< \brief number of rows, range [17; infty) */
-	size_t width;  /**< \brief number of columns, range [17; 1<<20] */
-
-	int weight[12];
+	struct frame *frame;
 };
 
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio);

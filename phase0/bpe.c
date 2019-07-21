@@ -10,6 +10,10 @@
 #define M20 1048575
 #define M27 134217727
 
+static const unsigned char lut_codeword_length[8] = {
+	8, 40, 16, 48, 24, 56, 32, 64
+};
+
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio)
 {
 	size_t S;
@@ -32,11 +36,15 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 
 	bpe->block_index = 0;
 
-	bpe->DWTtype = parameters->DWTtype;
-
 	for (i = 0; i < 12; ++i) {
-		bpe->weight[i] = parameters->weight[i];
+		bpe->segment_info.weight[i] = parameters->weight[i];
 	}
+
+	bpe->segment_info.S = (UINT32)S;
+	bpe->segment_info.DWTtype = parameters->DWTtype;
+	bpe->segment_info.ImageWidth = (UINT32)bpe->frame->width;
+	bpe->segment_info.TransposeImg = 0;
+	bpe->segment_info.CodeWordLength = 6; /* 6 => 32-bit coded words */
 
 	return RET_SUCCESS;
 }
@@ -134,7 +142,7 @@ int bpe_write_segment_header_part3(struct bpe *bpe)
 
 	assert(bpe);
 
-	word |= SET_UINT_INTO_UINT32(bpe->S, 0, M20);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.S, 0, M20);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.OptDCSelect, 20);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.OptACSelect, 21);
 	/* Reserved : 2 */
@@ -150,12 +158,12 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 
 	assert(bpe);
 
-	word |= SET_BOOL_INTO_UINT32(bpe->DWTtype, 0);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.DWTtype, 0);
 	/* Reserved : 1 */
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.ExtendedPixelBitDepthFlag, 2);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.SignedPixels, 3);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.PixelBitDepth, 4);
-	word |= SET_UINT_INTO_UINT32(bpe->width, 8, M20);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_info.ImageWidth, 8, M20);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.TransposeImg, 28);
 	word |= SET_UINT_INTO_UINT32(bpe->segment_info.CodeWordLength, 29, M3);
 
@@ -168,16 +176,16 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 	 word = 0;
 	 word |= SET_BOOL_INTO_UINT32(bpe->segment_info.CustomWtFlag, 0);
 	 if (bpe->segment_info.CustomWtFlag) {
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 3] - 1, 1, M2); /* CustomWtHH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 1] - 1, 3, M2); /* CustomWtHL1 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 2] - 1, 5, M2); /* CustomWtLH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 7] - 1, 7, M2); /* CustomWtHH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 5] - 1, 9, M2); /* CustomWtHL2 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[11] - 1, 13, M2); /* CustomWtHH3 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[10] - 1, 17, M2); /* CustomWtLH3 */
-		word |= SET_UINT_INTO_UINT32(bpe->weight[ 8] - 1, 19, M2); /* CustomWtLL3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 3] - 1, 1, M2); /* CustomWtHH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 1] - 1, 3, M2); /* CustomWtHL1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 2] - 1, 5, M2); /* CustomWtLH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 7] - 1, 7, M2); /* CustomWtHH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 5] - 1, 9, M2); /* CustomWtHL2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[11] - 1, 13, M2); /* CustomWtHH3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[10] - 1, 17, M2); /* CustomWtLH3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 8] - 1, 19, M2); /* CustomWtLL3 */
 	 }
 	 /* +21 Reserved : 11 */
 
@@ -276,7 +284,7 @@ int bpe_read_segment_header_part3(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->S = GET_UINT_FROM_UINT32(word, 0, M20); /* FIXME: reallocate struct bpe */
+	bpe->segment_info.S = GET_UINT_FROM_UINT32(word, 0, M20); /* FIXME: reallocate struct bpe */
 	bpe->segment_info.OptDCSelect = GET_BOOL_FROM_UINT32(word, 20);
 	bpe->segment_info.OptACSelect = GET_BOOL_FROM_UINT32(word, 21);
 
@@ -297,12 +305,12 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->DWTtype = GET_BOOL_FROM_UINT32(word, 0);
+	bpe->segment_info.DWTtype = GET_BOOL_FROM_UINT32(word, 0);
 	/* Reserved : 1 */
 	bpe->segment_info.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2);
 	bpe->segment_info.SignedPixels = GET_BOOL_FROM_UINT32(word, 3);
 	bpe->segment_info.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4);
-	bpe->width = GET_UINT_FROM_UINT32(word, 8, M20);
+	bpe->segment_info.ImageWidth = GET_UINT_FROM_UINT32(word, 8, M20); /* FIXME reallocate struct frame */
 	bpe->segment_info.TransposeImg = GET_BOOL_FROM_UINT32(word, 28);
 	bpe->segment_info.CodeWordLength = GET_UINT_FROM_UINT32(word, 29, M3);
 
@@ -314,16 +322,16 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 
 	bpe->segment_info.CustomWtFlag = GET_BOOL_FROM_UINT32(word, 0);
 	if (bpe->segment_info.CustomWtFlag) {
-		bpe->weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word, 1, M2); /* CustomWtHH1 */
-		bpe->weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word, 3, M2); /* CustomWtHL1 */
-		bpe->weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word, 5, M2); /* CustomWtLH1 */
-		bpe->weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word, 7, M2); /* CustomWtHH2 */
-		bpe->weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word, 9, M2); /* CustomWtHL2 */
-		bpe->weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
-		bpe->weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
-		bpe->weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
-		bpe->weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 */
-		bpe->weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 */
+		bpe->segment_info.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word, 1, M2); /* CustomWtHH1 */
+		bpe->segment_info.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word, 3, M2); /* CustomWtHL1 */
+		bpe->segment_info.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word, 5, M2); /* CustomWtLH1 */
+		bpe->segment_info.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word, 7, M2); /* CustomWtHH2 */
+		bpe->segment_info.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word, 9, M2); /* CustomWtHL2 */
+		bpe->segment_info.weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
+		bpe->segment_info.weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
+		bpe->segment_info.weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
+		bpe->segment_info.weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 */
+		bpe->segment_info.weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 */
 	}
 	/* +21 Reserved : 11 */
 
@@ -342,6 +350,16 @@ int bpe_write_segment_header(struct bpe *bpe)
 	bpe->segment_info.StartImgFlag = (bpe->block_index == S);
 	bpe->segment_info.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
 	/* TODO EndImgFlag */
+	/* BitDepthDC */
+	/* BitDepthAC */
+	/* Part 2: */
+	/* SegByteLimit */
+
+	if (bpe->segment_info.StartImgFlag) {
+		bpe->segment_info.Part2Flag = 1;
+		bpe->segment_info.Part3Flag = 1;
+		bpe->segment_info.Part4Flag = 1;
+	}
 
 	/* Segment Header Part 1A (mandatory) */
 	bpe_write_segment_header_part1a(bpe);
@@ -634,11 +652,11 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	 */
 	bio_write_int(bio, (UINT32) frame->width);
 	bio_write_int(bio, (UINT32) frame->height);
-	bpe.width = frame->width;
-	bpe.height = frame->height;
+	bio_write_int(bio, (UINT32) frame->bpp);
 
 	total_no_blocks = get_total_no_blocks(frame);
 
+	bpe.frame = frame;
 	bpe_init(&bpe, parameters, bio);
 
 	/* push all blocks into the BPE engine */
@@ -668,11 +686,11 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	/* HACK */
 	bio_read_int(bio, (UINT32 *) &frame->width);
 	bio_read_int(bio, (UINT32 *) &frame->height);
-	bpe.width = frame->width;
-	bpe.height = frame->height;
+	bio_read_int(bio, (UINT32 *) &frame->bpp);
 
 	total_no_blocks = get_total_no_blocks(frame);
 
+	bpe.frame = frame;
 	bpe_init(&bpe, parameters, bio);
 
 	/* push all blocks into the BPE engine */
@@ -698,5 +716,5 @@ size_t get_maximum_stream_size(struct frame *frame)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
-	return height * width * sizeof(int);
+	return height * width * sizeof(int) + 4096;
 }
