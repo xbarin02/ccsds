@@ -527,7 +527,7 @@ int bpe_read_segment_header(struct bpe *bpe)
 	return 0;
 }
 
-int bpe_encode_segment(struct bpe *bpe)
+int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 {
 	size_t S;
 	size_t s;
@@ -540,9 +540,13 @@ int bpe_encode_segment(struct bpe *bpe)
 
 	if (s == 0) {
 		s = S;
-		dprint (("BPE: encoding segment %lu (%lu blocks)\n", ((bpe->block_index - 1) / S), s));
+	}
+
+	/* next block is not valid block (behind the image) */
+	if (bpe->block_index >= total_no_blocks) {
+		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu <-- the last segment\n", ((bpe->block_index-1) / S), s, bpe->block_index));
 	} else {
-		dprint (("BPE: encoding segment %lu (%lu blocks) <-- the last segment\n",((bpe->block_index) / S), s));
+		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu\n", ((bpe->block_index - 1) / S), s, bpe->block_index));
 	}
 
 	bpe_write_segment_header(bpe);
@@ -601,7 +605,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	return RET_SUCCESS;
 }
 
-int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
+int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks)
 {
 	size_t S;
 	size_t s;
@@ -630,7 +634,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride)
 	/* if this is the last block in the segment, serialize the segment into bpe->bio */
 	if (s == 0) {
 		/* encode this segment */
-		bpe_encode_segment(bpe);
+		bpe_encode_segment(bpe, total_no_blocks);
 	}
 
 	return RET_SUCCESS;
@@ -665,7 +669,7 @@ int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_b
 	return RET_SUCCESS;
 }
 
-int bpe_flush(struct bpe *bpe)
+int bpe_flush(struct bpe *bpe, size_t total_no_blocks)
 {
 	size_t S;
 	size_t s;
@@ -675,7 +679,7 @@ int bpe_flush(struct bpe *bpe)
 
 	if (s > 0) {
 		/* encode the last (incomplete) segment */
-		bpe_encode_segment(bpe);
+		bpe_encode_segment(bpe, total_no_blocks);
 	}
 
 	return RET_SUCCESS;
@@ -764,10 +768,10 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 
 		block_by_index(&block, frame, block_index);
 
-		bpe_push_block(&bpe, block.data, block.stride);
+		bpe_push_block(&bpe, block.data, block.stride, total_no_blocks);
 	}
 
-	bpe_flush(&bpe);
+	bpe_flush(&bpe, total_no_blocks);
 
 	bpe_destroy(&bpe);
 

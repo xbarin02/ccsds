@@ -65,7 +65,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 int bpe_realloc_segment(struct bpe *bpe);
 int bpe_realloc_frame_width(struct bpe *bpe);
 
-int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride);
+int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);
 int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);
 
 int bpe_destroy(struct bpe *bpe);
