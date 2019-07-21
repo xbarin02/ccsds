@@ -9,7 +9,8 @@
 #include "frame.h"
 #include "bio.h"
 
-struct segment_info {
+/* Segment Header */
+struct segment_header {
 	/* Segment Header Part 1A */
 	int StartImgFlag;
 	int EndImgFlag;
@@ -55,7 +56,7 @@ struct bpe {
 
 	struct bio *bio;
 
-	struct segment_info segment_info;
+	struct segment_header segment_header;
 
 	struct frame *frame;
 };

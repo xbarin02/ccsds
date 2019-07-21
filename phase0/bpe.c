@@ -37,14 +37,14 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->block_index = 0;
 
 	for (i = 0; i < 12; ++i) {
-		bpe->segment_info.weight[i] = parameters->weight[i];
+		bpe->segment_header.weight[i] = parameters->weight[i];
 	}
 
-	bpe->segment_info.S = (UINT32)S;
-	bpe->segment_info.DWTtype = parameters->DWTtype;
-	bpe->segment_info.ImageWidth = (UINT32)bpe->frame->width;
-	bpe->segment_info.TransposeImg = 0;
-	bpe->segment_info.CodeWordLength = 6; /* 6 => 32-bit coded words */
+	bpe->segment_header.S = (UINT32)S;
+	bpe->segment_header.DWTtype = parameters->DWTtype;
+	bpe->segment_header.ImageWidth = (UINT32)bpe->frame->width;
+	bpe->segment_header.TransposeImg = 0;
+	bpe->segment_header.CodeWordLength = 6; /* 6 => 32-bit coded words */
 
 	return RET_SUCCESS;
 }
@@ -81,15 +81,15 @@ int bpe_write_segment_header_part1a(struct bpe *bpe)
 
 	assert(bpe);
 
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.StartImgFlag, 0); /* +0 Flags initial segment in an image */
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.EndImgFlag, 1); /* +1 Flags final segment in an image */
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.SegmentCount, 2, M8); /* +2 Segment counter value */
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.BitDepthDC, 10, M5); /* +10 value of BitDepthDC (mod 32) */
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.BitDepthAC, 15, M5); /* +15 value of BitDepthAC */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.StartImgFlag, 0); /* +0 Flags initial segment in an image */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.EndImgFlag, 1); /* +1 Flags final segment in an image */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.SegmentCount, 2, M8); /* +2 Segment counter value */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.BitDepthDC, 10, M5); /* +10 value of BitDepthDC (mod 32) */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.BitDepthAC, 15, M5); /* +15 value of BitDepthAC */
 	/* +20 Reserved : 1 -- shall be set to ‘0’ */
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.Part2Flag, 21); /* +21 Part2Flag */
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.Part3Flag, 22); /* +22 Part3Flag */
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.Part4Flag, 23); /* +23 Part4Flag */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.Part2Flag, 21); /* +21 Part2Flag */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.Part3Flag, 22); /* +22 Part3Flag */
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.Part4Flag, 23); /* +23 Part4Flag */
 
 	return bio_write_bits(bpe->bio, word, 24);
 }
@@ -101,7 +101,7 @@ int bpe_write_segment_header_part1b(struct bpe *bpe)
 
 	assert(bpe);
 
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.PadRows, 0, M3); /* Number of ‘padding’ rows to delete after inverse DWT */
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.PadRows, 0, M3); /* Number of ‘padding’ rows to delete after inverse DWT */
 	/*  +3 Reserved : 5 */
 
 	return bio_write_bits(bpe->bio, word, 8);
@@ -116,7 +116,7 @@ int bpe_write_segment_header_part2(struct bpe *bpe)
 	assert(bpe);
 
 	/* SegByteLimit (27 bits) */
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.SegByteLimit, 0, M27);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.SegByteLimit, 0, M27);
 
 	err = bio_write_bits(bpe->bio, word, 27);
 
@@ -126,10 +126,10 @@ int bpe_write_segment_header_part2(struct bpe *bpe)
 
 	/* all other fields (13 bits) */
 	word = 0; /* reset word */
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.DCStop, 0);
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.BitPlaneStop, 1, M5);
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.StageStop, 6, M2);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.UseFill, 8);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.DCStop, 0);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.BitPlaneStop, 1, M5);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.StageStop, 6, M2);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.UseFill, 8);
 	/* Reserved : 4 */
 
 	return bio_write_bits(bpe->bio, word, 13);
@@ -142,9 +142,9 @@ int bpe_write_segment_header_part3(struct bpe *bpe)
 
 	assert(bpe);
 
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.S, 0, M20);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.OptDCSelect, 20);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.OptACSelect, 21);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.S, 0, M20);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.OptDCSelect, 20);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.OptACSelect, 21);
 	/* Reserved : 2 */
 
 	return bio_write_bits(bpe->bio, word, 24);
@@ -158,14 +158,14 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 
 	assert(bpe);
 
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.DWTtype, 0);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.DWTtype, 0);
 	/* Reserved : 1 */
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.ExtendedPixelBitDepthFlag, 2);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.SignedPixels, 3);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.PixelBitDepth, 4);
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.ImageWidth, 8, M20);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_info.TransposeImg, 28);
-	word |= SET_UINT_INTO_UINT32(bpe->segment_info.CodeWordLength, 29, M3);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.ExtendedPixelBitDepthFlag, 2);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.SignedPixels, 3);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.PixelBitDepth, 4);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.ImageWidth, 8, M20);
+	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.TransposeImg, 28);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.CodeWordLength, 29, M3);
 
 	err = bio_write_bits(bpe->bio, word, 32);
 
@@ -174,18 +174,18 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 	}
 
 	 word = 0;
-	 word |= SET_BOOL_INTO_UINT32(bpe->segment_info.CustomWtFlag, 0);
-	 if (bpe->segment_info.CustomWtFlag) {
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 3] - 1, 1, M2); /* CustomWtHH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 1] - 1, 3, M2); /* CustomWtHL1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 2] - 1, 5, M2); /* CustomWtLH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 7] - 1, 7, M2); /* CustomWtHH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 5] - 1, 9, M2); /* CustomWtHL2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[11] - 1, 13, M2); /* CustomWtHH3 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[10] - 1, 17, M2); /* CustomWtLH3 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_info.weight[ 8] - 1, 19, M2); /* CustomWtLL3 */
+	 word |= SET_BOOL_INTO_UINT32(bpe->segment_header.CustomWtFlag, 0);
+	 if (bpe->segment_header.CustomWtFlag) {
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 3] - 1, 1, M2); /* CustomWtHH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 1] - 1, 3, M2); /* CustomWtHL1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 2] - 1, 5, M2); /* CustomWtLH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 7] - 1, 7, M2); /* CustomWtHH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 5] - 1, 9, M2); /* CustomWtHL2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[11] - 1, 13, M2); /* CustomWtHH3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[10] - 1, 17, M2); /* CustomWtLH3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 8] - 1, 19, M2); /* CustomWtLL3 */
 	 }
 	 /* +21 Reserved : 11 */
 
@@ -209,14 +209,14 @@ int bpe_read_segment_header_part1a(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.StartImgFlag = GET_BOOL_FROM_UINT32(word, 0);
-	bpe->segment_info.EndImgFlag = GET_BOOL_FROM_UINT32(word, 1);
-	bpe->segment_info.SegmentCount = GET_UINT_FROM_UINT32(word, 2, M8);
-	bpe->segment_info.BitDepthDC = GET_UINT_FROM_UINT32(word, 10, M5);
-	bpe->segment_info.BitDepthAC = GET_UINT_FROM_UINT32(word, 15, M5);
-	bpe->segment_info.Part2Flag = GET_BOOL_FROM_UINT32(word, 21);
-	bpe->segment_info.Part3Flag = GET_BOOL_FROM_UINT32(word, 22);
-	bpe->segment_info.Part4Flag = GET_BOOL_FROM_UINT32(word, 23);
+	bpe->segment_header.StartImgFlag = GET_BOOL_FROM_UINT32(word, 0);
+	bpe->segment_header.EndImgFlag = GET_BOOL_FROM_UINT32(word, 1);
+	bpe->segment_header.SegmentCount = GET_UINT_FROM_UINT32(word, 2, M8);
+	bpe->segment_header.BitDepthDC = GET_UINT_FROM_UINT32(word, 10, M5);
+	bpe->segment_header.BitDepthAC = GET_UINT_FROM_UINT32(word, 15, M5);
+	bpe->segment_header.Part2Flag = GET_BOOL_FROM_UINT32(word, 21);
+	bpe->segment_header.Part3Flag = GET_BOOL_FROM_UINT32(word, 22);
+	bpe->segment_header.Part4Flag = GET_BOOL_FROM_UINT32(word, 23);
 
 	return RET_SUCCESS;
 }
@@ -235,7 +235,7 @@ int bpe_read_segment_header_part1b(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.PadRows = GET_UINT_FROM_UINT32(word, 0, M3);
+	bpe->segment_header.PadRows = GET_UINT_FROM_UINT32(word, 0, M3);
 
 	return RET_SUCCESS;
 }
@@ -254,7 +254,7 @@ int bpe_read_segment_header_part2(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.SegByteLimit = GET_UINT_FROM_UINT32(word, 0, M27); /* SegByteLimit : 27 */
+	bpe->segment_header.SegByteLimit = GET_UINT_FROM_UINT32(word, 0, M27); /* SegByteLimit : 27 */
 
 	err = bio_read_bits(bpe->bio, &word, 13);
 
@@ -262,10 +262,10 @@ int bpe_read_segment_header_part2(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.DCStop = GET_BOOL_FROM_UINT32(word, 0);
-	bpe->segment_info.BitPlaneStop = GET_UINT_FROM_UINT32(word, 1, M5);
-	bpe->segment_info.StageStop = GET_UINT_FROM_UINT32(word, 6, M2);
-	bpe->segment_info.UseFill = GET_BOOL_FROM_UINT32(word, 8);
+	bpe->segment_header.DCStop = GET_BOOL_FROM_UINT32(word, 0);
+	bpe->segment_header.BitPlaneStop = GET_UINT_FROM_UINT32(word, 1, M5);
+	bpe->segment_header.StageStop = GET_UINT_FROM_UINT32(word, 6, M2);
+	bpe->segment_header.UseFill = GET_BOOL_FROM_UINT32(word, 8);
 
 	return RET_SUCCESS;
 }
@@ -284,9 +284,9 @@ int bpe_read_segment_header_part3(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.S = GET_UINT_FROM_UINT32(word, 0, M20); /* FIXME: reallocate struct bpe */
-	bpe->segment_info.OptDCSelect = GET_BOOL_FROM_UINT32(word, 20);
-	bpe->segment_info.OptACSelect = GET_BOOL_FROM_UINT32(word, 21);
+	bpe->segment_header.S = GET_UINT_FROM_UINT32(word, 0, M20); /* FIXME: reallocate struct bpe */
+	bpe->segment_header.OptDCSelect = GET_BOOL_FROM_UINT32(word, 20);
+	bpe->segment_header.OptACSelect = GET_BOOL_FROM_UINT32(word, 21);
 
 	return RET_SUCCESS;
 }
@@ -305,14 +305,14 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.DWTtype = GET_BOOL_FROM_UINT32(word, 0);
+	bpe->segment_header.DWTtype = GET_BOOL_FROM_UINT32(word, 0);
 	/* Reserved : 1 */
-	bpe->segment_info.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2);
-	bpe->segment_info.SignedPixels = GET_BOOL_FROM_UINT32(word, 3);
-	bpe->segment_info.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4);
-	bpe->segment_info.ImageWidth = GET_UINT_FROM_UINT32(word, 8, M20); /* FIXME reallocate struct frame */
-	bpe->segment_info.TransposeImg = GET_BOOL_FROM_UINT32(word, 28);
-	bpe->segment_info.CodeWordLength = GET_UINT_FROM_UINT32(word, 29, M3);
+	bpe->segment_header.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2);
+	bpe->segment_header.SignedPixels = GET_BOOL_FROM_UINT32(word, 3);
+	bpe->segment_header.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4);
+	bpe->segment_header.ImageWidth = GET_UINT_FROM_UINT32(word, 8, M20); /* FIXME reallocate struct frame */
+	bpe->segment_header.TransposeImg = GET_BOOL_FROM_UINT32(word, 28);
+	bpe->segment_header.CodeWordLength = GET_UINT_FROM_UINT32(word, 29, M3);
 
 	err = bio_read_bits(bpe->bio, &word, 32);
 
@@ -320,18 +320,18 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_info.CustomWtFlag = GET_BOOL_FROM_UINT32(word, 0);
-	if (bpe->segment_info.CustomWtFlag) {
-		bpe->segment_info.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word, 1, M2); /* CustomWtHH1 */
-		bpe->segment_info.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word, 3, M2); /* CustomWtHL1 */
-		bpe->segment_info.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word, 5, M2); /* CustomWtLH1 */
-		bpe->segment_info.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word, 7, M2); /* CustomWtHH2 */
-		bpe->segment_info.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word, 9, M2); /* CustomWtHL2 */
-		bpe->segment_info.weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
-		bpe->segment_info.weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
-		bpe->segment_info.weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
-		bpe->segment_info.weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 */
-		bpe->segment_info.weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 */
+	bpe->segment_header.CustomWtFlag = GET_BOOL_FROM_UINT32(word, 0);
+	if (bpe->segment_header.CustomWtFlag) {
+		bpe->segment_header.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word, 1, M2); /* CustomWtHH1 */
+		bpe->segment_header.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word, 3, M2); /* CustomWtHL1 */
+		bpe->segment_header.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word, 5, M2); /* CustomWtLH1 */
+		bpe->segment_header.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word, 7, M2); /* CustomWtHH2 */
+		bpe->segment_header.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word, 9, M2); /* CustomWtHL2 */
+		bpe->segment_header.weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
+		bpe->segment_header.weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
+		bpe->segment_header.weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
+		bpe->segment_header.weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 */
+		bpe->segment_header.weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 */
 	}
 	/* +21 Reserved : 11 */
 
@@ -347,25 +347,25 @@ int bpe_write_segment_header(struct bpe *bpe)
 
 	S = bpe->S;
 
-	bpe->segment_info.StartImgFlag = (bpe->block_index == S);
-	bpe->segment_info.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
+	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
+	bpe->segment_header.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
 	/* TODO EndImgFlag */
 	/* BitDepthDC */
 	/* BitDepthAC */
 	/* Part 2: */
 	/* SegByteLimit */
 
-	if (bpe->segment_info.StartImgFlag) {
-		bpe->segment_info.Part2Flag = 1;
-		bpe->segment_info.Part3Flag = 1;
-		bpe->segment_info.Part4Flag = 1;
+	if (bpe->segment_header.StartImgFlag) {
+		bpe->segment_header.Part2Flag = 1;
+		bpe->segment_header.Part3Flag = 1;
+		bpe->segment_header.Part4Flag = 1;
 	}
 
 	/* Segment Header Part 1A (mandatory) */
 	bpe_write_segment_header_part1a(bpe);
 
 	/* Segment Header Part 1B */
-	if (bpe->segment_info.EndImgFlag != 0) {
+	if (bpe->segment_header.EndImgFlag != 0) {
 		err = bpe_write_segment_header_part1b(bpe);
 
 		if (err) {
@@ -374,7 +374,7 @@ int bpe_write_segment_header(struct bpe *bpe)
 	}
 
 	/* Segment Header Part 2 */
-	if (bpe->segment_info.Part2Flag) {
+	if (bpe->segment_header.Part2Flag) {
 		err = bpe_write_segment_header_part2(bpe);
 
 		if (err) {
@@ -383,7 +383,7 @@ int bpe_write_segment_header(struct bpe *bpe)
 	}
 
 	/* Segment Header Part 3 */
-	if (bpe->segment_info.Part3Flag) {
+	if (bpe->segment_header.Part3Flag) {
 		err = bpe_write_segment_header_part3(bpe);
 
 		if (err) {
@@ -392,7 +392,7 @@ int bpe_write_segment_header(struct bpe *bpe)
 	}
 
 	/* Segment Header Part 4 */
-	if (bpe->segment_info.Part4Flag) {
+	if (bpe->segment_header.Part4Flag) {
 		err = bpe_write_segment_header_part4(bpe);
 
 		if (err) {
@@ -409,22 +409,22 @@ int bpe_read_segment_header(struct bpe *bpe)
 	bpe_read_segment_header_part1a(bpe);
 
 	/* Segment Header Part 1B */
-	if (bpe->segment_info.EndImgFlag != 0) {
+	if (bpe->segment_header.EndImgFlag != 0) {
 		bpe_read_segment_header_part1b(bpe);
 	}
 
 	/* Segment Header Part 2 */
-	if (bpe->segment_info.Part2Flag) {
+	if (bpe->segment_header.Part2Flag) {
 		bpe_read_segment_header_part2(bpe);
 	}
 
 	/* Segment Header Part 3 */
-	if (bpe->segment_info.Part3Flag) {
+	if (bpe->segment_header.Part3Flag) {
 		bpe_read_segment_header_part3(bpe);
 	}
 
 	/* Segment Header Part 4 */
-	if (bpe->segment_info.Part4Flag) {
+	if (bpe->segment_header.Part4Flag) {
 		bpe_read_segment_header_part4(bpe);
 	}
 
