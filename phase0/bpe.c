@@ -16,21 +16,12 @@ static const unsigned char lut_codeword_length[8] = {
 
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio, struct frame *frame)
 {
-	size_t S;
 	int i;
 
 	assert(bpe);
 	assert(parameters);
 
-	S = parameters->S;
-
-	bpe->segment = malloc( S * 8 * 8 * sizeof(INT32) );
-
-	if (bpe->segment == NULL) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	bpe->S = S;
+	bpe->segment = NULL;
 
 	bpe->bio = bio;
 
@@ -56,7 +47,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.BitPlaneStop = M5;
 	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
 	bpe->segment_header.UseFill = 0;
-	bpe->segment_header.S = (UINT32)S;
+	bpe->segment_header.S = (UINT32) parameters->S;
 	bpe->segment_header.OptDCSelect = 0; /* 0 => heuristic selection of k parameter */
 	bpe->segment_header.OptACSelect = 0; /* 0 => heuristic selection of k parameter */
 	bpe->segment_header.DWTtype = parameters->DWTtype;
@@ -72,9 +63,45 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 		bpe->segment_header.weight[i] = parameters->weight[i];
 	}
 
+	bpe_realloc_segment(bpe);
 
 	return RET_SUCCESS;
 }
+
+/* the S has been changed, realloc bpe->segment[] */
+int bpe_realloc_segment(struct bpe *bpe)
+{
+	size_t S;
+
+	assert(bpe);
+
+	S = (size_t) bpe->segment_header.S;
+
+	free(bpe->segment);
+
+	bpe->segment = malloc( S * 8 * 8 * sizeof(INT32) );
+
+	if (bpe->segment == NULL) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	bpe->S = S;
+
+	return RET_SUCCESS;
+}
+
+/* the ImageWidth has been changed, realloc bpe->frame */
+int bpe_realloc_frame_width(struct bpe *bpe)
+{
+	assert(bpe);
+	assert(bpe->frame);
+
+	/* basically, the width cannot be changed during decompression;
+	 * the only allowed change is the initial change from 0 to width,
+	 * or change from the width to same width */
+}
+
+/* increase frame height */
 
 int bpe_destroy(struct bpe *bpe)
 {
