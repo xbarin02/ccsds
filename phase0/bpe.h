@@ -61,7 +61,7 @@ struct bpe {
 	struct frame *frame;
 };
 
-int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio);
+int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio, struct frame *frame);
 
 int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride);
 int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);

@@ -1,6 +1,8 @@
 #include "common.h"
 #include <assert.h>
 
+#define M27 134217727
+
 int eprintf(const char *format, ...)
 {
 	va_list ap;
@@ -46,6 +48,8 @@ int init_parameters(struct parameters *parameters)
 	for (i = 0; i < 12; ++i) {
 		parameters->weight[i] = weight[i];
 	}
+
+	parameters->SegByteLimit = M27;
 
 	return RET_SUCCESS;
 }

@@ -14,7 +14,7 @@ static const unsigned char lut_codeword_length[8] = {
 	8, 40, 16, 48, 24, 56, 32, 64
 };
 
-int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio)
+int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio, struct frame *frame)
 {
 	size_t S;
 	int i;
@@ -36,15 +36,42 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 
 	bpe->block_index = 0;
 
+	bpe->frame = frame;
+
+	/* init Segment Header */
+
+	assert(bpe->frame);
+
+	bpe->segment_header.StartImgFlag = 1;
+	bpe->segment_header.EndImgFlag = 0;
+	bpe->segment_header.SegmentCount = 0;
+	bpe->segment_header.BitDepthDC = 1; /* It should be noted that the minimum value of BitDepthDC is 1. */
+	bpe->segment_header.BitDepthAC = 0; /* It should be noted that the minimum value of BitDepthAC is 0. */
+	bpe->segment_header.Part2Flag = 1;
+	bpe->segment_header.Part3Flag = 1;
+	bpe->segment_header.Part4Flag = 1;
+	bpe->segment_header.PadRows = (UINT32)((8 - bpe->frame->height % 8) % 8);
+	bpe->segment_header.SegByteLimit = (UINT32)parameters->SegByteLimit;
+	bpe->segment_header.DCStop = 0;
+	bpe->segment_header.BitPlaneStop = M5;
+	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
+	bpe->segment_header.UseFill = 0;
+	bpe->segment_header.S = (UINT32)S;
+	bpe->segment_header.OptDCSelect = 0; /* 0 => heuristic selection of k parameter */
+	bpe->segment_header.OptACSelect = 0; /* 0 => heuristic selection of k parameter */
+	bpe->segment_header.DWTtype = parameters->DWTtype;
+	bpe->segment_header.ExtendedPixelBitDepthFlag = 0; /* 0 => pixel bit depth is not larger than 16 */
+	bpe->segment_header.SignedPixels = 0; /* 0 => unsigned */
+	bpe->segment_header.PixelBitDepth = (UINT32)bpe->frame->bpp; /* the input pixel bit depth */
+	bpe->segment_header.ImageWidth = (UINT32)bpe->frame->width;
+	bpe->segment_header.TransposeImg = 0;
+	bpe->segment_header.CodeWordLength = 6; /* 6 => 32-bit coded words */
+	bpe->segment_header.CustomWtFlag = 0; /* no custom weights */
+
 	for (i = 0; i < 12; ++i) {
 		bpe->segment_header.weight[i] = parameters->weight[i];
 	}
 
-	bpe->segment_header.S = (UINT32)S;
-	bpe->segment_header.DWTtype = parameters->DWTtype;
-	bpe->segment_header.ImageWidth = (UINT32)bpe->frame->width;
-	bpe->segment_header.TransposeImg = 0;
-	bpe->segment_header.CodeWordLength = 6; /* 6 => 32-bit coded words */
 
 	return RET_SUCCESS;
 }
@@ -656,8 +683,7 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 
 	total_no_blocks = get_total_no_blocks(frame);
 
-	bpe.frame = frame;
-	bpe_init(&bpe, parameters, bio);
+	bpe_init(&bpe, parameters, bio, frame);
 
 	/* push all blocks into the BPE engine */
 	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
@@ -690,8 +716,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 	total_no_blocks = get_total_no_blocks(frame);
 
-	bpe.frame = frame;
-	bpe_init(&bpe, parameters, bio);
+	bpe_init(&bpe, parameters, bio, frame);
 
 	/* push all blocks into the BPE engine */
 	for (block_index = 0; block_index < total_no_blocks; ++block_index) {

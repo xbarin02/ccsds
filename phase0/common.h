@@ -111,6 +111,8 @@ struct parameters {
 	 * The LL0 and LL1 weight must be set to zero.
 	 */
 	int weight[12];
+
+	size_t SegByteLimit;
 };
 
 int init_parameters(struct parameters *parameters);
