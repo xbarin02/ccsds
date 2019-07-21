@@ -126,7 +126,24 @@ int bpe_realloc_frame_width(struct bpe *bpe)
 	return RET_SUCCESS;
 }
 
-/* increase frame height */
+/* increase frame height (+8 rows) */
+int bpe_increase_frame_height(struct bpe *bpe)
+{
+	int err;
+
+	assert(bpe);
+	assert(bpe->frame);
+
+	bpe->frame->height += 8; /* FIXME ??? */
+
+	err = frame_realloc_data(bpe->frame);
+
+	if (err) {
+		return err;
+	}
+
+	return RET_SUCCESS;
+}
 
 int bpe_destroy(struct bpe *bpe)
 {
