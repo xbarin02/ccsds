@@ -17,6 +17,7 @@ static const unsigned char lut_codeword_length[8] = {
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio, struct frame *frame)
 {
 	int i;
+	int err;
 
 	assert(bpe);
 	assert(parameters);
@@ -63,7 +64,11 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 		bpe->segment_header.weight[i] = parameters->weight[i];
 	}
 
-	bpe_realloc_segment(bpe);
+	err = bpe_realloc_segment(bpe);
+
+	if (err) {
+		return err;
+	}
 
 	return RET_SUCCESS;
 }
@@ -93,12 +98,32 @@ int bpe_realloc_segment(struct bpe *bpe)
 /* the ImageWidth has been changed, realloc bpe->frame */
 int bpe_realloc_frame_width(struct bpe *bpe)
 {
+	int err;
+
 	assert(bpe);
 	assert(bpe->frame);
 
 	/* basically, the width cannot be changed during decompression;
 	 * the only allowed change is the initial change from 0 to width,
 	 * or change from the width to same width */
+
+	if (bpe->frame->width != 0 && bpe->frame->width != (size_t) bpe->segment_header.ImageWidth) {
+		/* not allowed */;
+		return RET_FAILURE_FILE_UNSUPPORTED;
+	}
+
+	bpe->frame->width = (size_t) bpe->segment_header.ImageWidth;
+
+	/* call frame_realloc_data */
+	err = frame_realloc_data(bpe->frame);
+
+	if (err) {
+		return err;
+	}
+
+	/* what about bpp, DWTtype, etc.? */
+
+	return RET_SUCCESS;
 }
 
 /* increase frame height */

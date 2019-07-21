@@ -389,6 +389,29 @@ int frame_alloc_data(struct frame *frame)
 	return RET_SUCCESS;
 }
 
+int frame_realloc_data(struct frame *frame)
+{
+	size_t width, height;
+	int *data;
+
+	assert( frame );
+
+	width = ceil_multiple8(frame->width);
+	height = ceil_multiple8(frame->height);
+
+	data = frame->data;
+
+	data = realloc(data, height * width * sizeof *data);
+
+	if (NULL == data) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	frame->data = data;
+
+	return RET_SUCCESS;
+}
+
 int frame_read_pgm_data(struct frame *frame, FILE *stream)
 {
 	size_t width_, height_, depth_;
