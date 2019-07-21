@@ -540,10 +540,12 @@ int bpe_encode_segment(struct bpe *bpe)
 
 	if (s == 0) {
 		s = S;
-		dprint (("BPE: encoding segment %lu\n", ((bpe->block_index - 1) / S)));
+		dprint (("BPE: encoding segment %lu (%lu blocks)\n", ((bpe->block_index - 1) / S), s));
 	} else {
-		dprint (("BPE: flushing %lu blocks\n", s));
+		dprint (("BPE: encoding segment %lu (%lu blocks) <-- the last segment\n",((bpe->block_index) / S), s));
 	}
+
+	bpe_write_segment_header(bpe);
 
 	for (blk = 0; blk < s; ++blk) {
 		/* encode the block */
@@ -588,6 +590,8 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	}
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", ((bpe->block_index) / S), s));
+
+	bpe_read_segment_header(bpe);
 
 	for (blk = 0; blk < s; ++blk) {
 		/* decode the block */
@@ -810,5 +814,5 @@ size_t get_maximum_stream_size(struct frame *frame)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
-	return height * width * sizeof(int) + 4096;
+	return height * width * sizeof(int) + 20 * get_total_no_blocks(frame) + 4096;
 }
