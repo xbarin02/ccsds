@@ -545,6 +545,11 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 	/* next block is not valid block (behind the image) */
 	if (bpe->block_index >= total_no_blocks) {
 		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu <-- the last segment\n", ((bpe->block_index-1) / S), s, bpe->block_index));
+		bpe->segment_header.EndImgFlag = 1;
+		if (s != S) {
+			bpe->segment_header.Part3Flag = 1; /* signal new "s" as "S" */
+			bpe->segment_header.S = s;
+		}
 	} else {
 		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu\n", ((bpe->block_index - 1) / S), s, bpe->block_index));
 	}
@@ -555,6 +560,12 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 		/* encode the block */
 		bpe_encode_block(bpe->segment + blk*8*8, 8, bpe->bio);
 	}
+
+	/* after writing of the first segment, set some flags to zero */
+	bpe->segment_header.StartImgFlag = 0;
+	bpe->segment_header.Part2Flag = 0;
+	bpe->segment_header.Part3Flag = 0;
+	bpe->segment_header.Part4Flag = 0;
 
 	return RET_SUCCESS;
 }
@@ -596,6 +607,10 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", ((bpe->block_index) / S), s));
 
 	bpe_read_segment_header(bpe);
+
+	dprint (("BPE :: Segment Header :: StartImgFlag = %i\n", bpe->segment_header.StartImgFlag));
+	dprint (("BPE :: Segment Header :: EndImgFlag   = %i\n", bpe->segment_header.EndImgFlag));
+	dprint (("BPE :: Segment Header :: S            = %lu\n", bpe->segment_header.S));
 
 	for (blk = 0; blk < s; ++blk) {
 		/* decode the block */
