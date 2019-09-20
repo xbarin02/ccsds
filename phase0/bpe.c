@@ -827,7 +827,7 @@ int block_by_index(struct block *block, struct frame *frame, size_t block_index)
 
 	data = frame->data;
 
-	assert(block);
+	assert(block != NULL);
 
 	block->data = data + y*width + x;
 	block->stride = width;

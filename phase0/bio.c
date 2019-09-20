@@ -6,7 +6,7 @@
 
 static void bio_reset_after_flush(struct bio *bio)
 {
-	assert(bio);
+	assert(bio != NULL);
 
 	bio->b = 0;
 	bio->c = 0;
@@ -14,7 +14,7 @@ static void bio_reset_after_flush(struct bio *bio)
 
 int bio_open(struct bio *bio, unsigned char *ptr, int mode)
 {
-	assert(bio);
+	assert(bio != NULL);
 
 	bio->mode = mode;
 
@@ -82,7 +82,7 @@ int bio_flush_buffer(struct bio *bio)
 
 int bio_reload_buffer(struct bio *bio)
 {
-	assert(bio);
+	assert(bio != NULL);
 
 	if (bio->ptr == NULL) {
 		return RET_FAILURE_LOGIC_ERROR;
@@ -95,7 +95,7 @@ int bio_reload_buffer(struct bio *bio)
 
 int bio_put_bit(struct bio *bio, unsigned char b)
 {
-	assert(bio);
+	assert(bio != NULL);
 
 	assert(bio->c < CHAR_BIT);
 
@@ -120,7 +120,7 @@ int bio_put_bit(struct bio *bio, unsigned char b)
 /* c' = CHAR_BIT - c */
 int bio_get_bit(struct bio *bio, unsigned char *b)
 {
-	assert(bio);
+	assert(bio != NULL);
 
 	if (bio->c == CHAR_BIT) {
 		int err = bio_reload_buffer(bio);
@@ -188,7 +188,7 @@ int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 
 int bio_close(struct bio *bio)
 {
-	assert(bio);
+	assert(bio != NULL);
 
 	if (bio->mode == BIO_MODE_WRITE && bio->c > 0) {
 		bio_flush_buffer(bio);
