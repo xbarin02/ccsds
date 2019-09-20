@@ -101,8 +101,8 @@ int bpe_realloc_frame_width(struct bpe *bpe)
 {
 	int err;
 
-	assert(bpe);
-	assert(bpe->frame);
+	assert(bpe != NULL);
+	assert(bpe->frame != NULL);
 
 	/* basically, the width cannot be changed during decompression;
 	 * the only allowed change is the initial change from 0 to width,
@@ -123,6 +123,16 @@ int bpe_realloc_frame_width(struct bpe *bpe)
 	}
 
 	/* what about bpp, DWTtype, etc.? */
+
+	return RET_SUCCESS;
+}
+
+int bpe_realloc_frame_bpp(struct bpe *bpe)
+{
+	assert(bpe != NULL);
+	assert(bpe->frame != NULL);
+
+	bpe->frame->bpp = (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth);
 
 	return RET_SUCCESS;
 }
@@ -648,7 +658,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		dprint (("BPE: width changed %lu to %u ==> reallocate\n", bpe->frame->width, bpe->segment_header.ImageWidth));
 		bpe_realloc_frame_width(bpe);
 		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
-		bpe->frame->bpp = (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth);
+		bpe_realloc_frame_bpp(bpe);
 	}
 
 	for (blk = 0; blk < s; ++blk) {
@@ -875,6 +885,11 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 	/* initially allocate bpe->segment[] according to initial S */
 	bpe_realloc_segment(&bpe);
+
+	/* initialize frame->width & frame->data[] */
+	bpe_realloc_frame_width(&bpe);
+	/* initialize frame->bpp */
+	bpe_realloc_frame_bpp(&bpe);
 
 	dprint (("main decoding loop...\n"));
 
