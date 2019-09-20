@@ -601,7 +601,7 @@ int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
 	return RET_SUCCESS;
 }
 
-int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
+int bpe_decode_segment(struct bpe *bpe)
 {
 	size_t S;
 	size_t s;
@@ -620,14 +620,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		s = S;
 	}
 
-	/* the 's' in the last block shoul be read from Part 4 of the Segment Header */
-#if 0
-	/* correct the number of block in the last segment */
-	if (bpe->block_index + S > total_no_blocks) {
-		dprint (("shortened segment (%lu blocks)\n", total_no_blocks - bpe->block_index));
-		s = total_no_blocks - bpe->block_index;
-	}
-#endif
+	/* the 's' in the last block should be decoded from Part 4 of the Segment Header */
 
 	bpe_read_segment_header(bpe);
 
@@ -707,7 +700,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_
 	return RET_SUCCESS;
 }
 
-int bpe_pop_block_decode(struct bpe *bpe, size_t total_no_blocks)
+int bpe_pop_block_decode(struct bpe *bpe)
 {
 	size_t S;
 	size_t s;
@@ -721,7 +714,7 @@ int bpe_pop_block_decode(struct bpe *bpe, size_t total_no_blocks)
 
 	/* if this is the first block in the segment, deserialize it */
 	if (s == 0) {
-		bpe_decode_segment(bpe, total_no_blocks);
+		bpe_decode_segment(bpe);
 	}
 
 	return RET_SUCCESS;
@@ -901,7 +894,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		struct block block;
 
 		/* NOTE: the bpe_pop_block_decode reallocates frame->data[] */
-		bpe_pop_block_decode(&bpe, total_no_blocks);
+		bpe_pop_block_decode(&bpe);
 
 		block_by_index(&block, frame, block_index);
 
