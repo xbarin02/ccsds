@@ -649,7 +649,6 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		bpe_realloc_frame_width(bpe);
 		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
 		bpe->frame->bpp = (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth);
-		/* BUG  bpp changed from 8 to 1 */
 		abort();
 	}
 
