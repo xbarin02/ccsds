@@ -524,6 +524,7 @@ int bpe_read_segment_header(struct bpe *bpe)
 	/* Segment Header Part 4 */
 	if (bpe->segment_header.Part4Flag) {
 		bpe_read_segment_header_part4(bpe);
+		/* TODO BPP & width has been changed */
 	}
 
 	return 0;
