@@ -644,12 +644,11 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		}
 	}
 
-	if (bpe->segment_header.Part4Flag && bpe->frame->width != bpe->segment_header.ImageWidth) {
+	if (bpe->segment_header.Part4Flag) {
 		dprint (("BPE: width changed %lu to %u ==> reallocate\n", bpe->frame->width, bpe->segment_header.ImageWidth));
 		bpe_realloc_frame_width(bpe);
 		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
 		bpe->frame->bpp = (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth);
-		abort();
 	}
 
 	for (blk = 0; blk < s; ++blk) {
@@ -695,7 +694,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_
 	return RET_SUCCESS;
 }
 
-int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks)
+int bpe_pop_block_decode(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks)
 {
 	size_t S;
 	size_t s;
@@ -713,7 +712,41 @@ int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_b
 	if (s == 0) {
 		bpe_decode_segment(bpe, total_no_blocks);
 	}
+#if 0
+	/* pop the block from bpe->segment[] */
+	local = bpe->segment + s*8*8;
 
+	/* access frame->data[] */
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			data[y*stride + x] = local[y*8 + x];
+		}
+	}
+
+	bpe->block_index ++;
+#endif
+	return RET_SUCCESS;
+}
+
+int bpe_pop_block_copy_data(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks)
+{
+	size_t S;
+	size_t s;
+	INT32 *local;
+	size_t y, x;
+
+	S = bpe->S;
+
+	s = 0;
+	if (S != 0) {
+		s = bpe->block_index % S;
+	}
+#if 0
+	/* if this is the first block in the segment, deserialize it */
+	if (s == 0) {
+		bpe_decode_segment(bpe, total_no_blocks);
+	}
+#endif
 	/* pop the block from bpe->segment[] */
 	local = bpe->segment + s*8*8;
 
@@ -868,10 +901,12 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
 		struct block block;
 
+		/* NOTE: the bpe_pop_block reallocates frame->data[], thus passing block.data causes access to invalid memory area */
+		bpe_pop_block_decode(&bpe, block.data, block.stride, total_no_blocks);
+
 		block_by_index(&block, frame, block_index);
 
-		/* BUG: the bpe_pop_block reallocates frame->data[], thus passing block.data causes access to invalid memory area */
-		bpe_pop_block(&bpe, block.data, block.stride, total_no_blocks);
+		bpe_pop_block_copy_data(&bpe, block.data, block.stride, total_no_blocks);
 	}
 
 	bpe_destroy(&bpe);
