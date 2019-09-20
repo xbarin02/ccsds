@@ -152,7 +152,7 @@ int bpe_increase_frame_height(struct bpe *bpe)
 	assert(bpe);
 	assert(bpe->frame);
 
-	bpe->frame->height += 8; /* FIXME ??? */
+	bpe->frame->height += 8;
 
 	err = frame_realloc_data(bpe->frame);
 
@@ -161,6 +161,22 @@ int bpe_increase_frame_height(struct bpe *bpe)
 	}
 
 	return RET_SUCCESS;
+}
+
+void bpe_initialize_frame_height(struct bpe *bpe)
+{
+	assert(bpe);
+	assert(bpe->frame);
+
+	bpe->frame->height = 0;
+}
+
+void bpe_correct_frame_height(struct bpe *bpe)
+{
+	assert(bpe);
+	assert(bpe->frame);
+
+	bpe->frame->height -= bpe->segment_header.PadRows;
 }
 
 int bpe_destroy(struct bpe *bpe)
@@ -903,8 +919,8 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	/* initially allocate bpe->segment[] according to initial S */
 	bpe_realloc_segment(&bpe);
 
-	/* HACK */
-	bpe.frame->height = 0;
+	/* initialize frame->height */
+	bpe_initialize_frame_height(&bpe);
 	/* initialize frame->width & frame->data[] */
 	bpe_realloc_frame_width(&bpe);
 	/* initialize frame->bpp */
@@ -941,10 +957,9 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
 	}
 
-	bpe_destroy(&bpe);
+	bpe_correct_frame_height(&bpe);
 
-	/* HACK */
-	bpe.frame->height -= bpe.segment_header.PadRows;
+	bpe_destroy(&bpe);
 
 	return RET_SUCCESS;
 }
