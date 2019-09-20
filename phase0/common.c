@@ -40,7 +40,7 @@ int init_parameters(struct parameters *parameters)
 	};
 	int i;
 
-	assert(parameters);
+	assert(parameters != NULL);
 
 	parameters->DWTtype = 0;
 	parameters->S = 16;

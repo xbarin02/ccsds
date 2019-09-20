@@ -8,7 +8,7 @@
 
 int dwt_encode(struct frame *frame, const struct parameters *parameters)
 {
-	assert( parameters );
+	assert(parameters != NULL);
 
 	switch (parameters->DWTtype) {
 		case 0:
@@ -22,7 +22,7 @@ int dwt_encode(struct frame *frame, const struct parameters *parameters)
 
 int dwt_decode(struct frame *frame, const struct parameters *parameters)
 {
-	assert( parameters );
+	assert(parameters != NULL);
 
 	switch (parameters->DWTtype) {
 		case 0:
