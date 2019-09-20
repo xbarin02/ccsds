@@ -29,7 +29,7 @@ static int safe_abs(int j)
  */
 static int clamp(int v, int lo, int hi)
 {
-	return v < lo ? lo : ( hi < v ? hi : v );
+	return v < lo ? lo : (hi < v ? hi : v);
 }
 
 /**
@@ -80,7 +80,7 @@ static unsigned long convert_bpp_to_maxval(size_t bpp)
 static size_t convert_bpp_to_depth(size_t bpp)
 {
 	return bpp <= CHAR_BIT ? 1
-		: ( bpp <= CHAR_BIT * sizeof(short) ? sizeof(short)
+		: (bpp <= CHAR_BIT * sizeof(short) ? sizeof(short)
 			: 0);
 }
 
@@ -353,7 +353,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 	}
 
 	/* consume a single whitespace character */
-	if ( !isspace(fgetc(stream)) ) {
+	if (!isspace(fgetc(stream))) {
 		dprint (("[ERROR] unexpected input\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
@@ -576,7 +576,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 
 	depth = convert_bpp_to_depth(bpp);
 	stride = width * depth;
-	line = malloc( stride );
+	line = malloc(stride);
 
 	if (NULL == line) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
