@@ -598,7 +598,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	S = bpe->S;
 
 	s = 0;
-	if (S) {
+	if (S != 0) {
 		s = bpe->block_index % S;
 	}
 
@@ -612,7 +612,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		s = total_no_blocks - bpe->block_index;
 	}
 
-	if (S) {
+	if (S != 0) {
 		dprint (("BPE: decoding segment %lu (%lu blocks)\n", (bpe->block_index / S), s));
 	} else {
 		dprint (("BPE: decoding segment zero (%lu blocks)\n", s));
@@ -631,7 +631,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		bpe_realloc_segment(bpe);
 		S = bpe->S;
 		s = 0;
-		if (S) {
+		if (S != 0) {
 			s = bpe->block_index % S;
 		}
 		if (s == 0) {
@@ -700,7 +700,7 @@ int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_b
 	S = bpe->S;
 
 	s = 0;
-	if (S) {
+	if (S != 0) {
 		s = bpe->block_index % S;
 	}
 
@@ -712,6 +712,7 @@ int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_b
 	/* pop the block from bpe->segment[] */
 	local = bpe->segment + s*8*8;
 
+	/* access frame->data[] */
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
 			data[y*stride + x] = local[y*8 + x];
