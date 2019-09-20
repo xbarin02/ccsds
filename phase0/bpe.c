@@ -272,11 +272,11 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 	 word = 0;
 	 word |= SET_BOOL_INTO_UINT32(bpe->segment_header.CustomWtFlag, 0);
 	 if (bpe->segment_header.CustomWtFlag) {
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 3] - 1, 1, M2); /* CustomWtHH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 1] - 1, 3, M2); /* CustomWtHL1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 2] - 1, 5, M2); /* CustomWtLH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 7] - 1, 7, M2); /* CustomWtHH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 5] - 1, 9, M2); /* CustomWtHL2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 3] - 1,  1, M2); /* CustomWtHH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 1] - 1,  3, M2); /* CustomWtHL1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 2] - 1,  5, M2); /* CustomWtLH1 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 7] - 1,  7, M2); /* CustomWtHH2 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 5] - 1,  9, M2); /* CustomWtHL2 */
 		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
 		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[11] - 1, 13, M2); /* CustomWtHH3 */
 		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
@@ -380,7 +380,7 @@ int bpe_read_segment_header_part3(struct bpe *bpe)
 		return err;
 	}
 
-	bpe->segment_header.S = GET_UINT_FROM_UINT32(word, 0, M20); /* FIXME: reallocate struct bpe */
+	bpe->segment_header.S = GET_UINT_FROM_UINT32(word, 0, M20); /* NOTE: S has been changed ==> reallocate bpe->segment[] */
 	bpe->segment_header.OptDCSelect = GET_BOOL_FROM_UINT32(word, 20);
 	bpe->segment_header.OptACSelect = GET_BOOL_FROM_UINT32(word, 21);
 
@@ -403,10 +403,10 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 
 	bpe->segment_header.DWTtype = GET_BOOL_FROM_UINT32(word, 0);
 	/* Reserved : 1 */
-	bpe->segment_header.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2);
+	bpe->segment_header.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2); /* NOTE bpp has been changed */
 	bpe->segment_header.SignedPixels = GET_BOOL_FROM_UINT32(word, 3);
-	bpe->segment_header.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4);
-	bpe->segment_header.ImageWidth = GET_UINT_FROM_UINT32(word, 8, M20); /* FIXME reallocate struct frame */
+	bpe->segment_header.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4); /* NOTE bpp has been changed */
+	bpe->segment_header.ImageWidth = GET_UINT_FROM_UINT32(word, 8, M20); /* NOTE width has been changed ==> reallocate frame->data[] */
 	bpe->segment_header.TransposeImg = GET_BOOL_FROM_UINT32(word, 28);
 	bpe->segment_header.CodeWordLength = GET_UINT_FROM_UINT32(word, 29, M3);
 
@@ -418,11 +418,11 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 
 	bpe->segment_header.CustomWtFlag = GET_BOOL_FROM_UINT32(word, 0);
 	if (bpe->segment_header.CustomWtFlag) {
-		bpe->segment_header.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word, 1, M2); /* CustomWtHH1 */
-		bpe->segment_header.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word, 3, M2); /* CustomWtHL1 */
-		bpe->segment_header.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word, 5, M2); /* CustomWtLH1 */
-		bpe->segment_header.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word, 7, M2); /* CustomWtHH2 */
-		bpe->segment_header.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word, 9, M2); /* CustomWtHL2 */
+		bpe->segment_header.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word,  1, M2); /* CustomWtHH1 */
+		bpe->segment_header.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word,  3, M2); /* CustomWtHL1 */
+		bpe->segment_header.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word,  5, M2); /* CustomWtLH1 */
+		bpe->segment_header.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word,  7, M2); /* CustomWtHH2 */
+		bpe->segment_header.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word,  9, M2); /* CustomWtHL2 */
 		bpe->segment_header.weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
 		bpe->segment_header.weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
 		bpe->segment_header.weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
@@ -519,12 +519,13 @@ int bpe_read_segment_header(struct bpe *bpe)
 	/* Segment Header Part 3 */
 	if (bpe->segment_header.Part3Flag) {
 		bpe_read_segment_header_part3(bpe);
+		/* NOTE S has been changed */
 	}
 
 	/* Segment Header Part 4 */
 	if (bpe->segment_header.Part4Flag) {
 		bpe_read_segment_header_part4(bpe);
-		/* TODO BPP & width has been changed */
+		/* NOTE bpp & width have been changed */
 	}
 
 	return 0;
@@ -625,17 +626,21 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	dprint (("BPE :: Segment Header :: Part4Flag    = %i\n", bpe->segment_header.Part4Flag));
 	dprint (("BPE :: Segment Header :: S            = %lu\n", bpe->segment_header.S));
 
-	if (bpe->segment_header.Part3Flag && bpe->S != bpe->segment_header.S) {
+	if (bpe->segment_header.Part3Flag /*&& bpe->S != bpe->segment_header.S*/) {
 		dprint (("BPE:: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
 		bpe_realloc_segment(bpe);
 		S = bpe->S;
-		s = bpe->block_index % S;
+		s = 0;
+		if (S) {
+			s = bpe->block_index % S;
+		}
 		if (s == 0) {
 			s = S;
 		}
 	}
 
 	if (bpe->segment_header.Part4Flag && bpe->frame->width != bpe->segment_header.ImageWidth) {
+		dprint (("BPE: bpp changed\n"));
 		dprint (("BPE: width changed ==> reallocate\n"));
 		bpe_realloc_frame_width(bpe);
 		abort();
