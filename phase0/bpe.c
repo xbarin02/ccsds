@@ -479,7 +479,7 @@ int bpe_write_segment_header(struct bpe *bpe)
 
 	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
 	bpe->segment_header.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
-	/* TODO EndImgFlag */
+	/* TODO EndImgFlag is set in bpe_encode_segment (parent) */
 	/* BitDepthDC */
 	/* BitDepthAC */
 	/* Part 2: */
