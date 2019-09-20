@@ -52,9 +52,9 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.OptDCSelect = 0; /* 0 => heuristic selection of k parameter */
 	bpe->segment_header.OptACSelect = 0; /* 0 => heuristic selection of k parameter */
 	bpe->segment_header.DWTtype = parameters->DWTtype;
-	bpe->segment_header.ExtendedPixelBitDepthFlag = 0; /* 0 => pixel bit depth is not larger than 16 */
+	bpe->segment_header.ExtendedPixelBitDepthFlag = (bpe->frame->bpp >= 16); /* 0 => pixel bit depth is not larger than 16 */
 	bpe->segment_header.SignedPixels = 0; /* 0 => unsigned */
-	bpe->segment_header.PixelBitDepth = (UINT32)bpe->frame->bpp; /* the input pixel bit depth */
+	bpe->segment_header.PixelBitDepth = (UINT32)(bpe->frame->bpp % 16); /* the input pixel bit depth */
 	bpe->segment_header.ImageWidth = (UINT32)bpe->frame->width;
 	bpe->segment_header.TransposeImg = 0;
 	bpe->segment_header.CodeWordLength = 6; /* 6 => 32-bit coded words */
@@ -620,11 +620,12 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	bpe_read_segment_header(bpe);
 
-	dprint (("BPE :: Segment Header :: StartImgFlag = %i\n", bpe->segment_header.StartImgFlag));
-	dprint (("BPE :: Segment Header :: EndImgFlag   = %i\n", bpe->segment_header.EndImgFlag));
-	dprint (("BPE :: Segment Header :: Part3Flag    = %i\n", bpe->segment_header.Part3Flag));
-	dprint (("BPE :: Segment Header :: Part4Flag    = %i\n", bpe->segment_header.Part4Flag));
-	dprint (("BPE :: Segment Header :: S            = %lu\n", bpe->segment_header.S));
+	dprint (("BPE :: Segment Header :: StartImgFlag  = %i\n", bpe->segment_header.StartImgFlag));
+	dprint (("BPE :: Segment Header :: EndImgFlag    = %i\n", bpe->segment_header.EndImgFlag));
+	dprint (("BPE :: Segment Header :: Part3Flag     = %i\n", bpe->segment_header.Part3Flag));
+	dprint (("BPE :: Segment Header :: Part4Flag     = %i\n", bpe->segment_header.Part4Flag));
+	dprint (("BPE :: Segment Header :: S             = %lu\n", bpe->segment_header.S));
+	dprint (("BPE :: Segment Header :: PixelBitDepth = %u\n", bpe->segment_header.PixelBitDepth));
 
 	if (bpe->segment_header.Part3Flag) {
 		dprint (("BPE:: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
@@ -642,8 +643,9 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	if (bpe->segment_header.Part4Flag && bpe->frame->width != bpe->segment_header.ImageWidth) {
 		dprint (("BPE: width changed %lu to %u ==> reallocate\n", bpe->frame->width, bpe->segment_header.ImageWidth));
 		bpe_realloc_frame_width(bpe);
-		dprint (("BPE: bpp changed\n"));
-		/* bpe->frame->bpp = (size_t) bpe->segment_header....; */
+		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
+		bpe->frame->bpp = (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth);
+		/* BUG  bpp changed from 8 to 1 */
 		abort();
 	}
 
