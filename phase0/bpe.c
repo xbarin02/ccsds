@@ -55,6 +55,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.ExtendedPixelBitDepthFlag = (bpe->frame->bpp >= 16); /* 0 => pixel bit depth is not larger than 16 */
 	bpe->segment_header.SignedPixels = 0; /* 0 => unsigned */
 	bpe->segment_header.PixelBitDepth = (UINT32)(bpe->frame->bpp % 16); /* the input pixel bit depth */
+	dprint (("bpe_init: PixelBitDepth = %u\n", bpe->segment_header.PixelBitDepth));
 	bpe->segment_header.ImageWidth = (UINT32)bpe->frame->width;
 	bpe->segment_header.TransposeImg = 0;
 	bpe->segment_header.CodeWordLength = 6; /* 6 => 32-bit coded words */
@@ -258,7 +259,7 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 	/* Reserved : 1 */
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.ExtendedPixelBitDepthFlag, 2);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.SignedPixels, 3);
-	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.PixelBitDepth, 4);
+	word |= SET_UINT_INTO_UINT32(bpe->segment_header.PixelBitDepth, 4, M4);
 	word |= SET_UINT_INTO_UINT32(bpe->segment_header.ImageWidth, 8, M20);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.TransposeImg, 28);
 	word |= SET_UINT_INTO_UINT32(bpe->segment_header.CodeWordLength, 29, M3);
@@ -405,7 +406,7 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 	/* Reserved : 1 */
 	bpe->segment_header.ExtendedPixelBitDepthFlag = GET_BOOL_FROM_UINT32(word, 2); /* NOTE bpp has been changed */
 	bpe->segment_header.SignedPixels = GET_BOOL_FROM_UINT32(word, 3);
-	bpe->segment_header.PixelBitDepth = GET_BOOL_FROM_UINT32(word, 4); /* NOTE bpp has been changed */
+	bpe->segment_header.PixelBitDepth = GET_UINT_FROM_UINT32(word, 4, M4); /* NOTE bpp has been changed */
 	bpe->segment_header.ImageWidth = GET_UINT_FROM_UINT32(word, 8, M20); /* NOTE width has been changed ==> reallocate frame->data[] */
 	bpe->segment_header.TransposeImg = GET_BOOL_FROM_UINT32(word, 28);
 	bpe->segment_header.CodeWordLength = GET_UINT_FROM_UINT32(word, 29, M3);
@@ -491,6 +492,8 @@ int bpe_write_segment_header(struct bpe *bpe)
 	if (bpe->segment_header.Part4Flag) {
 		err = bpe_write_segment_header_part4(bpe);
 
+		dprint (("Segment Header Part 4 written\n"));
+
 		if (err) {
 			return err;
 		}
@@ -526,6 +529,7 @@ int bpe_read_segment_header(struct bpe *bpe)
 	if (bpe->segment_header.Part4Flag) {
 		bpe_read_segment_header_part4(bpe);
 		/* NOTE bpp & width have been changed */
+		dprint (("Segment Header Part 4 read\n"));
 	}
 
 	return 0;
