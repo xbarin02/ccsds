@@ -798,7 +798,7 @@ int block_by_index(struct block *block, struct frame *frame, size_t block_index)
 	size_t y, x;
 	int *data;
 
-	assert(frame);
+	assert(frame != NULL);
 
 	width  = ceil_multiple8(frame->width);
 
@@ -813,6 +813,20 @@ int block_by_index(struct block *block, struct frame *frame, size_t block_index)
 	block->stride = width;
 
 	return RET_SUCCESS;
+}
+
+int block_starts_new_stripe(struct frame *frame, size_t block_index)
+{
+	size_t width;
+	size_t x;
+
+	assert(frame != NULL);
+
+	width  = ceil_multiple8(frame->width);
+
+	x = block_index % (width / 8) * 8;
+
+	return x == 0;
 }
 
 int bpe_encode_block_by_index(struct frame *frame, struct bio *bio, size_t block_index)
@@ -889,6 +903,8 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	/* initially allocate bpe->segment[] according to initial S */
 	bpe_realloc_segment(&bpe);
 
+	/* HACK */
+	bpe.frame->height = 0;
 	/* initialize frame->width & frame->data[] */
 	bpe_realloc_frame_width(&bpe);
 	/* initialize frame->bpp */
@@ -914,12 +930,21 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 			return err;
 		}
 
+		if (block_starts_new_stripe(frame, block_index)) {
+			/* increase height */
+			dprint (("this block starts new strip, increasing the image height!\n"));
+			bpe_increase_frame_height(&bpe);
+		}
+
 		block_by_index(&block, frame, block_index);
 
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
 	}
 
 	bpe_destroy(&bpe);
+
+	/* HACK */
+	bpe.frame->height -= bpe.segment_header.PadRows;
 
 	return RET_SUCCESS;
 }

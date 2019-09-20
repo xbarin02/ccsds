@@ -391,11 +391,11 @@ int frame_realloc_data(struct frame *frame)
 	data = frame->data;
 
 	/* NOTE C89 does not have SIZE_MAX */
-	assert(height <= (~(size_t)0) / width);
+	assert(width == 0 || height <= (~(size_t)0) / width);
 
 	resolution = height * width;
 
-	assert(sizeof *data <= (~(size_t)0) / resolution);
+	assert(resolution == 0 || sizeof *data <= (~(size_t)0) / resolution);
 
 	data = realloc(data, resolution * sizeof *data);
 
@@ -784,7 +784,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	assert( frameB );
 
 	if ( frame_cmp(frameA, frameB) ) {
-		dprint (("[ERROR] frame dimensions must be identical\n"));
+		dprint (("[ERROR] frame dimensions must be identical (%lu, %lu) != (%lu, %lu)\n", frameA->height, frameA->width, frameB->height, frameB->width));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
