@@ -475,6 +475,7 @@ int bpe_write_segment_header(struct bpe *bpe)
 
 	assert(bpe != NULL);
 
+	/* TODO: pull out the following lines to parent bpe_encode_segment function */
 	S = bpe->S;
 
 	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
