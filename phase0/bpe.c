@@ -620,17 +620,14 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		s = S;
 	}
 
+	/* the 's' in the last block shoul be read from Part 4 of the Segment Header */
+#if 0
 	/* correct the number of block in the last segment */
 	if (bpe->block_index + S > total_no_blocks) {
 		dprint (("shortened segment (%lu blocks)\n", total_no_blocks - bpe->block_index));
 		s = total_no_blocks - bpe->block_index;
 	}
-
-	if (S != 0) {
-		dprint (("BPE: decoding segment %lu (%lu blocks)\n", (bpe->block_index / S), s));
-	} else {
-		dprint (("BPE: decoding segment zero (%lu blocks)\n", s));
-	}
+#endif
 
 	bpe_read_segment_header(bpe);
 
@@ -659,6 +656,12 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		bpe_realloc_frame_width(bpe);
 		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
 		bpe_realloc_frame_bpp(bpe);
+	}
+
+	if (S != 0) {
+		dprint (("BPE: decoding segment %lu (%lu blocks)\n", (bpe->block_index / S), s));
+	} else {
+		dprint (("BPE: decoding segment zero (%lu blocks)\n", s));
 	}
 
 	for (blk = 0; blk < s; ++blk) {
