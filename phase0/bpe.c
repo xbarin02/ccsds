@@ -846,7 +846,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 	bpe_init(&bpe, parameters, bio, frame);
 
-	/* HACK */
+	/* initially allocate bpe->segment[] according to initial S */
 	bpe_realloc_segment(&bpe);
 
 	dprint (("main decoding loop...\n"));
