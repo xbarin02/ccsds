@@ -53,7 +53,7 @@ static unsigned long floor_log2_l(unsigned long n)
  */
 static size_t convert_maxval_to_bpp(unsigned long maxval)
 {
-	if (maxval) {
+	if (maxval != 0) {
 		return floor_log2_l(maxval) + 1;
 	}
 
@@ -65,7 +65,7 @@ static size_t convert_maxval_to_bpp(unsigned long maxval)
  */
 static unsigned long convert_bpp_to_maxval(size_t bpp)
 {
-	if (bpp) {
+	if (bpp != 0) {
 		return (1UL << bpp) - 1;
 	}
 
@@ -125,13 +125,13 @@ int frame_write_pgm_header(const struct frame *frame, FILE *stream)
 
 	/* write header */
 
-	assert( frame );
+	assert(frame != NULL);
 
 	height = frame->height;
 	width = frame->width;
 	bpp = frame->bpp;
 
-	if ( width > ULONG_MAX || height > ULONG_MAX ) {
+	if (width > ULONG_MAX || height > ULONG_MAX) {
 		return RET_FAILURE_OVERFLOW_ERROR;
 	}
 
@@ -151,7 +151,7 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 	void *line;
 	const int *data;
 
-	assert( frame );
+	assert(frame != NULL);
 
 	width_ = frame->width;
 	height_ = frame->height;
@@ -162,7 +162,7 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 	width = ceil_multiple8(frame->width);
 
 	/* allocate a line */
-	line = malloc( width_ * depth_ );
+	line = malloc(width_ * depth_);
 
 	if (NULL == line) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -170,7 +170,7 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 
 	data = frame->data;
 
-	assert( data );
+	assert(data != NULL);
 
 	/* write data */
 	for (y = 0; y < height_; ++y) {
@@ -199,7 +199,7 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 				return RET_FAILURE_LOGIC_ERROR;
 		}
 		/* write line */
-		if ( fwrite(line, depth_, width_, stream) < width_ ) {
+		if (fwrite(line, depth_, width_, stream) < width_) {
 			return RET_FAILURE_FILE_IO;
 		}
 	}
@@ -256,7 +256,7 @@ int stream_skip_comment(FILE *stream)
 	int c;
 
 	/* look ahead for a comment, ungetc */
-	while ( (c = getc(stream)) == '#' ) {
+	while ((c = getc(stream)) == '#') {
 		char com[4096];
 		if (NULL == fgets(com, 4096, stream))
 			return RET_FAILURE_FILE_IO;
@@ -359,7 +359,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 	}
 
 	/* fill the struct */
-	assert( frame );
+	assert(frame != NULL);
 
 	frame->width = width;
 	frame->height = height;
@@ -416,7 +416,7 @@ int frame_read_pgm_data(struct frame *frame, FILE *stream)
 	void *line;
 	int *data;
 
-	assert( frame );
+	assert(frame != NULL);
 
 	width_ = frame->width;
 	height_ = frame->height;
@@ -426,7 +426,7 @@ int frame_read_pgm_data(struct frame *frame, FILE *stream)
 	height = ceil_multiple8(frame->height);
 
 	/* allocate a line */
-	line = malloc( width_ * depth_ );
+	line = malloc(width_ * depth_);
 
 	if (NULL == line) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -434,12 +434,12 @@ int frame_read_pgm_data(struct frame *frame, FILE *stream)
 
 	data = frame->data;
 
-	assert( data );
+	assert(data != NULL);
 
 	/* (2.1) copy the input raster into an array of 32-bit DWT coefficients, incl. padding */
 	for (y = 0; y < height_; ++y) {
 		/* read line */
-		if ( fread(line, depth_, width_, stream) < width_ ) {
+		if (fread(line, depth_, width_, stream) < width_) {
 			dprint (("[ERROR] end-of-file or error while reading a row\n"));
 			return RET_FAILURE_FILE_IO;
 		}
@@ -527,7 +527,7 @@ int frame_load_pgm(struct frame *frame, const char *path)
 			return RET_FAILURE_FILE_IO;
 	}
 
-	assert( frame );
+	assert(frame != NULL);
 
 	dprint (("[INFO] frame %lu %lu %lu\n", (unsigned long) frame->width, (unsigned long) frame->height, (unsigned long) frame->bpp));
 
@@ -552,7 +552,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 		return RET_FAILURE_FILE_OPEN;
 	}
 
-	assert( frame );
+	assert(frame != NULL);
 
 	bpp = frame->bpp;
 
@@ -561,18 +561,18 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
-	if ( width > ULONG_MAX || height > ULONG_MAX ) {
+	if (width > ULONG_MAX || height > ULONG_MAX) {
 		return RET_FAILURE_OVERFLOW_ERROR;
 	}
 
-	if ( fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, (unsigned long) maxval) < 0 ) {
+	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, (unsigned long) maxval) < 0) {
 		return RET_FAILURE_FILE_IO;
 	}
 
 	data = frame->data;
 
-	assert( data );
-	assert( factor );
+	assert(data != NULL);
+	assert(factor != 0);
 
 	depth = convert_bpp_to_depth(bpp);
 	stride = width * depth;
@@ -608,7 +608,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 			}
 		}
 
-		if ( 1 != fwrite(line, stride, 1, stream) ) {
+		if (1 != fwrite(line, stride, 1, stream)) {
 			return RET_FAILURE_FILE_IO;
 		}
 	}
@@ -623,7 +623,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 
 void frame_destroy(struct frame *frame)
 {
-	assert( frame );
+	assert(frame != NULL);
 
 	free(frame->data);
 
@@ -634,8 +634,8 @@ static void copy_band(int *dst, int *src, size_t height, size_t width, size_t st
 {
 	size_t y, x;
 
-	assert( dst );
-	assert( src );
+	assert(dst != NULL);
+	assert(src != NULL);
 
 	/* for each row */
 	for (y = 0; y < height; ++y) {
@@ -653,7 +653,7 @@ int frame_convert_chunked_to_semiplanar(struct frame *frame)
 	int j;
 	int err;
 
-	assert( frame );
+	assert(frame != NULL);
 
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
@@ -712,8 +712,8 @@ int frame_clone(const struct frame *frame, struct frame *cloned_frame)
 	int err;
 	size_t width, height;
 
-	assert( frame );
-	assert( cloned_frame );
+	assert(frame != NULL);
+	assert(cloned_frame != NULL);
 
 	*cloned_frame = *frame;
 
@@ -761,8 +761,8 @@ int frame_dump_chunked_as_semiplanar(const struct frame *frame, const char *path
 
 static int frame_cmp(const struct frame *frameA, const struct frame *frameB)
 {
-	assert( frameA );
-	assert( frameB );
+	assert(frameA != NULL);
+	assert(frameB != NULL);
 
 	if ( frameA->width != frameB->width
 	  || frameA->height != frameB->height
@@ -780,10 +780,10 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	int *dataA, *dataB;
 	double mse;
 
-	assert( frameA );
-	assert( frameB );
+	assert(frameA != NULL);
+	assert(frameB != NULL);
 
-	if ( frame_cmp(frameA, frameB) ) {
+	if (frame_cmp(frameA, frameB)) {
 		dprint (("[ERROR] frame dimensions must be identical (%lu, %lu) != (%lu, %lu)\n", frameA->height, frameA->width, frameB->height, frameB->width));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
@@ -794,8 +794,8 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	dataA = frameA->data;
 	dataB = frameB->data;
 
-	assert( dataA );
-	assert( dataB );
+	assert(dataA != NULL);
+	assert(dataB != NULL);
 
 	mse = 0.;
 
@@ -846,14 +846,14 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 	size_t y, x;
 	int *data, *dataA, *dataB;
 
-	if ( frame_cmp(frame, frameA) || frame_cmp(frame, frameB) ) {
+	if (frame_cmp(frame, frameA) || frame_cmp(frame, frameB)) {
 		dprint (("[ERROR] frame dimensions must be identical\n"));
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
-	assert( frame );
-	assert( frameA );
-	assert( frameB );
+	assert(frame != NULL);
+	assert(frameA != NULL);
+	assert(frameB != NULL);
 
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
@@ -862,9 +862,9 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 	dataA = frameA->data;
 	dataB = frameB->data;
 
-	assert( data );
-	assert( dataA );
-	assert( dataB );
+	assert(data != NULL);
+	assert(dataA != NULL);
+	assert(dataB != NULL);
 
 	for (y = 0; y < height; ++y) {
 		for (x = 0; x < width; ++x) {
@@ -895,7 +895,7 @@ int frame_scale_pixels(struct frame *frame, size_t bpp)
 	size_t old_bpp;
 	int *data;
 
-	assert( frame );
+	assert(frame != NULL);
 
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
@@ -904,7 +904,7 @@ int frame_scale_pixels(struct frame *frame, size_t bpp)
 
 	data = frame->data;
 
-	assert( data );
+	assert(data != NULL);
 
 	if (old_bpp < bpp) {
 		for (y = 0; y < height; ++y) {
@@ -928,7 +928,7 @@ void frame_randomize(struct frame *frame)
 	int maxval;
 	int *data;
 
-	assert( frame );
+	assert(frame != NULL);
 
 	height = ceil_multiple8(frame->height);
 	width = ceil_multiple8(frame->width);
