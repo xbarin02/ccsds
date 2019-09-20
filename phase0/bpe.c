@@ -86,7 +86,7 @@ int bpe_realloc_segment(struct bpe *bpe)
 
 	bpe->segment = malloc( S * 8 * 8 * sizeof(INT32) );
 
-	if (bpe->segment == NULL) {
+	if (bpe->segment == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
@@ -594,7 +594,11 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	assert(bpe);
 
 	S = bpe->S;
-	s = bpe->block_index % S;
+
+	s = 0;
+	if (S) {
+		s = bpe->block_index % S;
+	}
 
 	if (s == 0) {
 		s = S;
@@ -606,13 +610,18 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 		s = total_no_blocks - bpe->block_index;
 	}
 
-	dprint (("BPE: decoding segment %lu (%lu blocks)\n", ((bpe->block_index) / S), s));
+	if (S) {
+		dprint (("BPE: decoding segment %lu (%lu blocks)\n", (bpe->block_index / S), s));
+	} else {
+		dprint (("BPE: decoding segment zero (%lu blocks)\n", s));
+	}
 
 	bpe_read_segment_header(bpe);
 
 	dprint (("BPE :: Segment Header :: StartImgFlag = %i\n", bpe->segment_header.StartImgFlag));
 	dprint (("BPE :: Segment Header :: EndImgFlag   = %i\n", bpe->segment_header.EndImgFlag));
 	dprint (("BPE :: Segment Header :: Part3Flag    = %i\n", bpe->segment_header.Part3Flag));
+	dprint (("BPE :: Segment Header :: Part4Flag    = %i\n", bpe->segment_header.Part4Flag));
 	dprint (("BPE :: Segment Header :: S            = %lu\n", bpe->segment_header.S));
 
 	if (bpe->segment_header.Part3Flag && bpe->S != bpe->segment_header.S) {
@@ -682,7 +691,11 @@ int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_b
 	size_t y, x;
 
 	S = bpe->S;
-	s = bpe->block_index % S;
+
+	s = 0;
+	if (S) {
+		s = bpe->block_index % S;
+	}
 
 	/* if this is the first block in the segment, deserialize it */
 	if (s == 0) {
@@ -785,7 +798,8 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 
 	assert(frame);
 
-	/* HACK until the library is fully implemented, write the image
+	/* HACK
+	 * until the library is fully implemented, write the image
 	 * dimensions at the beginning of the bitstream
 	 */
 	bio_write_int(bio, (UINT32) frame->width);
@@ -820,7 +834,10 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 	assert(frame);
 
-	/* HACK */
+	/* HACK
+	 * until the library is fully implemented, read the image
+	 * dimensions from the beginning of the bitstream
+	 */
 	bio_read_int(bio, (UINT32 *) &frame->width);
 	bio_read_int(bio, (UINT32 *) &frame->height);
 	bio_read_int(bio, (UINT32 *) &frame->bpp);
@@ -830,8 +847,9 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	bpe_init(&bpe, parameters, bio, frame);
 
 	/* HACK */
-	bpe.segment_header.S = 64;
 	bpe_realloc_segment(&bpe);
+
+	dprint (("main decoding loop...\n"));
 
 	/* push all blocks into the BPE engine */
 	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
