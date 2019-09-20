@@ -870,7 +870,7 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	struct bpe bpe;
 
 	assert(frame);
-
+#if 0
 	/* HACK
 	 * until the library is fully implemented, write the image
 	 * dimensions at the beginning of the bitstream
@@ -878,7 +878,7 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	bio_write_int(bio, (UINT32) frame->width);
 	bio_write_int(bio, (UINT32) frame->height);
 	bio_write_int(bio, (UINT32) frame->bpp);
-
+#endif
 	total_no_blocks = get_total_no_blocks(frame);
 
 	bpe_init(&bpe, parameters, bio, frame);
@@ -905,7 +905,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	struct bpe bpe;
 
 	assert(frame);
-
+#if 0
 	/* HACK
 	 * until the library is fully implemented, read the image
 	 * dimensions from the beginning of the bitstream
@@ -913,7 +913,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	bio_read_int(bio, (UINT32 *) &frame->width);
 	bio_read_int(bio, (UINT32 *) &frame->height);
 	bio_read_int(bio, (UINT32 *) &frame->bpp);
-
+#endif
 	bpe_init(&bpe, parameters, bio, frame);
 
 	/* initially allocate bpe->segment[] according to initial S */
