@@ -721,6 +721,9 @@ int bpe_pop_block_decode(struct bpe *bpe)
 
 	/* if this is the first block in the segment, deserialize it */
 	if (s == 0) {
+		if (bpe_is_last_segment(bpe)) {
+			return RET_FAILURE_NO_MORE_DATA;
+		}
 		bpe_decode_segment(bpe);
 	}
 
@@ -869,7 +872,6 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 int bpe_decode(struct frame *frame, const struct parameters *parameters, struct bio *bio)
 {
 	size_t block_index;
-	size_t total_no_blocks;
 	struct bpe bpe;
 
 	assert(frame);
@@ -881,8 +883,6 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	bio_read_int(bio, (UINT32 *) &frame->width);
 	bio_read_int(bio, (UINT32 *) &frame->height);
 	bio_read_int(bio, (UINT32 *) &frame->bpp);
-
-	total_no_blocks = get_total_no_blocks(frame);
 
 	bpe_init(&bpe, parameters, bio, frame);
 
@@ -897,20 +897,26 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	dprint (("main decoding loop...\n"));
 
 	/* push all blocks into the BPE engine */
-	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
+	for (block_index = 0; ; ++block_index) {
+		int err;
 		struct block block;
 
 		/* NOTE: the bpe_pop_block_decode reallocates frame->data[] */
-		bpe_pop_block_decode(&bpe);
+		err = bpe_pop_block_decode(&bpe);
+
+		if (err == RET_FAILURE_NO_MORE_DATA) {
+			dprint (("last segment indicated, breaking the decoding loop!\n"));
+			break;
+		}
+
+		/* other error */
+		if (err) {
+			return err;
+		}
 
 		block_by_index(&block, frame, block_index);
 
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
-
-		if (bpe_is_last_segment(&bpe)) {
-			dprint (("last segment ==> break the loop!\n"));
-			/* BUG in decoding weird.pgm, etc. */
-		}
 	}
 
 	bpe_destroy(&bpe);

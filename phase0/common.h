@@ -46,6 +46,8 @@ enum {
 	/* 0x3xxx general exceptions */
 	RET_FAILURE_LOGIC_ERROR       = 0x3000, /**< faulty logic within the program */
 	RET_FAILURE_OVERFLOW_ERROR    = 0x3001, /**< result is too large for the destination type */
+	/* 0x4xxx other */
+	RET_FAILURE_NO_MORE_DATA      = 0x4000,
 	RET_LAST
 };
 
