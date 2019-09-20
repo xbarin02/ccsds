@@ -496,6 +496,8 @@ int bpe_write_segment_header(struct bpe *bpe)
 		}
 	}
 
+	dprint (("BPE :: Segment Header has been written\n"));
+
 	return RET_SUCCESS;
 }
 
@@ -548,7 +550,7 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 		bpe->segment_header.EndImgFlag = 1;
 		if (s != S) {
 			bpe->segment_header.Part3Flag = 1; /* signal new "s" as "S" */
-			bpe->segment_header.S = s;
+			bpe->segment_header.S = (UINT32) s;
 		}
 	} else {
 		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu\n", ((bpe->block_index - 1) / S), s, bpe->block_index));
@@ -610,7 +612,24 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	dprint (("BPE :: Segment Header :: StartImgFlag = %i\n", bpe->segment_header.StartImgFlag));
 	dprint (("BPE :: Segment Header :: EndImgFlag   = %i\n", bpe->segment_header.EndImgFlag));
+	dprint (("BPE :: Segment Header :: Part3Flag    = %i\n", bpe->segment_header.Part3Flag));
 	dprint (("BPE :: Segment Header :: S            = %lu\n", bpe->segment_header.S));
+
+	if (bpe->segment_header.Part3Flag && bpe->S != bpe->segment_header.S) {
+		dprint (("BPE:: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
+		bpe_realloc_segment(bpe);
+		S = bpe->S;
+		s = bpe->block_index % S;
+		if (s == 0) {
+			s = S;
+		}
+	}
+
+	if (bpe->segment_header.Part4Flag && bpe->frame->width != bpe->segment_header.ImageWidth) {
+		dprint (("BPE: width changed ==> reallocate\n"));
+		bpe_realloc_frame_width(bpe);
+		abort();
+	}
 
 	for (blk = 0; blk < s; ++blk) {
 		/* decode the block */
@@ -809,6 +828,10 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	total_no_blocks = get_total_no_blocks(frame);
 
 	bpe_init(&bpe, parameters, bio, frame);
+
+	/* HACK */
+	bpe.segment_header.S = 64;
+	bpe_realloc_segment(&bpe);
 
 	/* push all blocks into the BPE engine */
 	for (block_index = 0; block_index < total_no_blocks; ++block_index) {
