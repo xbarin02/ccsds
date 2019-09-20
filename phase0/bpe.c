@@ -470,21 +470,9 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 
 int bpe_write_segment_header(struct bpe *bpe)
 {
-	size_t S;
 	int err;
 
 	assert(bpe != NULL);
-
-	/* TODO: pull out the following lines to parent bpe_encode_segment function */
-	S = bpe->S;
-
-	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
-	bpe->segment_header.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
-	/* TODO EndImgFlag is set in bpe_encode_segment (parent) */
-	/* BitDepthDC */
-	/* BitDepthAC */
-	/* Part 2: */
-	/* SegByteLimit */
 
 	if (bpe->segment_header.StartImgFlag) {
 		bpe->segment_header.Part2Flag = 1;
@@ -595,6 +583,13 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 	} else {
 		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu\n", ((bpe->block_index - 1) / S), s, bpe->block_index));
 	}
+
+	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
+	bpe->segment_header.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
+	/* BitDepthDC */
+	/* BitDepthAC */
+	/* Part 2: */
+	/* SegByteLimit */
 
 	bpe_write_segment_header(bpe);
 
