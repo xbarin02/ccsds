@@ -370,40 +370,36 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 
 int frame_alloc_data(struct frame *frame)
 {
-	size_t width, height;
-	int *data;
+	assert(frame != NULL);
 
-	assert( frame );
+	frame->data = NULL;
 
-	width = ceil_multiple8(frame->width);
-	height = ceil_multiple8(frame->height);
-
-	data = malloc( height * width * sizeof *data );
-
-	if (NULL == data) {
-		return RET_FAILURE_MEMORY_ALLOCATION;
-	}
-
-	frame->data = data;
-
-	return RET_SUCCESS;
+	return frame_realloc_data(frame);
 }
 
 int frame_realloc_data(struct frame *frame)
 {
 	size_t width, height;
+	size_t resolution;
 	int *data;
 
-	assert( frame );
+	assert(frame != NULL);
 
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
 	data = frame->data;
 
-	data = realloc(data, height * width * sizeof *data);
+	/* NOTE C89 does not have SIZE_MAX */
+	assert(height <= (~(size_t)0) / width);
 
-	if (NULL == data) {
+	resolution = height * width;
+
+	assert(sizeof *data <= (~(size_t)0) / resolution);
+
+	data = realloc(data, resolution * sizeof *data);
+
+	if (NULL == data && resolution != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
