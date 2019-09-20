@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define BLOCK_SIZE (8 * 8)
+
 #define M2 3
 #define M3 7
 #define M4 15
@@ -92,7 +94,7 @@ int bpe_realloc_segment(struct bpe *bpe)
 
 	free(bpe->segment);
 
-	bpe->segment = malloc( S * 8 * 8 * sizeof(INT32) );
+	bpe->segment = malloc( S * BLOCK_SIZE * sizeof(INT32) );
 
 	if (bpe->segment == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -595,7 +597,7 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	for (blk = 0; blk < s; ++blk) {
 		/* encode the block */
-		bpe_encode_block(bpe->segment + blk*8*8, 8, bpe->bio);
+		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
 
 	/* after writing of the first segment, set some flags to zero */
@@ -678,7 +680,7 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	for (blk = 0; blk < s; ++blk) {
 		/* decode the block */
-		bpe_decode_block(bpe->segment + blk*8*8, 8, bpe->bio);
+		bpe_decode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
 
 	return RET_SUCCESS;
@@ -697,7 +699,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_
 
 	S = bpe->S;
 	s = bpe->block_index % S;
-	local = bpe->segment + s*8*8;
+	local = bpe->segment + s * BLOCK_SIZE;
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
@@ -761,7 +763,7 @@ int bpe_pop_block_copy_data(struct bpe *bpe, INT32 *data, size_t stride)
 	}
 
 	/* pop the block from bpe->segment[] */
-	local = bpe->segment + s*8*8;
+	local = bpe->segment + s * BLOCK_SIZE;
 
 	/* access frame->data[] */
 	for (y = 0; y < 8; ++y) {
