@@ -19,8 +19,8 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	int i;
 	int err;
 
-	assert(bpe);
-	assert(parameters);
+	assert(bpe != NULL);
+	assert(parameters != NULL);
 
 	bpe->segment = NULL;
 
@@ -32,7 +32,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 
 	/* init Segment Header */
 
-	assert(bpe->frame);
+	assert(bpe->frame != NULL);
 
 	bpe->segment_header.StartImgFlag = 1;
 	bpe->segment_header.EndImgFlag = 0;
@@ -86,7 +86,7 @@ int bpe_realloc_segment(struct bpe *bpe)
 {
 	size_t S;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	S = (size_t) bpe->segment_header.S;
 
@@ -149,8 +149,8 @@ int bpe_increase_frame_height(struct bpe *bpe)
 {
 	int err;
 
-	assert(bpe);
-	assert(bpe->frame);
+	assert(bpe != NULL);
+	assert(bpe->frame != NULL);
 
 	bpe->frame->height += 8;
 
@@ -165,23 +165,23 @@ int bpe_increase_frame_height(struct bpe *bpe)
 
 void bpe_initialize_frame_height(struct bpe *bpe)
 {
-	assert(bpe);
-	assert(bpe->frame);
+	assert(bpe != NULL);
+	assert(bpe->frame != NULL);
 
 	bpe->frame->height = 0;
 }
 
 void bpe_correct_frame_height(struct bpe *bpe)
 {
-	assert(bpe);
-	assert(bpe->frame);
+	assert(bpe != NULL);
+	assert(bpe->frame != NULL);
 
 	bpe->frame->height -= bpe->segment_header.PadRows;
 }
 
 int bpe_destroy(struct bpe *bpe)
 {
-	assert(bpe);
+	assert(bpe != NULL);
 
 	free(bpe->segment);
 
@@ -209,7 +209,7 @@ int bpe_write_segment_header_part1a(struct bpe *bpe)
 {
 	UINT32 word = 0;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.StartImgFlag, 0); /* +0 Flags initial segment in an image */
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.EndImgFlag, 1); /* +1 Flags final segment in an image */
@@ -229,7 +229,7 @@ int bpe_write_segment_header_part1b(struct bpe *bpe)
 {
 	UINT32 word = 0;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	word |= SET_UINT_INTO_UINT32(bpe->segment_header.PadRows, 0, M3); /* Number of ‘padding’ rows to delete after inverse DWT */
 	/*  +3 Reserved : 5 */
@@ -243,7 +243,7 @@ int bpe_write_segment_header_part2(struct bpe *bpe)
 	UINT32 word = 0;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	/* SegByteLimit (27 bits) */
 	word |= SET_UINT_INTO_UINT32(bpe->segment_header.SegByteLimit, 0, M27);
@@ -270,7 +270,7 @@ int bpe_write_segment_header_part3(struct bpe *bpe)
 {
 	UINT32 word = 0;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	word |= SET_UINT_INTO_UINT32(bpe->segment_header.S, 0, M20);
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.OptDCSelect, 20);
@@ -286,7 +286,7 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 	UINT32 word = 0;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	word |= SET_BOOL_INTO_UINT32(bpe->segment_header.DWTtype, 0);
 	/* Reserved : 1 */
@@ -331,7 +331,7 @@ int bpe_read_segment_header_part1a(struct bpe *bpe)
 	UINT32 word;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	err = bio_read_bits(bpe->bio, &word, 24);
 
@@ -357,7 +357,7 @@ int bpe_read_segment_header_part1b(struct bpe *bpe)
 	UINT32 word;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	err = bio_read_bits(bpe->bio, &word, 8);
 
@@ -376,7 +376,7 @@ int bpe_read_segment_header_part2(struct bpe *bpe)
 	UINT32 word;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	err = bio_read_bits(bpe->bio, &word, 27);
 
@@ -406,7 +406,7 @@ int bpe_read_segment_header_part3(struct bpe *bpe)
 	UINT32 word;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	err = bio_read_bits(bpe->bio, &word, 24);
 
@@ -427,7 +427,7 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 	UINT32 word;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	err = bio_read_bits(bpe->bio, &word, 32);
 
@@ -473,7 +473,7 @@ int bpe_write_segment_header(struct bpe *bpe)
 	size_t S;
 	int err;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	S = bpe->S;
 
@@ -574,7 +574,7 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 	size_t s;
 	size_t blk;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	S = bpe->S;
 	s = bpe->block_index % S;
@@ -630,7 +630,7 @@ int bpe_decode_segment(struct bpe *bpe)
 	size_t s;
 	size_t blk;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	S = bpe->S;
 
@@ -695,7 +695,7 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_
 	INT32 *local;
 	size_t y, x;
 
-	assert(bpe);
+	assert(bpe != NULL);
 
 	/* push block into bpe->segment[] at the index (block_index%S) */
 
@@ -728,6 +728,8 @@ int bpe_pop_block_decode(struct bpe *bpe)
 	size_t S;
 	size_t s;
 
+	assert(bpe != NULL);
+
 	S = bpe->S;
 
 	s = 0;
@@ -752,6 +754,8 @@ int bpe_pop_block_copy_data(struct bpe *bpe, INT32 *data, size_t stride)
 	size_t s;
 	INT32 *local;
 	size_t y, x;
+
+	assert(bpe != NULL);
 
 	S = bpe->S;
 
@@ -780,6 +784,8 @@ int bpe_flush(struct bpe *bpe, size_t total_no_blocks)
 	size_t S;
 	size_t s;
 
+	assert(bpe != NULL);
+
 	S = bpe->S;
 	s = bpe->block_index % S;
 
@@ -795,7 +801,7 @@ size_t get_total_no_blocks(struct frame *frame)
 {
 	size_t height, width;
 
-	assert(frame);
+	assert(frame != NULL);
 
 	height = ceil_multiple8(frame->height);
 	width  = ceil_multiple8(frame->width);
@@ -869,16 +875,8 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 	size_t total_no_blocks;
 	struct bpe bpe;
 
-	assert(frame);
-#if 0
-	/* HACK
-	 * until the library is fully implemented, write the image
-	 * dimensions at the beginning of the bitstream
-	 */
-	bio_write_int(bio, (UINT32) frame->width);
-	bio_write_int(bio, (UINT32) frame->height);
-	bio_write_int(bio, (UINT32) frame->bpp);
-#endif
+	assert(frame != NULL);
+
 	total_no_blocks = get_total_no_blocks(frame);
 
 	bpe_init(&bpe, parameters, bio, frame);
@@ -904,16 +902,8 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	size_t block_index;
 	struct bpe bpe;
 
-	assert(frame);
-#if 0
-	/* HACK
-	 * until the library is fully implemented, read the image
-	 * dimensions from the beginning of the bitstream
-	 */
-	bio_read_int(bio, (UINT32 *) &frame->width);
-	bio_read_int(bio, (UINT32 *) &frame->height);
-	bio_read_int(bio, (UINT32 *) &frame->bpp);
-#endif
+	assert(frame != NULL);
+
 	bpe_init(&bpe, parameters, bio, frame);
 
 	/* initially allocate bpe->segment[] according to initial S */
@@ -968,7 +958,7 @@ size_t get_maximum_stream_size(struct frame *frame)
 {
 	size_t width, height;
 
-	assert(frame);
+	assert(frame != NULL);
 
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
