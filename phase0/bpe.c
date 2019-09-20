@@ -74,6 +74,13 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	return RET_SUCCESS;
 }
 
+int bpe_is_last_segment(struct bpe *bpe)
+{
+	assert(bpe != NULL);
+
+	return bpe->segment_header.EndImgFlag;
+}
+
 /* the S has been changed, realloc bpe->segment[] */
 int bpe_realloc_segment(struct bpe *bpe)
 {
@@ -899,6 +906,11 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		block_by_index(&block, frame, block_index);
 
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
+
+		if (bpe_is_last_segment(&bpe)) {
+			dprint (("last segment ==> break the loop!\n"));
+			/* BUG in decoding weird.pgm, etc. */
+		}
 	}
 
 	bpe_destroy(&bpe);
