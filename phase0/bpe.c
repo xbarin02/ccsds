@@ -626,7 +626,7 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	dprint (("BPE :: Segment Header :: Part4Flag    = %i\n", bpe->segment_header.Part4Flag));
 	dprint (("BPE :: Segment Header :: S            = %lu\n", bpe->segment_header.S));
 
-	if (bpe->segment_header.Part3Flag /*&& bpe->S != bpe->segment_header.S*/) {
+	if (bpe->segment_header.Part3Flag) {
 		dprint (("BPE:: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
 		bpe_realloc_segment(bpe);
 		S = bpe->S;
@@ -640,9 +640,10 @@ int bpe_decode_segment(struct bpe *bpe, size_t total_no_blocks)
 	}
 
 	if (bpe->segment_header.Part4Flag && bpe->frame->width != bpe->segment_header.ImageWidth) {
-		dprint (("BPE: bpp changed\n"));
-		dprint (("BPE: width changed ==> reallocate\n"));
+		dprint (("BPE: width changed %lu to %u ==> reallocate\n", bpe->frame->width, bpe->segment_header.ImageWidth));
 		bpe_realloc_frame_width(bpe);
+		dprint (("BPE: bpp changed\n"));
+		/* bpe->frame->bpp = (size_t) bpe->segment_header....; */
 		abort();
 	}
 
@@ -863,6 +864,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 		block_by_index(&block, frame, block_index);
 
+		/* BUG: the bpe_pop_block reallocates frame->data[], thus passing block.data causes access to invalid memory area */
 		bpe_pop_block(&bpe, block.data, block.stride, total_no_blocks);
 	}
 
