@@ -108,7 +108,7 @@ int bpe_realloc_frame_width(struct bpe *bpe)
 	 * or change from the width to same width */
 
 	if (bpe->frame->width != 0 && bpe->frame->width != (size_t) bpe->segment_header.ImageWidth) {
-		/* not allowed */;
+		/* not allowed */
 		return RET_FAILURE_FILE_UNSUPPORTED;
 	}
 
