@@ -17,6 +17,8 @@ static int safe_abs(int j)
 {
 	int r = abs(j);
 
+	/* FIXME: this is UB since the standard says "if the result cannot be
+	 * represented. the behavior is undefined." */
 	if (r < 0) {
 		return INT_MAX;
 	}
