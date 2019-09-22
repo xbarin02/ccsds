@@ -15,7 +15,7 @@
 
 #define UINT32_MAX_ 4294967295
 #define INT32_MAX_ 2147483647
-#define INT32_MIN_ -2147483648
+#define INT32_MIN_ (-2147483647-1)
 
 #if (USHRT_MAX == UINT32_MAX_)
 #	define INT32 short
