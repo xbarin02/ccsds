@@ -524,8 +524,6 @@ int bpe_write_segment_header(struct bpe *bpe)
 		}
 	}
 
-	dprint (("BPE :: Segment Header has been written\n"));
-
 	return RET_SUCCESS;
 }
 
@@ -677,17 +675,19 @@ int bpe_decode_segment(struct bpe *bpe)
 		return err;
 	}
 
+#if 0
 	dprint (("BPE :: Segment Header :: StartImgFlag  = %i\n", bpe->segment_header.StartImgFlag));
 	dprint (("BPE :: Segment Header :: EndImgFlag    = %i\n", bpe->segment_header.EndImgFlag));
 	dprint (("BPE :: Segment Header :: Part3Flag     = %i\n", bpe->segment_header.Part3Flag));
 	dprint (("BPE :: Segment Header :: Part4Flag     = %i\n", bpe->segment_header.Part4Flag));
 	dprint (("BPE :: Segment Header :: S             = %lu\n", bpe->segment_header.S));
 	dprint (("BPE :: Segment Header :: PixelBitDepth = %u\n", bpe->segment_header.PixelBitDepth));
+#endif
 
 	if (bpe->segment_header.Part3Flag) {
 		int err;
 
-		dprint (("BPE:: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
+		dprint (("BPE: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
 		err = bpe_realloc_segment(bpe);
 
 		if (err) {
@@ -1003,8 +1003,6 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	/* initialize frame->bpp */
 	bpe_realloc_frame_bpp(&bpe);
 
-	dprint (("main decoding loop...\n"));
-
 	/* push all blocks into the BPE engine */
 	for (block_index = 0; ; ++block_index) {
 		int err;
@@ -1014,7 +1012,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		err = bpe_pop_block_decode(&bpe);
 
 		if (err == RET_FAILURE_NO_MORE_DATA) {
-			dprint (("last segment indicated, breaking the decoding loop!\n"));
+			dprint (("BPE: last segment indicated, breaking the decoding loop!\n"));
 			break;
 		}
 
@@ -1027,7 +1025,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 			int err;
 
 			/* increase height */
-			dprint (("this block starts new strip, increasing the image height!\n"));
+			dprint (("BPE: this block starts new strip, increasing the image height!\n"));
 			err = bpe_increase_frame_height(&bpe);
 
 			if (err) {
