@@ -54,7 +54,7 @@ static unsigned long floor_log2_l(unsigned long n)
 static size_t convert_maxval_to_bpp(unsigned long maxval)
 {
 	if (maxval != 0) {
-		return floor_log2_l(maxval) + 1;
+		return (size_t) (floor_log2_l(maxval) + 1);
 	}
 
 	return 0;
