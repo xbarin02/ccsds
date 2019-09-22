@@ -387,11 +387,15 @@ int frame_realloc_data(struct frame *frame)
 
 	data = frame->data;
 
-	assert(width == 0 || height <= SIZE_MAX_ / width);
+	if (width != 0 && height > SIZE_MAX_ / width) {
+		return RET_FAILURE_OVERFLOW_ERROR;
+	}
 
 	resolution = height * width;
 
-	assert(resolution == 0 || sizeof *data <= SIZE_MAX_ / resolution);
+	if (resolution != 0 && sizeof *data > SIZE_MAX_ / resolution) {
+		return RET_FAILURE_OVERFLOW_ERROR;
+	}
 
 	data = realloc(data, resolution * sizeof *data);
 
