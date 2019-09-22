@@ -93,7 +93,7 @@ int bpe_realloc_segment(struct bpe *bpe)
 
 	free(bpe->segment);
 
-	bpe->segment = malloc( S * BLOCK_SIZE * sizeof(INT32) );
+	bpe->segment = malloc(S * BLOCK_SIZE * sizeof(INT32));
 
 	if (bpe->segment == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
@@ -610,7 +610,7 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 	}
 
 	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
-	bpe->segment_header.SegmentCount = ( (bpe->block_index - 1) / S ) & M8;
+	bpe->segment_header.SegmentCount = ((bpe->block_index - 1) / S) & M8;
 	/* BitDepthDC */
 	/* BitDepthAC */
 	/* Part 2: */
