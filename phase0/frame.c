@@ -307,10 +307,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 		return RET_FAILURE_FILE_IO;
 	}
 
-	/*
-	 * (size_t)-1 is well defined in C89 under section 6.2.1.2 Signed and unsigned integers
-	 */
-	if (width_l > (size_t)-1) {
+	if (width_l > SIZE_MAX_) {
 		return RET_FAILURE_OVERFLOW_ERROR;
 	}
 
@@ -326,7 +323,7 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 		return RET_FAILURE_FILE_IO;
 	}
 
-	if (height_l > (size_t)-1) {
+	if (height_l > SIZE_MAX_) {
 		return RET_FAILURE_OVERFLOW_ERROR;
 	}
 
