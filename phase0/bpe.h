@@ -68,14 +68,14 @@ int bpe_realloc_frame_width(struct bpe *bpe);
 int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);
 int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);
 
-int bpe_destroy(struct bpe *bpe);
+int bpe_destroy(struct bpe *bpe, struct parameters *parameters);
 
 /* helper function (to be removed in future) */
 size_t get_total_no_blocks(struct frame *frame);
 
 int bpe_encode(struct frame *frame, const struct parameters *parameters, struct bio *bio);
 
-int bpe_decode(struct frame *frame, const struct parameters *parameters, struct bio *bio);
+int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *bio);
 
 size_t get_maximum_stream_size(struct frame *frame);
 

@@ -178,11 +178,15 @@ void bpe_correct_frame_height(struct bpe *bpe)
 	bpe->frame->height -= bpe->segment_header.PadRows;
 }
 
-int bpe_destroy(struct bpe *bpe)
+int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 {
 	assert(bpe != NULL);
 
 	free(bpe->segment);
+
+	if (parameters != NULL) {
+		parameters->DWTtype = bpe->segment_header.DWTtype;
+	}
 
 	return RET_SUCCESS;
 }
@@ -969,12 +973,12 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 		return err;
 	}
 
-	bpe_destroy(&bpe);
+	bpe_destroy(&bpe, NULL);
 
 	return RET_SUCCESS;
 }
 
-int bpe_decode(struct frame *frame, const struct parameters *parameters, struct bio *bio)
+int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *bio)
 {
 	size_t block_index;
 	struct bpe bpe;
@@ -1040,7 +1044,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 
 	bpe_correct_frame_height(&bpe);
 
-	bpe_destroy(&bpe);
+	bpe_destroy(&bpe, parameters);
 
 	return RET_SUCCESS;
 }
