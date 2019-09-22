@@ -879,8 +879,7 @@ int frame_diff(struct frame *frame, const struct frame *frameA, const struct fra
 			int pixB = dataB[y*width + x];
 			int e;
 
-			if ( (pixA < 0 && pixB > INT_MAX + pixA)
-			  || (pixA > 0 && pixB < INT_MIN + pixA) ) {
+			if ((pixA < 0 && pixB > INT_MAX + pixA) || (pixA > 0 && pixB < INT_MIN + pixA)) {
 				dprint (("[ERROR] error overflow\n"));
 				return RET_FAILURE_OVERFLOW_ERROR;
 			}
