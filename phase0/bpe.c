@@ -988,12 +988,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		return err;
 	}
 
-	/* initially allocate bpe->segment[] according to initial S */
-	err = bpe_realloc_segment(&bpe);
-
-	if (err) {
-		return err;
-	}
+	/* NOTE bpe_init already called bpe_realloc_segment */
 
 	/* initialize frame->height */
 	bpe_initialize_frame_height(&bpe);
