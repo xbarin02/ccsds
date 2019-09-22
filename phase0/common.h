@@ -26,6 +26,9 @@
 #error "Unable to find 32-bit type"
 #endif
 
+/* NOTE C89 does not have SIZE_MAX */
+#define SIZE_MAX_ (~(size_t)0)
+
 /**
  * \brief Error codes
  *

@@ -120,7 +120,7 @@ static unsigned short native_to_be_s(unsigned short a)
 
 int frame_write_pgm_header(const struct frame *frame, FILE *stream)
 {
-	size_t width, height;
+	size_t height, width;
 	size_t bpp;
 
 	/* write header */
@@ -144,7 +144,7 @@ int frame_write_pgm_header(const struct frame *frame, FILE *stream)
 
 int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 {
-	size_t width_, height_, depth_;
+	size_t height_, width_, depth_;
 	size_t width;
 	size_t y, x;
 	int maxval;
@@ -153,8 +153,8 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 
 	assert(frame != NULL);
 
-	width_ = frame->width;
 	height_ = frame->height;
+	width_ = frame->width;
 	depth_ = convert_bpp_to_depth(frame->bpp);
 
 	maxval = (int) convert_bpp_to_maxval(frame->bpp);
@@ -272,8 +272,8 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 {
 	char magic[2];
 	unsigned long maxval;
-	size_t width, height;
-	unsigned long width_l, height_l;
+	size_t height, width;
+	unsigned long height_l, width_l;
 	size_t bpp;
 
 	/* (1.2) read header */
@@ -361,8 +361,8 @@ int frame_read_pgm_header(struct frame *frame, FILE *stream)
 	/* fill the struct */
 	assert(frame != NULL);
 
-	frame->width = width;
 	frame->height = height;
+	frame->width = width;
 	frame->bpp = bpp;
 
 	return RET_SUCCESS;
@@ -379,23 +379,22 @@ int frame_alloc_data(struct frame *frame)
 
 int frame_realloc_data(struct frame *frame)
 {
-	size_t width, height;
+	size_t height, width;
 	size_t resolution;
 	int *data;
 
 	assert(frame != NULL);
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	data = frame->data;
 
-	/* NOTE C89 does not have SIZE_MAX */
-	assert(width == 0 || height <= (~(size_t)0) / width);
+	assert(width == 0 || height <= SIZE_MAX_ / width);
 
 	resolution = height * width;
 
-	assert(resolution == 0 || sizeof *data <= (~(size_t)0) / resolution);
+	assert(resolution == 0 || sizeof *data <= SIZE_MAX_ / resolution);
 
 	data = realloc(data, resolution * sizeof *data);
 
@@ -410,20 +409,20 @@ int frame_realloc_data(struct frame *frame)
 
 int frame_read_pgm_data(struct frame *frame, FILE *stream)
 {
-	size_t width_, height_, depth_;
-	size_t width, height;
+	size_t height_, width_, depth_;
+	size_t height, width;
 	size_t y, x;
 	void *line;
 	int *data;
 
 	assert(frame != NULL);
 
-	width_ = frame->width;
 	height_ = frame->height;
+	width_ = frame->width;
 	depth_ = convert_bpp_to_depth(frame->bpp);
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	/* allocate a line */
 	line = malloc(width_ * depth_);
@@ -538,7 +537,7 @@ int frame_load_pgm(struct frame *frame, const char *path)
 int frame_dump(const struct frame *frame, const char *path, int factor)
 {
 	FILE *stream;
-	size_t width, height, depth;
+	size_t height, width, depth;
 	size_t bpp;
 	size_t stride;
 	size_t y, x;
@@ -558,8 +557,8 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 
 	maxval = (int) convert_bpp_to_maxval(bpp);
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	if (width > ULONG_MAX || height > ULONG_MAX) {
 		return RET_FAILURE_OVERFLOW_ERROR;
@@ -710,7 +709,7 @@ int frame_convert_chunked_to_semiplanar(struct frame *frame)
 int frame_clone(const struct frame *frame, struct frame *cloned_frame)
 {
 	int err;
-	size_t width, height;
+	size_t height, width;
 
 	assert(frame != NULL);
 	assert(cloned_frame != NULL);
@@ -723,8 +722,8 @@ int frame_clone(const struct frame *frame, struct frame *cloned_frame)
 		return err;
 	}
 
-	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
+	width = ceil_multiple8(frame->width);
 
 	memcpy(cloned_frame->data, frame->data, height * width * sizeof(int));
 
@@ -764,9 +763,15 @@ static int frame_cmp(const struct frame *frameA, const struct frame *frameB)
 	assert(frameA != NULL);
 	assert(frameB != NULL);
 
-	if ( frameA->width != frameB->width
-	  || frameA->height != frameB->height
-	  || frameA->bpp != frameB->bpp ) {
+	if (frameA->height != frameB->height) {
+		return 1;
+	}
+
+	if (frameA->width != frameB->width) {
+		return 1;
+	}
+
+	if (frameA->bpp != frameB->bpp) {
 		return 1;
 	}
 
@@ -805,8 +810,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 			int pixB = dataB[y*width + x];
 			int e;
 
-			if ( (pixA < 0 && pixB > INT_MAX + pixA)
-			  || (pixA > 0 && pixB < INT_MIN + pixA) ) {
+			if ((pixA < 0 && pixB > INT_MAX + pixA) || (pixA > 0 && pixB < INT_MIN + pixA)) {
 				dprint (("[ERROR] error overflow\n"));
 				return RET_FAILURE_OVERFLOW_ERROR;
 			}
@@ -818,6 +822,9 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 			mse += (double)e * (double)e;
 		}
 	}
+
+	assert(height != 0);
+	assert(width != 0);
 
 	/* compute mean */
 	mse /= (double)height;
