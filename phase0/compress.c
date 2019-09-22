@@ -70,17 +70,17 @@ int main(int argc, char *argv[])
 
 	dprint (("[DEBUG] loading...\n"));
 
-	if ( frame_load_pgm(&frame, argv[1]) ) {
+	if (frame_load_pgm(&frame, argv[1])) {
 		fprintf(stderr, "[ERROR] unable to load image\n");
 		return EXIT_FAILURE;
 	}
 
-	if ( frame.width > (1<<20) || frame.width < 17 ) {
+	if (frame.width > (1<<20) || frame.width < 17) {
 		fprintf(stderr, "[ERROR] unsupported image width\n");
 		return EXIT_FAILURE;
 	}
 
-	if ( frame.height < 17 ) {
+	if (frame.height < 17) {
 		fprintf(stderr, "[ERROR] unsupported image height\n");
 		return EXIT_FAILURE;
 	}
