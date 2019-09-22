@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 
 	dprint (("[DEBUG] saving...\n"));
 
-	if ( frame_save_pgm(&frame, "output.pgm") ) {
+	if (frame_save_pgm(&frame, "output.pgm")) {
 		fprintf(stderr, "[ERROR] unable to save an output raster\n");
 		return EXIT_FAILURE;
 	}
