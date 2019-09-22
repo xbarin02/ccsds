@@ -963,7 +963,11 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 		}
 	}
 
-	bpe_flush(&bpe, total_no_blocks);
+	err = bpe_flush(&bpe, total_no_blocks);
+
+	if (err) {
+		return err;
+	}
 
 	bpe_destroy(&bpe);
 
