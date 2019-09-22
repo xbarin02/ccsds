@@ -666,8 +666,11 @@ int bpe_decode_segment(struct bpe *bpe)
 	}
 
 	if (bpe->segment_header.Part4Flag) {
+		int err;
 		dprint (("BPE: width changed %lu to %u ==> reallocate\n", bpe->frame->width, bpe->segment_header.ImageWidth));
-		bpe_realloc_frame_width(bpe);
+		err = bpe_realloc_frame_width(bpe);
+		if (err)
+			return err;
 		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
 		bpe_realloc_frame_bpp(bpe);
 	}
@@ -899,6 +902,7 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 {
 	size_t block_index;
 	struct bpe bpe;
+	int err;
 
 	assert(frame != NULL);
 
@@ -910,7 +914,9 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	/* initialize frame->height */
 	bpe_initialize_frame_height(&bpe);
 	/* initialize frame->width & frame->data[] */
-	bpe_realloc_frame_width(&bpe);
+	err = bpe_realloc_frame_width(&bpe);
+	if (err)
+		return err;
 	/* initialize frame->bpp */
 	bpe_realloc_frame_bpp(&bpe);
 
@@ -935,9 +941,12 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 		}
 
 		if (block_starts_new_stripe(frame, block_index)) {
+			int err;
 			/* increase height */
 			dprint (("this block starts new strip, increasing the image height!\n"));
-			bpe_increase_frame_height(&bpe);
+			err = bpe_increase_frame_height(&bpe);
+			if (err)
+				return err;
 		}
 
 		block_by_index(&block, frame, block_index);
