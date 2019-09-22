@@ -653,8 +653,11 @@ int bpe_decode_segment(struct bpe *bpe)
 	dprint (("BPE :: Segment Header :: PixelBitDepth = %u\n", bpe->segment_header.PixelBitDepth));
 
 	if (bpe->segment_header.Part3Flag) {
+		int err;
 		dprint (("BPE:: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
-		bpe_realloc_segment(bpe);
+		err = bpe_realloc_segment(bpe);
+		if (err)
+			return err;
 		S = bpe->S;
 		s = 0;
 		if (S != 0) {
@@ -909,7 +912,9 @@ int bpe_decode(struct frame *frame, const struct parameters *parameters, struct 
 	bpe_init(&bpe, parameters, bio, frame);
 
 	/* initially allocate bpe->segment[] according to initial S */
-	bpe_realloc_segment(&bpe);
+	err = bpe_realloc_segment(&bpe);
+	if (err)
+		return err;
 
 	/* initialize frame->height */
 	bpe_initialize_frame_height(&bpe);
