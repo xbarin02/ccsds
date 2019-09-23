@@ -1,4 +1,5 @@
 #include "bpe.h"
+#include "common.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -749,6 +750,28 @@ int bpe_read_segment_header(struct bpe *bpe)
 	return 0;
 }
 
+static size_t size_max(size_t a, size_t b)
+{
+	return a > b ? a : b;
+}
+
+size_t BitShift(const struct bpe *bpe, int subband)
+{
+	assert(bpe != NULL);
+
+	switch (bpe->segment_header.DWTtype) {
+		case 0: /* Float DWT */
+			return 0;
+		case 1: /* Integer DWT */
+			assert(bpe->segment_header.weight[subband] >= 0);
+
+			return (size_t) bpe->segment_header.weight[subband];
+		default:
+			dprint (("[ERROR] invalid DWTtype\n"));
+			abort();
+	}
+}
+
 int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 {
 	size_t S;
@@ -788,6 +811,25 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	if (err) {
 		return err;
+	}
+
+	/* TODO (Section 4.3) */
+	{
+		size_t bitDepthDC = BitDepthDC(bpe, s);
+		size_t bitDepthAC = BitDepthAC(bpe, s);
+		size_t q_; /* q' in Table 4-8 */
+		size_t q;
+
+		if (bitDepthDC <= 3)
+			q_ = 0;
+		else if (bitDepthDC - (1 + bitDepthAC/2) <= 1 && bitDepthDC > 3)
+			q_ = bitDepthDC - 3;
+		else if (bitDepthDC - (1 + bitDepthAC/2) > 10 && bitDepthDC > 3)
+			q_ = bitDepthDC - 10;
+		else
+			q_ = 1 + bitDepthAC/2;
+
+		q = size_max(q_, BitShift(bpe, DWT_LL2)); /* FIXME LL3 in (15) */
 	}
 
 	for (blk = 0; blk < s; ++blk) {

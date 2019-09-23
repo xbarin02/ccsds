@@ -61,6 +61,8 @@ struct bpe {
 	struct frame *frame;
 };
 
+size_t BitShift(const struct bpe *bpe, int subband);
+
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio, struct frame *frame);
 int bpe_realloc_segment(struct bpe *bpe);
 int bpe_realloc_frame_width(struct bpe *bpe);

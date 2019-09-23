@@ -140,8 +140,6 @@ struct parameters {
 #define DWT_LH2 10
 #define DWT_HH2 11
 
-size_t BitShift(const struct parameters *parameters, int subband);
-
 int init_parameters(struct parameters *parameters);
 
 #endif /* COMMON_H_ */

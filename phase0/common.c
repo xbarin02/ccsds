@@ -53,17 +53,3 @@ int init_parameters(struct parameters *parameters)
 
 	return RET_SUCCESS;
 }
-
-size_t BitShift(const struct parameters *parameters, int subband)
-{
-	assert(parameters != NULL);
-
-	switch (parameters->DWTtype) {
-		case 0: /* Float DWT */
-			return 0;
-		case 1: /* Integer DWT */
-			assert(parameters->weight[subband] >= 0);
-
-			return (size_t) parameters->weight[subband];
-	}
-}
