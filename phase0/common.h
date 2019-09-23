@@ -127,6 +127,21 @@ struct parameters {
 	size_t SegByteLimit;
 };
 
+#define DWT_LL0  0
+#define DWT_HL0  1
+#define DWT_LH0  2
+#define DWT_HH0  3
+#define DWT_LL1  4
+#define DWT_HL1  5
+#define DWT_LH1  6
+#define DWT_HH1  7
+#define DWT_LL2  8
+#define DWT_HL2  9
+#define DWT_LH2 10
+#define DWT_HH2 11
+
+size_t BitShift(const struct parameters *parameters, int subband);
+
 int init_parameters(struct parameters *parameters);
 
 #endif /* COMMON_H_ */
