@@ -799,8 +799,18 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			bio_put_bit(bpe->bio, (unsigned char) (quantized_dc[blk] != 0));
 		}
 	} else {
-		/* TODO */
 		dprint (("BPE(4.3.2): N > 1\n"));
+
+		/* DC coefficients are represented using two’s-complement representation. */
+
+		/* TODO
+		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
+		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
+		assert(s > 0);
+
+		bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
+
+		/* TODO */
 	}
 
 	return RET_SUCCESS;
@@ -834,8 +844,19 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			quantized_dc[blk] = bit ? -1 : 0;
 		}
 	} else {
-		/* TODO */
 		dprint (("BPE(4.3.2): N > 1\n"));
+
+		/* DC coefficients are represented using two’s-complement representation. */
+
+		/*
+		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
+		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
+
+		assert(s > 0);
+
+		bio_read_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
+
+		/* TODO */
 	}
 
 	return RET_SUCCESS;
