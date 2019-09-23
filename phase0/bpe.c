@@ -795,8 +795,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		for (blk = 0; blk < s; ++blk) {
 			assert( quantized_dc[blk] == 0 || quantized_dc[blk] == -1 );
-			/* TODO bio_*(bpe->bio, ...) */
-			bio_put_bit(bpe->bio, (unsigned char) quantized_dc[blk]); /* FIXME warning: conversion to ‘unsigned char’ from ‘int’ may alter its value */
+
+			bio_put_bit(bpe->bio, (unsigned char) (quantized_dc[blk] != 0));
 		}
 	} else {
 		/* TODO */
@@ -827,8 +827,11 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		dprint (("BPE(4.3.2): N = 1\n"));
 
 		for (blk = 0; blk < s; ++blk) {
-			/* TODO bio_*(bpe->bio, ...) */
-			bio_get_bit(bpe->bio, (unsigned char *)&quantized_dc[blk]); /* FIXME */
+			unsigned char bit;
+
+			bio_get_bit(bpe->bio, (unsigned char *)&bit);
+
+			quantized_dc[blk] = bit ? -1 : 0;
 		}
 	} else {
 		/* TODO */
