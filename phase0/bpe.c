@@ -794,6 +794,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		dprint (("BPE(4.3.2): N = 1\n"));
 
 		for (blk = 0; blk < s; ++blk) {
+			assert( quantized_dc[blk] == 0 || quantized_dc[blk] == -1 );
 			/* TODO bio_*(bpe->bio, ...) */
 			bio_put_bit(bpe->bio, (unsigned char) quantized_dc[blk]); /* FIXME warning: conversion to ‘unsigned char’ from ‘int’ may alter its value */
 		}
@@ -876,6 +877,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		}
 
 		for (blk = 0; blk < s; ++blk) {
+			/* FIXME in general, DC coefficients are INT32 and can be negative */
 			quantized_dc[blk] = *(bpe->segment + blk * BLOCK_SIZE) >> q;
 		}
 
