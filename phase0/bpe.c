@@ -783,7 +783,17 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	/* 4.3.2.1 The number of bits needed to represent each quantized DC coefficient */
 	N = size_max(bitDepthDC - q, 1);
 
-	/* TODO */
+	assert(N <= 10);
+
+	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
+	if (N == 1) {
+		/* In this case, the coded quantized DC coefficients for a segment consist of these bits, concatenated together. */
+		dprint (("BPE(4.3.2): N = 1\n"));
+		/* TODO */
+	} else {
+		/* TODO */
+		dprint (("BPE(4.3.2): N > 1\n"));
+	}
 
 	return RET_SUCCESS;
 }
