@@ -794,11 +794,19 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		dprint (("BPE(4.3.2): N = 1\n"));
 
 		for (blk = 0; blk < s; ++blk) {
+			int err;
+
 			assert( quantized_dc[blk] == 0 || quantized_dc[blk] == -1 );
 
-			bio_put_bit(bpe->bio, (unsigned char) (quantized_dc[blk] != 0));
+			err = bio_put_bit(bpe->bio, (unsigned char) (quantized_dc[blk] != 0));
+
+			if (err) {
+				return err;
+			}
 		}
 	} else {
+		int err;
+
 		dprint (("BPE(4.3.2): N > 1\n"));
 
 		/* DC coefficients are represented using two’s-complement representation. */
@@ -808,7 +816,11 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 		assert(s > 0);
 
-		bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
+		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
+
+		if (err) {
+			return err;
+		}
 
 		/* TODO */
 	}
@@ -837,13 +849,20 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		dprint (("BPE(4.3.2): N = 1\n"));
 
 		for (blk = 0; blk < s; ++blk) {
+			int err;
 			unsigned char bit;
 
-			bio_get_bit(bpe->bio, (unsigned char *)&bit);
+			err = bio_get_bit(bpe->bio, (unsigned char *)&bit);
+
+			if (err) {
+				return err;
+			}
 
 			quantized_dc[blk] = bit ? -1 : 0;
 		}
 	} else {
+		int err;
+
 		dprint (("BPE(4.3.2): N > 1\n"));
 
 		/* DC coefficients are represented using two’s-complement representation. */
@@ -854,7 +873,11 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		assert(s > 0);
 
-		bio_read_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
+		err = bio_read_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
+
+		if (err) {
+			return err;
+		}
 
 		/* TODO */
 	}
