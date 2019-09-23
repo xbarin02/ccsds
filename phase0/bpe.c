@@ -830,6 +830,44 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 			q_ = 1 + bitDepthAC/2;
 
 		q = size_max(q_, BitShift(bpe, DWT_LL2)); /* FIXME LL3 in (15) */
+
+		/* The value of q indicates the number of least-significant bits
+		 * in each DC coefficient that are not encoded in the quantized
+		 * DC coefficient values. */
+
+		/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
+		 * the BPE shall compute quantized coefficients */
+		{
+			INT32 *quantized_dc = malloc(s * sizeof(INT32));
+
+			if (quantized_dc == NULL) {
+				return RET_FAILURE_MEMORY_ALLOCATION;
+			}
+
+			for (blk = 0; blk < s; ++blk) {
+				quantized_dc[blk] = *(bpe->segment + blk * BLOCK_SIZE) >> q;
+			}
+
+			/* 4.3.1.6 TODO
+			 * The quantized DC coefficients shall be encoded using
+			 * the procedure described in 4.3.2, which effectively
+			 * encodes several of the most significant bits from
+			 * each DC coefficient. */
+
+			/* 4.3.1.7 TODO
+			 * When q >max{BitDepthAC,BitShift(LL3)}, the next
+			 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
+			 * of each DC coefficient appear in the coded bitstream,
+			 * as described in 4.3.3.
+			 */
+
+			/* NOTE Section 4.3.2 */
+			{
+				/* TODO */
+			}
+
+			free(quantized_dc);
+		}
 	}
 
 	for (blk = 0; blk < s; ++blk) {
