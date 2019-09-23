@@ -1,9 +1,11 @@
 #include "bpe.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <stdlib.h>
 
 #define BLOCK_SIZE (8 * 8)
 
+/* Mn = 2^n - 1 */
 #define M2 3
 #define M3 7
 #define M4 15
@@ -11,6 +13,172 @@
 #define M8 255
 #define M20 1048575
 #define M27 134217727
+
+struct block {
+	int *data;
+	size_t stride;
+};
+
+static INT32 int32_abs(INT32 j)
+{
+#if (USHRT_MAX == UINT32_MAX_)
+	return (INT32) abs((int) j);
+#elif (UINT_MAX == UINT32_MAX_)
+	return (INT32) abs((int) j);
+#elif (ULONG_MAX == UINT32_MAX_)
+	return (INT32) labs((long int) j);
+#else
+#	error "Not implemented"
+#endif
+}
+
+static UINT32 uint32_abs(INT32 j)
+{
+	if (j == INT32_MIN_) {
+		return (UINT32)INT32_MAX_ + 1;
+	}
+
+	return (UINT32) int32_abs(j);
+}
+
+/* Round up to the next highest power of 2 */
+static UINT32 uint32_ceil_pow2(UINT32 v)
+{
+	assert( v != 0 );
+
+	v--;
+
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+
+	v++;
+
+	return v;
+}
+
+static size_t uint32_floor_log2(UINT32 n)
+{
+	size_t r = 0;
+
+	assert( n != 0 );
+
+	while (n >>= 1) {
+		r++;
+	}
+
+	return r;
+}
+
+static size_t uint32_ceil_log2(UINT32 n)
+{
+	return uint32_floor_log2(uint32_ceil_pow2(n));
+}
+
+/*
+ * The number of bits needed to represent cm in 2's-complement representation.
+ * Eq. (12) in the CCSDS 122.0.
+ */
+static size_t int32_bitsize(INT32 cm)
+{
+	if (cm < 0) {
+		return 1 + uint32_ceil_log2(uint32_abs(cm));
+	}
+
+	return 1 + uint32_ceil_log2(1 + (UINT32)cm);
+}
+
+size_t BitDepthDC(struct bpe *bpe, size_t s)
+{
+	size_t blk;
+	size_t max;
+
+	assert(bpe != NULL);
+
+	assert(bpe->segment != NULL);
+
+	/* max is not defined on empty set */
+	assert(s > 0);
+
+	/* start with the first DC */
+	max = int32_bitsize(*(bpe->segment + 0 * BLOCK_SIZE));
+
+	/* for each block in the segment */
+	for (blk = 0; blk < s; ++blk) {
+		INT32 *dc = bpe->segment + blk * BLOCK_SIZE;
+
+		size_t dc_bitsize = int32_bitsize(*dc);
+
+		if (dc_bitsize > max)
+			max = dc_bitsize;
+	}
+
+	return max;
+}
+
+/* max(abs(x)) */
+UINT32 block_max_abs_ac(INT32 *data, size_t stride)
+{
+	size_t max;
+	size_t y, x;
+
+	assert(data != NULL);
+
+	/* start with the first AC */
+	max = uint32_abs(data[0*stride + 1]);
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			UINT32 abs_ac = uint32_abs(data[y*stride + x]);
+
+			if (y == 0 && x == 0)
+				continue;
+
+			if (abs_ac > max)
+				max = abs_ac;
+		}
+	}
+
+	return max;
+}
+
+/* the maximization is over all AC coefficients x in the block */
+UINT32 BitDepthAC_Block(INT32 *data, size_t stride)
+{
+	UINT32 max_abs_ac = block_max_abs_ac(data, stride);
+
+	return uint32_ceil_log2(1 + max_abs_ac);
+}
+
+UINT32 BitDepthAC(struct bpe *bpe, size_t s)
+{
+	size_t blk;
+	size_t max;
+
+	assert(bpe != NULL);
+
+	assert(bpe->segment != NULL);
+
+	/* max is not defined on empty set */
+	assert(s > 0);
+
+	/* start with the first block */
+	max = BitDepthAC_Block(bpe->segment + 0 * BLOCK_SIZE, 8);
+
+	/* for each block in the segment */
+	for (blk = 0; blk < s; ++blk) {
+		INT32 *block = bpe->segment + blk * BLOCK_SIZE;
+
+		size_t ac_bitsize = BitDepthAC_Block(block, 8);
+
+		if (ac_bitsize > max)
+			max = ac_bitsize;
+	}
+
+	return max;
+}
 
 static const unsigned char lut_codeword_length[8] = {
 	8, 40, 16, 48, 24, 56, 32, 64
@@ -875,11 +1043,6 @@ size_t get_total_no_blocks(struct frame *frame)
 
 	return height / 8 * width / 8;
 }
-
-struct block {
-	int *data;
-	size_t stride;
-};
 
 int block_by_index(struct block *block, struct frame *frame, size_t block_index)
 {
