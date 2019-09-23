@@ -121,7 +121,7 @@ size_t BitDepthDC(struct bpe *bpe, size_t s)
 /* max(abs(x)) */
 UINT32 block_max_abs_ac(INT32 *data, size_t stride)
 {
-	size_t max;
+	UINT32 max;
 	size_t y, x;
 
 	assert(data != NULL);
@@ -145,14 +145,14 @@ UINT32 block_max_abs_ac(INT32 *data, size_t stride)
 }
 
 /* the maximization is over all AC coefficients x in the block */
-UINT32 BitDepthAC_Block(INT32 *data, size_t stride)
+size_t BitDepthAC_Block(INT32 *data, size_t stride)
 {
 	UINT32 max_abs_ac = block_max_abs_ac(data, stride);
 
 	return uint32_ceil_log2(1 + max_abs_ac);
 }
 
-UINT32 BitDepthAC(struct bpe *bpe, size_t s)
+size_t BitDepthAC(struct bpe *bpe, size_t s)
 {
 	size_t blk;
 	size_t max;
