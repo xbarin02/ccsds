@@ -789,9 +789,46 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
 	if (N == 1) {
+		size_t blk;
 		/* In this case, the coded quantized DC coefficients for a segment consist of these bits, concatenated together. */
 		dprint (("BPE(4.3.2): N = 1\n"));
+
+		for (blk = 0; blk < s; ++blk) {
+			/* TODO bio_*(bpe->bio, ...) */
+			bio_put_bit(bpe->bio, (unsigned char) quantized_dc[blk]); /* FIXME warning: conversion to ‘unsigned char’ from ‘int’ may alter its value */
+		}
+	} else {
 		/* TODO */
+		dprint (("BPE(4.3.2): N > 1\n"));
+	}
+
+	return RET_SUCCESS;
+}
+
+int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t s, size_t q, INT32 *quantized_dc)
+{
+	size_t bitDepthDC;
+	size_t N;
+
+	assert(bpe != NULL);
+
+	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
+
+	/* 4.3.2.1 The number of bits needed to represent each quantized DC coefficient */
+	N = size_max(bitDepthDC - q, 1);
+
+	assert(N <= 10);
+
+	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
+	if (N == 1) {
+		size_t blk;
+		/* In this case, the coded quantized DC coefficients for a segment consist of these bits, concatenated together. */
+		dprint (("BPE(4.3.2): N = 1\n"));
+
+		for (blk = 0; blk < s; ++blk) {
+			/* TODO bio_*(bpe->bio, ...) */
+			bio_get_bit(bpe->bio, (unsigned char *)&quantized_dc[blk]); /* FIXME */
+		}
 	} else {
 		/* TODO */
 		dprint (("BPE(4.3.2): N > 1\n"));
@@ -857,6 +894,69 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 
 		/* NOTE Section 4.3.2 */
 		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, s, q, quantized_dc);
+
+		free(quantized_dc);
+	}
+
+	return RET_SUCCESS;
+}
+
+int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t s)
+{
+	size_t blk;
+	size_t bitDepthDC;
+	size_t bitDepthAC;
+	size_t q_; /* q' in Table 4-8 */
+	size_t q;
+
+	assert(bpe != NULL);
+
+	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	if (bitDepthDC <= 3)
+		q_ = 0;
+	else if (bitDepthDC - (1 + bitDepthAC/2) <= 1 && bitDepthDC > 3)
+		q_ = bitDepthDC - 3;
+	else if (bitDepthDC - (1 + bitDepthAC/2) > 10 && bitDepthDC > 3)
+		q_ = bitDepthDC - 10;
+	else
+		q_ = 1 + bitDepthAC/2;
+
+	q = size_max(q_, BitShift(bpe, DWT_LL2)); /* FIXME LL3 in (15) */
+
+	/* The value of q indicates the number of least-significant bits
+	 * in each DC coefficient that are not encoded in the quantized
+	 * DC coefficient values. */
+
+	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
+	 * the BPE shall compute quantized coefficients */
+	{
+		INT32 *quantized_dc = malloc(s * sizeof(INT32));
+
+		if (quantized_dc == NULL) {
+			return RET_FAILURE_MEMORY_ALLOCATION;
+		}
+
+		/* 4.3.1.6 TODO
+		 * The quantized DC coefficients shall be encoded using
+		 * the procedure described in 4.3.2, which effectively
+		 * encodes several of the most significant bits from
+		 * each DC coefficient. */
+
+		/* 4.3.1.7 TODO
+		 * When q >max{BitDepthAC,BitShift(LL3)}, the next
+		 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
+		 * of each DC coefficient appear in the coded bitstream,
+		 * as described in 4.3.3.
+		 */
+
+		/* NOTE Section 4.3.2 */
+		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, s, q, quantized_dc);
+
+		for (blk = 0; blk < s; ++blk) {
+			*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q;
+		}
 
 		free(quantized_dc);
 	}
@@ -1013,6 +1113,8 @@ int bpe_decode_segment(struct bpe *bpe)
 	} else {
 		dprint (("BPE: decoding segment zero (%lu blocks)\n", s));
 	}
+
+	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, s);
 
 	for (blk = 0; blk < s; ++blk) {
 		/* decode the block */
