@@ -62,7 +62,8 @@ size_t BitShift(const struct parameters *parameters, int subband)
 		case 0: /* Float DWT */
 			return 0;
 		case 1: /* Integer DWT */
-			/* TODO */
-			abort();
+			assert(parameters->weight[subband] >= 0);
+
+			return (size_t) parameters->weight[subband];
 	}
 }
