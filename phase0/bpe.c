@@ -811,7 +811,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		/* DC coefficients are represented using two’s-complement representation. */
 
-		/* TODO
+		/*
 		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 		assert(s > 0);
@@ -821,6 +821,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		if (err) {
 			return err;
 		}
+
+		/* TODO
+		 * 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
+		 * coefficient values (taken in raster scan order) shall be encoded. */
 
 		/* TODO */
 	}
