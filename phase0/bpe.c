@@ -772,6 +772,22 @@ size_t BitShift(const struct bpe *bpe, int subband)
 	}
 }
 
+/* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
+int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t s, size_t q, INT32 *quantized_dc)
+{
+	size_t bitDepthDC = BitDepthDC(bpe, s);
+	size_t N;
+
+	assert(bpe != NULL);
+
+	/* 4.3.2.1 The number of bits needed to represent each quantized DC coefficient */
+	N = size_max(bitDepthDC - q, 1);
+
+	/* TODO */
+
+	return RET_SUCCESS;
+}
+
 /* Section 4.3 */
 int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t s)
 {
@@ -825,9 +841,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 			*/
 
 		/* NOTE Section 4.3.2 */
-		{
-			/* TODO */
-		}
+		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, s, q, quantized_dc);
 
 		free(quantized_dc);
 	}
