@@ -804,16 +804,15 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t s)
 {
 	size_t blk;
-	size_t bitDepthDC = BitDepthDC(bpe, s);
-	size_t bitDepthAC = BitDepthAC(bpe, s);
+	size_t bitDepthDC;
+	size_t bitDepthAC;
 	size_t q_; /* q' in Table 4-8 */
 	size_t q;
 
 	assert(bpe != NULL);
 
-	bpe->segment_header.BitDepthDC = (UINT32) bitDepthDC;
-	bpe->segment_header.BitDepthAC = (UINT32) bitDepthAC;
-	/* NOTE Segment Header Part 1A has been changed */
+	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 
 	if (bitDepthDC <= 3)
 		q_ = 0;
@@ -895,8 +894,8 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
 	bpe->segment_header.SegmentCount = ((bpe->block_index - 1) / S) & M8;
-	/* BitDepthDC */
-	/* BitDepthAC */
+	bpe->segment_header.BitDepthDC = (UINT32) BitDepthDC(bpe, s);
+	bpe->segment_header.BitDepthAC = (UINT32) BitDepthAC(bpe, s);
 	/* Part 2: */
 	/* SegByteLimit */
 
@@ -908,7 +907,6 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
 	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, s);
-	/* FIXME: this function changes some fields in Segment Header */
 
 	for (blk = 0; blk < s; ++blk) {
 		/* encode the block */
