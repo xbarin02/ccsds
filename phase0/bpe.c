@@ -806,6 +806,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 	} else {
 		int err;
+		size_t blk;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
 
@@ -825,6 +826,9 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/* TODO
 		 * 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
 		 * coefficient values (taken in raster scan order) shall be encoded. */
+		for (blk = 1; blk < s; ++blk) {
+			/* TODO */
+		}
 
 		/* TODO */
 	}
