@@ -775,10 +775,12 @@ size_t BitShift(const struct bpe *bpe, int subband)
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
 int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t s, size_t q, INT32 *quantized_dc)
 {
-	size_t bitDepthDC = BitDepthDC(bpe, s);
+	size_t bitDepthDC;
 	size_t N;
 
 	assert(bpe != NULL);
+
+	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 
 	/* 4.3.2.1 The number of bits needed to represent each quantized DC coefficient */
 	N = size_max(bitDepthDC - q, 1);
@@ -808,6 +810,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	size_t q;
 
 	assert(bpe != NULL);
+
+	bpe->segment_header.BitDepthDC = (UINT32) bitDepthDC;
+	bpe->segment_header.BitDepthAC = (UINT32) bitDepthAC;
+	/* NOTE Segment Header Part 1A has been changed */
 
 	if (bitDepthDC <= 3)
 		q_ = 0;
@@ -902,6 +908,7 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
 	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, s);
+	/* FIXME: this function changes some fields in Segment Header */
 
 	for (blk = 0; blk < s; ++blk) {
 		/* encode the block */
