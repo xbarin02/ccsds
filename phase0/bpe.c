@@ -790,8 +790,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
 	if (N == 1) {
 		size_t blk;
+
 		/* In this case, the coded quantized DC coefficients for a segment consist of these bits, concatenated together. */
-		dprint (("BPE(4.3.2): N = 1\n"));
 
 		for (blk = 0; blk < s; ++blk) {
 			int err;
@@ -849,8 +849,8 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
 	if (N == 1) {
 		size_t blk;
+
 		/* In this case, the coded quantized DC coefficients for a segment consist of these bits, concatenated together. */
-		dprint (("BPE(4.3.2): N = 1\n"));
 
 		for (blk = 0; blk < s; ++blk) {
 			int err;
