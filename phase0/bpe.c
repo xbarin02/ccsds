@@ -818,6 +818,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		int err;
 		size_t m;
 		UINT32 *mapped_quantized_dc;
+		size_t g, G;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
 
@@ -865,7 +866,18 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
+		Q = s / 16;
 
+		for (g = 0; g < G; ++g) {
+			/* gaggle no. g */
+			size_t ge = (g * 16 - 1 < s) ? 16 : s%16; /* gaggle elements */
+
+			if (g == 0) {
+				/* the first gaggle */
+			} else {
+				/* all other gaggles */
+			}
+		}
 		/* TODO */
 
 		free(mapped_quantized_dc);
