@@ -897,7 +897,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 #endif
 		assert(s > 0);
-#if 0
+#if 1
 		mapped_quantized_dc = malloc(s * sizeof(UINT32));
 
 		if (mapped_quantized_dc == NULL)
