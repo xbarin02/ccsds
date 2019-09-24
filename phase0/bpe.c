@@ -817,6 +817,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	} else {
 		int err;
 		size_t m;
+		UINT32 *mapped_quantized_dc;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
 
@@ -833,15 +834,21 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			return err;
 		}
 
-		/* TODO
-		 * 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
+		mapped_quantized_dc = malloc(s * sizeof(UINT32));
+
+		if (mapped_quantized_dc == NULL)
+			return RET_FAILURE_MEMORY_ALLOCATION;
+
+		/* NOTE mapped_quantized_dc[0] is not accessed */
+
+		/* 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
 		 * coefficient values (taken in raster scan order) shall be encoded. */
 		for (m = 1; m < s; ++m) {
 			INT32 d_ = quantized_dc[m] - quantized_dc[m-1]; /* (18) */
 			INT32 x_min = -((INT32)1 << (N-1));
 			INT32 x_max = +((INT32)1 << (N-1)) - 1;
 			UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
-			UINT32 d; /* (19) */
+			UINT32 d; /* (19) = mapped quantized coefficients */
 
 			assert(quantized_dc[m-1] - x_min >= 0);
 			assert(x_max - quantized_dc[m-1] >= 0);
@@ -849,15 +856,19 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			/* Each difference value ... shall be mapped to a non-negative integer ... */
 			if (d_ >= 0 && (UINT32)d_ <= theta)
 				d = 2 * (UINT32)d_;
-			else if (d_ < 0 && -d_ <= theta)
+			else if (d_ < 0 && (UINT32)-d_ <= theta)
 				d = 2 * uint32_abs(d_) - 1;
 			else
 				d = theta + uint32_abs(d_);
 
-			/* TODO */
+			mapped_quantized_dc[m] = d;
 		}
 
+		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
+
 		/* TODO */
+
+		free(mapped_quantized_dc);
 	}
 
 	return RET_SUCCESS;
