@@ -798,9 +798,16 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (k == -1) {
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
+			int err;
+
 			/* first gaggle in a segment */
 			/* code option k */
 			/* N-bit reference */
+			err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
+
+			if (err) {
+				return err;
+			}
 			/* 15 mapped sample di fferences */
 		} else {
 			/* subsequent gaggles */
@@ -810,9 +817,16 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	} else {
 		/* Coded Data Format for a Gaggle When a Coding Option Is Selected */
 		if (first) {
+			int err;
+
 			/* first gaggle in a segment */
 			/* code option k */
 			/* N-bit reference */
+			err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
+
+			if (err) {
+				return err;
+			}
 			/* first part words */
 			/* second part words */
 		} else {
@@ -872,12 +886,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 		assert(s > 0);
-
-		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
-
-		if (err) {
-			return err;
-		}
 
 		mapped_quantized_dc = malloc(s * sizeof(UINT32));
 
