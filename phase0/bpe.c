@@ -795,6 +795,34 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	/* TODO 4.3.2.7 */
 	k = -1; /* uncoded */
 
+	if (k == -1) {
+		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
+		if (first) {
+			/* first gaggle in a segment */
+			/* code option k */
+			/* N-bit reference */
+			/* 15 mapped sample di fferences */
+		} else {
+			/* subsequent gaggles */
+			/* code option k */
+			/* J mapped sample differences */
+		}
+	} else {
+		/* Coded Data Format for a Gaggle When a Coding Option Is Selected */
+		if (first) {
+			/* first gaggle in a segment */
+			/* code option k */
+			/* N-bit reference */
+			/* first part words */
+			/* second part words */
+		} else {
+			/* subsequent gaggles */
+			/* code option k */
+			/* first part words */
+			/* second part words */
+		}
+	}
+
 	return RET_SUCCESS;
 }
 
