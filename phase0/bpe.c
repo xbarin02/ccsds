@@ -782,6 +782,19 @@ size_t BitShift(const struct bpe *bpe, int subband)
 	}
 }
 
+/* Section 4.3.2.6 */
+static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, INT32 *quantized_dc, UINT32 *mapped_quantized_dc)
+{
+	assert(bpe != NULL);
+	assert(first == 0 || quantized_dc != NULL);
+	assert(mapped_quantized_dc != NULL);
+	assert(size > 0);
+
+	/* TODO 4.3.2.7 */
+
+	return RET_SUCCESS;
+}
+
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
 int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t s, size_t q, INT32 *quantized_dc)
 {
@@ -878,11 +891,11 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			if (g == 0) {
 				/* the first gaggle (quantized_dc[0] has already been written, FIXME) */
 
-				/* TODO 4.3.2.6 */
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, quantized_dc, mapped_quantized_dc);
 			} else {
 				/* all other gaggles */
 
-				/* TODO 4.3.2.6 */
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, quantized_dc, mapped_quantized_dc);
 			}
 		}
 
@@ -895,11 +908,11 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			if (g == 0) {
 				/* the first gaggle (quantized_dc[0] has already been written, FIXME) */
 
-				/* TODO 4.3.2.6 */
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, quantized_dc, mapped_quantized_dc);
 			} else {
 				/* all other gaggles */
 
-				/* TODO 4.3.2.6 */
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, quantized_dc, mapped_quantized_dc);
 			}
 		}
 
