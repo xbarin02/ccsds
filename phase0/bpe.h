@@ -52,7 +52,9 @@ struct bpe {
 	/* local copy of S blocks, the size is 64*S = 8*8*S 32-bit integers */
 	INT32 *segment;
 
-	size_t block_index;
+	size_t s; /* local block index */
+	size_t block_index; /* global block index */
+	size_t segment_index; /* global segment index */
 
 	struct bio *bio;
 
@@ -64,11 +66,8 @@ struct bpe {
 size_t BitShift(const struct bpe *bpe, int subband);
 
 int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *bio, struct frame *frame);
-int bpe_realloc_segment(struct bpe *bpe);
+int bpe_realloc_segment(struct bpe *bpe, size_t S);
 int bpe_realloc_frame_width(struct bpe *bpe);
-
-int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);
-int bpe_pop_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks);
 
 int bpe_destroy(struct bpe *bpe, struct parameters *parameters);
 

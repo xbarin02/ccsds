@@ -198,6 +198,8 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->bio = bio;
 
 	bpe->block_index = 0;
+	bpe->segment_index = 0;
+	bpe->s = 0;
 
 	bpe->frame = frame;
 
@@ -235,7 +237,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 		bpe->segment_header.weight[i] = parameters->weight[i];
 	}
 
-	err = bpe_realloc_segment(bpe);
+	err = bpe_realloc_segment(bpe, parameters->S);
 
 	if (err) {
 		return err;
@@ -252,23 +254,18 @@ int bpe_is_last_segment(struct bpe *bpe)
 }
 
 /* the S has been changed, realloc bpe->segment[] */
-int bpe_realloc_segment(struct bpe *bpe)
+int bpe_realloc_segment(struct bpe *bpe, size_t S)
 {
-	size_t S;
-
 	assert(bpe != NULL);
 
-	S = (size_t) bpe->segment_header.S;
+	bpe->S = S;
+	bpe->segment_header.S = (UINT32) S;
 
-	free(bpe->segment);
-
-	bpe->segment = malloc(S * BLOCK_SIZE * sizeof(INT32));
+	bpe->segment = realloc(bpe->segment, S * BLOCK_SIZE * sizeof(INT32));
 
 	if (bpe->segment == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
-
-	bpe->S = S;
 
 	return RET_SUCCESS;
 }
@@ -1160,38 +1157,30 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	return RET_SUCCESS;
 }
 
-int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
+/* write segment into bitstream */
+int bpe_encode_segment(struct bpe *bpe, int flush)
 {
 	size_t S;
-	size_t s;
 	size_t blk;
 	int err;
 
 	assert(bpe != NULL);
 
 	S = bpe->S;
-	s = bpe->block_index % S;
-
-	if (s == 0) {
-		s = S;
-	}
 
 	/* next block is not valid block (behind the image) */
-	if (bpe->block_index >= total_no_blocks) {
-		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu <-- the last segment\n", ((bpe->block_index-1) / S), s, bpe->block_index));
+	if (flush) {
+		dprint (("BPE: encoding segment %lu (%lu blocks) <-- the last segment\n", bpe->segment_index, S));
 		bpe->segment_header.EndImgFlag = 1;
-		if (s != S) {
-			bpe->segment_header.Part3Flag = 1; /* signal new "s" as "S" */
-			bpe->segment_header.S = (UINT32) s;
-		}
+		bpe->segment_header.Part3Flag = 1; /* signal new "S" */
 	} else {
-		dprint (("BPE: encoding segment %lu (%lu blocks), next block starts at %lu\n", ((bpe->block_index - 1) / S), s, bpe->block_index));
+		dprint (("BPE: encoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 	}
 
-	bpe->segment_header.StartImgFlag = (bpe->block_index == S);
-	bpe->segment_header.SegmentCount = ((bpe->block_index - 1) / S) & M8;
-	bpe->segment_header.BitDepthDC = (UINT32) BitDepthDC(bpe, s);
-	bpe->segment_header.BitDepthAC = (UINT32) BitDepthAC(bpe, s);
+	bpe->segment_header.StartImgFlag = (bpe->block_index == 0);
+	bpe->segment_header.SegmentCount = bpe->segment_index & M8;
+	bpe->segment_header.BitDepthDC = (UINT32) BitDepthDC(bpe, S);
+	bpe->segment_header.BitDepthAC = (UINT32) BitDepthAC(bpe, S);
 	/* Part 2: */
 	/* SegByteLimit */
 
@@ -1200,11 +1189,11 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 	if (err) {
 		return err;
 	}
-
+#if 0
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
-	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, s);
-
-	for (blk = 0; blk < s; ++blk) {
+	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, S);
+#endif
+	for (blk = 0; blk < S; ++blk) {
 		/* encode the block */
 		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
@@ -1214,6 +1203,8 @@ int bpe_encode_segment(struct bpe *bpe, size_t total_no_blocks)
 	bpe->segment_header.Part2Flag = 0;
 	bpe->segment_header.Part3Flag = 0;
 	bpe->segment_header.Part4Flag = 0;
+
+	bpe->segment_index ++;
 
 	return RET_SUCCESS;
 }
@@ -1234,7 +1225,6 @@ int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
 int bpe_decode_segment(struct bpe *bpe)
 {
 	size_t S;
-	size_t s;
 	size_t blk;
 	int err;
 
@@ -1242,16 +1232,7 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	S = bpe->S;
 
-	s = 0;
-	if (S != 0) {
-		s = bpe->block_index % S;
-	}
-
-	if (s == 0) {
-		s = S;
-	}
-
-	/* the 's' in the last block should be decoded from Part 4 of the Segment Header */
+	/* the 'S' in the last block should be decoded from Part 4 of the Segment Header */
 
 	err = bpe_read_segment_header(bpe);
 
@@ -1272,20 +1253,13 @@ int bpe_decode_segment(struct bpe *bpe)
 		int err;
 
 		dprint (("BPE: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
-		err = bpe_realloc_segment(bpe);
+		err = bpe_realloc_segment(bpe, bpe->segment_header.S);
 
 		if (err) {
 			return err;
 		}
 
 		S = bpe->S;
-		s = 0;
-		if (S != 0) {
-			s = bpe->block_index % S;
-		}
-		if (s == 0) {
-			s = S;
-		}
 	}
 
 	if (bpe->segment_header.Part4Flag) {
@@ -1304,15 +1278,12 @@ int bpe_decode_segment(struct bpe *bpe)
 		/* what about DWTtype, etc.? */
 	}
 
-	if (S != 0) {
-		dprint (("BPE: decoding segment %lu (%lu blocks)\n", (bpe->block_index / S), s));
-	} else {
-		dprint (("BPE: decoding segment zero (%lu blocks)\n", s));
-	}
+	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 
+#if 0
 	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, s);
-
-	for (blk = 0; blk < s; ++blk) {
+#endif
+	for (blk = 0; blk < S; ++blk) {
 		/* decode the block */
 		bpe_decode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
@@ -1320,7 +1291,8 @@ int bpe_decode_segment(struct bpe *bpe)
 	return RET_SUCCESS;
 }
 
-int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_blocks)
+/* push block into bpe->segment[] */
+int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, int flush)
 {
 	size_t S;
 	size_t s;
@@ -1329,10 +1301,8 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_
 
 	assert(bpe != NULL);
 
-	/* push block into bpe->segment[] at the index (block_index%S) */
-
 	S = bpe->S;
-	s = bpe->block_index % S;
+	s = bpe->s;
 	local = bpe->segment + s * BLOCK_SIZE;
 
 	for (y = 0; y < 8; ++y) {
@@ -1341,47 +1311,40 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, size_t total_no_
 		}
 	}
 
-	/* next block will be... */
-	bpe->block_index ++;
+	if (flush) {
+		dprint (("BPE: flush\n"));
+		bpe_realloc_segment(bpe, s + 1);
+		S = s + 1;
+	}
 
-	s = bpe->block_index % S;
-
-	/* if this is the last block in the segment, serialize the segment into bpe->bio */
-	if (s == 0) {
+	if (s + 1 == S) {
 		int err;
 
 		/* encode this segment */
-		err = bpe_encode_segment(bpe, total_no_blocks);
+		err = bpe_encode_segment(bpe, flush);
 
 		if (err) {
 			return err;
 		}
+
+		bpe->s = 0;
+	} else {
+		bpe->s ++;
 	}
+
+	/* next block will be... */
+	bpe->block_index ++;
 
 	return RET_SUCCESS;
 }
 
 int bpe_pop_block_decode(struct bpe *bpe)
 {
-	size_t S;
-	size_t s;
-
 	assert(bpe != NULL);
 
-	S = bpe->S;
-
-	s = 0;
-	if (S != 0) {
-		s = bpe->block_index % S;
-	}
-
 	/* if this is the first block in the segment, deserialize it */
-	if (s == 0) {
+	if (bpe->s == 0) {
 		int err;
-
-		if (bpe_is_last_segment(bpe)) {
-			return RET_FAILURE_NO_MORE_DATA;
-		}
 
 		err = bpe_decode_segment(bpe);
 
@@ -1395,22 +1358,13 @@ int bpe_pop_block_decode(struct bpe *bpe)
 
 int bpe_pop_block_copy_data(struct bpe *bpe, INT32 *data, size_t stride)
 {
-	size_t S;
-	size_t s;
 	INT32 *local;
 	size_t y, x;
 
 	assert(bpe != NULL);
 
-	S = bpe->S;
-
-	s = 0;
-	if (S != 0) {
-		s = bpe->block_index % S;
-	}
-
 	/* pop the block from bpe->segment[] */
-	local = bpe->segment + s * BLOCK_SIZE;
+	local = bpe->segment + bpe->s * BLOCK_SIZE;
 
 	/* access frame->data[] */
 	for (y = 0; y < 8; ++y) {
@@ -1419,31 +1373,13 @@ int bpe_pop_block_copy_data(struct bpe *bpe, INT32 *data, size_t stride)
 		}
 	}
 
-	bpe->block_index ++;
+	/* next block will be */
+	bpe->s ++;
 
-	return RET_SUCCESS;
-}
-
-int bpe_flush(struct bpe *bpe, size_t total_no_blocks)
-{
-	size_t S;
-	size_t s;
-
-	assert(bpe != NULL);
-
-	S = bpe->S;
-	s = bpe->block_index % S;
-
-	if (s > 0) {
-		int err;
-
-		/* encode the last (incomplete) segment */
-		err = bpe_encode_segment(bpe, total_no_blocks);
-
-		if (err) {
-			return err;
-		}
+	if (bpe->s == bpe->S) {
+		bpe->s = 0;
 	}
+	bpe->block_index ++;
 
 	return RET_SUCCESS;
 }
@@ -1539,17 +1475,11 @@ int bpe_encode(struct frame *frame, const struct parameters *parameters, struct 
 
 		block_by_index(&block, frame, block_index);
 
-		err = bpe_push_block(&bpe, block.data, block.stride, total_no_blocks);
+		err = bpe_push_block(&bpe, block.data, block.stride, (block_index + 1 == total_no_blocks));
 
 		if (err) {
 			return err;
 		}
-	}
-
-	err = bpe_flush(&bpe, total_no_blocks);
-
-	if (err) {
-		return err;
 	}
 
 	bpe_destroy(&bpe, NULL);
@@ -1619,6 +1549,9 @@ int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *b
 		block_by_index(&block, frame, block_index);
 
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
+
+		if (bpe_is_last_segment(&bpe) && bpe.s == 0)
+			break;
 	}
 
 	bpe_correct_frame_height(&bpe);
