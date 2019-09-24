@@ -1527,11 +1527,6 @@ int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *b
 		/* NOTE: the bpe_pop_block_decode reallocates frame->data[] */
 		err = bpe_pop_block_decode(&bpe);
 
-		if (err == RET_FAILURE_NO_MORE_DATA) {
-			dprint (("BPE: last segment indicated, breaking the decoding loop!\n"));
-			break;
-		}
-
 		/* other error */
 		if (err) {
 			return err;
@@ -1553,8 +1548,10 @@ int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *b
 
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
 
-		if (bpe_is_last_segment(&bpe) && bpe.s == 0)
+		if (bpe_is_last_segment(&bpe) && bpe.s == 0) {
+			dprint (("BPE: last segment indicated, breaking the decoding loop!\n"));
 			break;
+		}
 	}
 
 	bpe_correct_frame_height(&bpe);
