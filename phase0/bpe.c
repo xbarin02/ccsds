@@ -888,7 +888,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/*
 		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
-#if 1
+#if 0
 		dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
 
@@ -1015,14 +1015,14 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 
 		assert(s > 0);
-
+#if 0
 		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
 		err = bio_read_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
 
 		if (err) {
 			return err;
 		}
-
+#endif
 		/* TODO */
 	}
 
@@ -1189,10 +1189,10 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	if (err) {
 		return err;
 	}
-#if 1
+
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
 	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, S);
-#endif
+
 	for (blk = 0; blk < S; ++blk) {
 		/* encode the block */
 		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
@@ -1280,9 +1280,8 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 
-#if 1
 	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, S);
-#endif
+
 	for (blk = 0; blk < S; ++blk) {
 		/* decode the block */
 		bpe_decode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
