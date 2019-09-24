@@ -783,14 +783,17 @@ size_t BitShift(const struct bpe *bpe, int subband)
 }
 
 /* Section 4.3.2.6 */
-static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, INT32 *quantized_dc, UINT32 *mapped_quantized_dc)
+static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N, INT32 *quantized_dc, UINT32 *mapped_quantized_dc)
 {
+	int k;
+
 	assert(bpe != NULL);
 	assert(first == 0 || quantized_dc != NULL);
 	assert(mapped_quantized_dc != NULL);
 	assert(size > 0);
 
 	/* TODO 4.3.2.7 */
+	k = -1; /* uncoded */
 
 	return RET_SUCCESS;
 }
@@ -891,11 +894,11 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			if (g == 0) {
 				/* the first gaggle (quantized_dc[0] has already been written, FIXME) */
 
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, quantized_dc, mapped_quantized_dc);
 			} else {
 				/* all other gaggles */
 
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, quantized_dc, mapped_quantized_dc);
 			}
 		}
 
@@ -908,11 +911,11 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			if (g == 0) {
 				/* the first gaggle (quantized_dc[0] has already been written, FIXME) */
 
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, quantized_dc, mapped_quantized_dc);
 			} else {
 				/* all other gaggles */
 
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, quantized_dc, mapped_quantized_dc);
 			}
 		}
 
