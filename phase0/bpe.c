@@ -876,9 +876,13 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			dprint (("BPE(4.3.2.5): full gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
 			if (g == 0) {
-				/* the first gaggle */
+				/* the first gaggle (quantized_dc[0] has already been written, FIXME) */
+
+				/* TODO 4.3.2.6 */
 			} else {
 				/* all other gaggles */
+
+				/* TODO 4.3.2.6 */
 			}
 		}
 
@@ -889,9 +893,13 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
 			if (g == 0) {
-				/* the first gaggle */
+				/* the first gaggle (quantized_dc[0] has already been written, FIXME) */
+
+				/* TODO 4.3.2.6 */
 			} else {
 				/* all other gaggles */
+
+				/* TODO 4.3.2.6 */
 			}
 		}
 
