@@ -1288,6 +1288,8 @@ int bpe_decode_segment(struct bpe *bpe)
 		bpe_decode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
 
+	bpe->segment_index ++;
+
 	return RET_SUCCESS;
 }
 
