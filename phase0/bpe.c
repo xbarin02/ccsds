@@ -888,7 +888,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/*
 		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
-#if 0
+#if 1
 		dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
 
@@ -1015,9 +1015,11 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 
 		assert(s > 0);
-#if 0
+#if 1
 		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
 		err = bio_read_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
+
+		assert((((UINT32)quantized_dc[0]) >> (N-1)) == 0 && "BUG: negative number?");
 
 		if (err) {
 			return err;
