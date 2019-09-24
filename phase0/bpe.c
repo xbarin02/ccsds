@@ -755,6 +755,16 @@ static size_t size_max(size_t a, size_t b)
 	return a > b ? a : b;
 }
 
+static INT32 int32_min(INT32 a, INT32 b)
+{
+	return a < b ? a : b;
+}
+
+static UINT32 uint32_min(UINT32 a, UINT32 b)
+{
+	return a < b ? a : b;
+}
+
 size_t BitShift(const struct bpe *bpe, int subband)
 {
 	assert(bpe != NULL);
@@ -806,7 +816,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 	} else {
 		int err;
-		size_t blk;
+		size_t m;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
 
@@ -826,7 +836,24 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/* TODO
 		 * 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
 		 * coefficient values (taken in raster scan order) shall be encoded. */
-		for (blk = 1; blk < s; ++blk) {
+		for (m = 1; m < s; ++m) {
+			INT32 d_ = quantized_dc[m] - quantized_dc[m-1]; /* (18) */
+			INT32 x_min = -((INT32)1 << (N-1));
+			INT32 x_max = +((INT32)1 << (N-1)) - 1;
+			UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
+			UINT32 d; /* (19) */
+
+			assert(quantized_dc[m-1] - x_min >= 0);
+			assert(x_max - quantized_dc[m-1] >= 0);
+
+			/* Each difference value ... shall be mapped to a non-negative integer ... */
+			if (d_ >= 0 && (UINT32)d_ <= theta)
+				d = 2 * (UINT32)d_;
+			else if (d_ < 0 && -d_ <= theta)
+				d = 2 * uint32_abs(d_) - 1;
+			else
+				d = theta + uint32_abs(d_);
+
 			/* TODO */
 		}
 
