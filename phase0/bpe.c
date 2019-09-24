@@ -1189,7 +1189,7 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	if (err) {
 		return err;
 	}
-#if 0
+#if 1
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
 	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, S);
 #endif
@@ -1280,8 +1280,8 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 
-#if 0
-	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, s);
+#if 1
+	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, S);
 #endif
 	for (blk = 0; blk < S; ++blk) {
 		/* decode the block */
