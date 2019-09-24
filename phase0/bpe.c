@@ -1019,6 +1019,11 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
 		err = bio_read_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
 
+		/* BUG
+		 * Negative numbers must be fixed.
+		 * This is however not THE bug since the coefficients are rewritten later by original coefficients.
+		 * Basically, anything stored here in quantized_dc[0] is rewritten later.
+		 */
 		assert((((UINT32)quantized_dc[0]) >> (N-1)) == 0 && "BUG: negative number?");
 
 		if (err) {
