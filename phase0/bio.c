@@ -75,7 +75,11 @@ int bio_flush_buffer(struct bio *bio)
 
 	assert(CHAR_BIT == 8);
 
+#if (CONFIG_BIO_REVERSE_BITS == 1)
 	*bio->ptr++ = lut_reverse_char[bio->b];
+#else
+	*bio->ptr++ = bio->b;
+#endif
 
 	return RET_SUCCESS;
 }
@@ -88,7 +92,11 @@ int bio_reload_buffer(struct bio *bio)
 		return RET_FAILURE_LOGIC_ERROR;
 	}
 
+#if (CONFIG_BIO_REVERSE_BITS == 1)
+	bio->b = lut_reverse_char[*bio->ptr++];
+#else
 	bio->b = *bio->ptr++;
+#endif
 
 	return RET_SUCCESS;
 }
