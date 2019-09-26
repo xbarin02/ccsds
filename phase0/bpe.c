@@ -800,7 +800,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			/* first gaggle in a segment */
 			/* code option k */
 			/* N-bit reference */
-#if 0
+#if 1
 			dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 			err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
 
@@ -822,7 +822,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			/* first gaggle in a segment */
 			/* code option k */
 			/* N-bit reference */
-#if 0
+#if 1
 			dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 			err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
 
@@ -888,7 +888,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/*
 		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
-#if 1
+#if 0
 		dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 
 		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
@@ -898,7 +898,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 #endif
 		assert(s > 0);
-#if 1
+
 		mapped_quantized_dc = malloc(s * sizeof(UINT32));
 
 		if (mapped_quantized_dc == NULL)
@@ -966,7 +966,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/* TODO */
 
 		free(mapped_quantized_dc);
-#endif
 	}
 
 	return RET_SUCCESS;
@@ -1016,7 +1015,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 
 		assert(s > 0);
-#if 1
+
 		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
 
 		err = bio_read_dc_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
@@ -1024,7 +1023,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		if (err) {
 			return err;
 		}
-#endif
+
 		/* TODO */
 	}
 
