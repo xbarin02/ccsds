@@ -5,15 +5,12 @@
 #include "common.h"
 #include "bio.h"
 
-int main(int argc, char *argv[])
+int main()
 {
 	size_t buffer_size = 4096;
-	/* N-bit prologue */
-	size_t prologue = 7;
 	void *ptr;
 	struct bio bio;
-	UINT32 x;
-	UINT32 y;
+	UINT32 x, y, z;
 	int err;
 
 	ptr = malloc(buffer_size);
@@ -24,18 +21,25 @@ int main(int argc, char *argv[])
 
 	x = 42;
 	y = 57;
+	z = 3238002945UL;
 
 	/* writer */
 
 	bio_open(&bio, ptr, BIO_MODE_WRITE);
 
-	err = bio_write_bits(&bio, x, prologue);
+	err = bio_write_bits(&bio, x, 7);
 
 	if (err) {
 		abort();
 	}
 
-	err = bio_write_bits(&bio, y, prologue);
+	err = bio_write_bits(&bio, y, 7);
+
+	if (err) {
+		abort();
+	}
+
+	err = bio_write_bits(&bio, z, 32);
 
 	if (err) {
 		abort();
@@ -47,15 +51,25 @@ int main(int argc, char *argv[])
 
 	/* reader */
 
+	x = 0;
+	y = 0;
+	z = 0;
+
 	bio_open(&bio, ptr, BIO_MODE_READ);
 
-	err = bio_read_bits(&bio, &x, prologue);
+	err = bio_read_bits(&bio, &x, 7);
 
 	if (err) {
 		abort();
 	}
 
-	err = bio_read_bits(&bio, &y, prologue);
+	err = bio_read_bits(&bio, &y, 7);
+
+	if (err) {
+		abort();
+	}
+
+	err = bio_read_bits(&bio, &z, 32);
 
 	if (err) {
 		abort();
@@ -63,9 +77,11 @@ int main(int argc, char *argv[])
 
 	dprint (("x = %lu\n", x));
 	dprint (("y = %lu\n", y));
+	dprint (("z = %lu\n", z));
 
 	assert(x == 42);
 	assert(y == 57);
+	assert(z == 3238002945UL);
 
 	bio_close(&bio);
 
