@@ -75,7 +75,7 @@ int bio_flush_buffer(struct bio *bio)
 
 	assert(CHAR_BIT == 8);
 
-#if 1
+#if 0
 	*bio->ptr++ = lut_reverse_char[bio->b];
 #else
 	*bio->ptr++ = bio->b;
@@ -106,9 +106,12 @@ int bio_put_bit(struct bio *bio, unsigned char b)
 	assert(bio != NULL);
 
 	assert(bio->c < CHAR_BIT);
-
+#if 0
 	/* do not trust the input, mask the LSB here */
 	bio->b = (unsigned char) ( (bio->b << 1) | (b & 1) );
+#else
+	bio->b |= (unsigned char)((b & 1) << bio->c);
+#endif
 
 	bio->c ++;
 
@@ -184,7 +187,12 @@ int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 			return err;
 		}
 
+#if 1
 		word |= (UINT32)bit << i;
+#else
+		word <<= 1;
+		word |= (UINT32)bit;
+#endif
 	}
 
 	assert(b);
