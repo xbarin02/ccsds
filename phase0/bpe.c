@@ -846,7 +846,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 }
 
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
-int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t s, size_t q, INT32 *quantized_dc)
+int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q, INT32 *quantized_dc)
 {
 	size_t bitDepthDC;
 	size_t N;
@@ -866,7 +866,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		/* In this case, the coded quantized DC coefficients for a segment consist of these bits, concatenated together. */
 
-		for (blk = 0; blk < s; ++blk) {
+		for (blk = 0; blk < S; ++blk) {
 			int err;
 
 			assert( quantized_dc[blk] == 0 || quantized_dc[blk] == -1 );
@@ -892,9 +892,9 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		/* NOTE the N-bit reference sample is written in bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle */
 
-		assert(s > 0);
+		assert(S > 0);
 
-		mapped_quantized_dc = malloc(s * sizeof(UINT32));
+		mapped_quantized_dc = malloc(S * sizeof(UINT32));
 
 		if (mapped_quantized_dc == NULL)
 			return RET_FAILURE_MEMORY_ALLOCATION;
@@ -903,7 +903,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		/* 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
 		 * coefficient values (taken in raster scan order) shall be encoded. */
-		for (m = 1; m < s; ++m) {
+		for (m = 1; m < S; ++m) {
 			INT32 d_ = quantized_dc[m] - quantized_dc[m-1]; /* (18) */
 			INT32 x_min = -((INT32)1 << (N-1));
 			INT32 x_max = +((INT32)1 << (N-1)) - 1;
@@ -925,7 +925,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
-		G = s / 16;
+		G = S / 16;
 		g = 0; /* gaggle number */
 
 		/* full 16-element gaggles */
@@ -944,8 +944,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 
 		/* and (the last in the segment) smaller gaggle */
-		if (s % 16 != 0) {
-			size_t ge = s % 16;
+		if (S % 16 != 0) {
+			size_t ge = S % 16;
 
 			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
@@ -1026,7 +1026,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 }
 
 /* Section 4.3 */
-int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t s)
+int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t S)
 {
 	size_t blk;
 	size_t bitDepthDC;
@@ -1057,13 +1057,13 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
 	{
-		INT32 *quantized_dc = malloc(s * sizeof(INT32));
+		INT32 *quantized_dc = malloc(S * sizeof(INT32));
 
 		if (quantized_dc == NULL) {
 			return RET_FAILURE_MEMORY_ALLOCATION;
 		}
 
-		for (blk = 0; blk < s; ++blk) {
+		for (blk = 0; blk < S; ++blk) {
 			/* FIXME in general, DC coefficients are INT32 and can be negative */
 			quantized_dc[blk] = *(bpe->segment + blk * BLOCK_SIZE) >> q;
 		}
@@ -1082,7 +1082,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		 */
 
 		/* NOTE Section 4.3.2 */
-		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, s, q, quantized_dc);
+		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q, quantized_dc);
 
 		free(quantized_dc);
 	}
