@@ -16,3 +16,4 @@ perftest
 
 # Makefile overlay
 Makefile.local
+biotest

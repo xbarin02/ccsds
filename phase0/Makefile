@@ -31,6 +31,8 @@ bio.o: bio.c bio.h common.h
 
 bpe.o: bpe.c bpe.h frame.h common.h bio.h
 
+biotest: biotest.o bio.o common.o
+
 clean:
 	$(RM) -- *.o $(TARGETS)
 
