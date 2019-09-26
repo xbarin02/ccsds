@@ -203,6 +203,38 @@ int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 	return RET_SUCCESS;
 }
 
+int bio_read_dc_bits(struct bio *bio, UINT32 *b, size_t n)
+{
+	size_t i;
+	unsigned char bit;
+	UINT32 word = 0;
+
+	for (i = 0; i < n; ++i) {
+		int err = bio_get_bit(bio, &bit);
+
+		if (err) {
+			return err;
+		}
+
+#if 1
+		word |= (UINT32)bit << i;
+#else
+		word <<= 1;
+		word |= (UINT32)bit;
+#endif
+	}
+
+	for (; i < 32; ++i) {
+		word |= (UINT32)bit << i;
+	}
+
+	assert(b);
+
+	*b = word;
+
+	return RET_SUCCESS;
+}
+
 int bio_close(struct bio *bio)
 {
 	assert(bio != NULL);
