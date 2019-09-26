@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdlib.h>
 
+#define DEBUG_ENCODE_BLOCKS 1
+
 #define BLOCK_SIZE (8 * 8)
 
 /* Mn = 2^n - 1 */
@@ -1188,10 +1190,12 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
 	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, S);
 
+#if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
 		/* encode the block */
 		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
+#endif
 
 	/* after writing of the first segment, set some flags to zero */
 	bpe->segment_header.StartImgFlag = 0;
@@ -1277,10 +1281,12 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, S);
 
+#if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
 		/* decode the block */
 		bpe_decode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
+#endif
 
 	bpe->segment_index ++;
 
@@ -1427,24 +1433,6 @@ int block_starts_new_stripe(struct frame *frame, size_t block_index)
 	x = block_index % (width / 8) * 8;
 
 	return x == 0;
-}
-
-int bpe_encode_block_by_index(struct frame *frame, struct bio *bio, size_t block_index)
-{
-	struct block block;
-
-	block_by_index(&block, frame, block_index);
-
-	return bpe_encode_block(block.data, block.stride, bio);
-}
-
-int bpe_decode_block_by_index(struct frame *frame, struct bio *bio, size_t block_index)
-{
-	struct block block;
-
-	block_by_index(&block, frame, block_index);
-
-	return bpe_decode_block(block.data, block.stride, bio);
 }
 
 int bpe_encode(struct frame *frame, const struct parameters *parameters, struct bio *bio)
