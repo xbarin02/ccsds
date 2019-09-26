@@ -106,8 +106,9 @@ int bio_put_bit(struct bio *bio, unsigned char b)
 	assert(bio != NULL);
 
 	assert(bio->c < CHAR_BIT);
-#if 0
+
 	/* do not trust the input, mask the LSB here */
+#if 0
 	bio->b = (unsigned char) ( (bio->b << 1) | (b & 1) );
 #else
 	bio->b |= (unsigned char)((b & 1) << bio->c);
