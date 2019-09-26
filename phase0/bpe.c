@@ -810,7 +810,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 				return err;
 			}
 
-			/* 15 mapped sample di fferences */
+			/* 15 mapped sample differences */
 		} else {
 			/* subsequent gaggles */
 			/* code option k */
@@ -878,7 +878,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			}
 		}
 	} else {
-		int err;
 		size_t m;
 		UINT32 *mapped_quantized_dc;
 		size_t g, G;

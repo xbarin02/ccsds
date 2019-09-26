@@ -40,7 +40,7 @@ int bpe_encode(const struct frame *frame, const struct parameters *parameters)
 
 		/* encode AC bit depths, BLUE BOOK section 4.4 */
 
-		/* for each bit plane, , BLUE BOOK section 4.5 */
+		/* for each bit plane, BLUE BOOK section 4.5 */
 		{
 			/* stage 0: DC refinement bits for all blocks */
 			/* stage 1: code parents update for all blocks */
