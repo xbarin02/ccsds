@@ -1090,7 +1090,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	return RET_SUCCESS;
 }
 
-int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t s)
+int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t S)
 {
 	size_t blk;
 	size_t bitDepthDC;
@@ -1121,7 +1121,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
 	{
-		INT32 *quantized_dc = malloc(s * sizeof(INT32));
+		INT32 *quantized_dc = malloc(S * sizeof(INT32));
 
 		if (quantized_dc == NULL) {
 			return RET_FAILURE_MEMORY_ALLOCATION;
@@ -1141,9 +1141,9 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		 */
 
 		/* NOTE Section 4.3.2 */
-		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, s, q, quantized_dc);
+		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q, quantized_dc);
 
-		for (blk = 0; blk < s; ++blk) {
+		for (blk = 0; blk < S; ++blk) {
 			*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q;
 		}
 
