@@ -64,6 +64,8 @@ struct bpe {
 
 	/* array of S quantized DC coefficients */
 	INT32 *quantized_dc;
+	/* array of S mapped quantized DC coefficients */
+	UINT32 *mapped_quantized_dc;
 };
 
 size_t BitShift(const struct bpe *bpe, int subband);

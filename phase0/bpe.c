@@ -197,6 +197,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 
 	bpe->segment = NULL;
 	bpe->quantized_dc = NULL;
+	bpe->mapped_quantized_dc = NULL;
 
 	bpe->bio = bio;
 
@@ -273,6 +274,12 @@ int bpe_realloc_segment(struct bpe *bpe, size_t S)
 	bpe->quantized_dc = realloc(bpe->quantized_dc, S * sizeof(INT32));
 
 	if (bpe->quantized_dc == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	bpe->mapped_quantized_dc = realloc(bpe->mapped_quantized_dc, S * sizeof(UINT32));
+
+	if (bpe->mapped_quantized_dc == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
@@ -359,6 +366,7 @@ int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 
 	free(bpe->segment);
 	free(bpe->quantized_dc);
+	free(bpe->mapped_quantized_dc);
 
 	if (parameters != NULL) {
 		parameters->DWTtype = bpe->segment_header.DWTtype;
@@ -790,14 +798,16 @@ size_t BitShift(const struct bpe *bpe, int subband)
 }
 
 /* Section 4.3.2.6 */
-static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N, UINT32 *mapped_quantized_dc)
+static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N)
 {
 	int k;
 	INT32 *quantized_dc;
+	UINT32 *mapped_quantized_dc;
 
 	assert(bpe != NULL);
 
 	quantized_dc = bpe->quantized_dc;
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
 
 	assert(first == 0 || quantized_dc != NULL);
 	assert(mapped_quantized_dc != NULL);
@@ -896,7 +906,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 	} else {
 		size_t m;
-		UINT32 *mapped_quantized_dc;
+		UINT32 *mapped_quantized_dc = bpe->mapped_quantized_dc;
 		size_t g, G;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
@@ -911,10 +921,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		assert(S > 0);
 
-		mapped_quantized_dc = malloc(S * sizeof(UINT32));
-
-		if (mapped_quantized_dc == NULL)
-			return RET_FAILURE_MEMORY_ALLOCATION;
+		assert(mapped_quantized_dc != NULL);
 
 		/* NOTE mapped_quantized_dc[0] is not accessed */
 
@@ -955,10 +962,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			if (g == 0) {
 				/* the first gaggle */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N);
 			} else {
 				/* all other gaggles */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N);
 			}
 		}
 
@@ -970,16 +977,14 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			if (g == 0) {
 				/* the first gaggle */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N);
 			} else {
 				/* all other gaggles */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N);
 			}
 		}
 
 		/* TODO */
-
-		free(mapped_quantized_dc);
 	}
 
 	return RET_SUCCESS;
