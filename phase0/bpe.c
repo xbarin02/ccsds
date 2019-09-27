@@ -493,16 +493,16 @@ int bpe_write_segment_header_part4(struct bpe *bpe)
 	 word = 0;
 	 word |= SET_BOOL_INTO_UINT32(bpe->segment_header.CustomWtFlag, 0);
 	 if (bpe->segment_header.CustomWtFlag) {
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 3] - 1,  1, M2); /* CustomWtHH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 1] - 1,  3, M2); /* CustomWtHL1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 2] - 1,  5, M2); /* CustomWtLH1 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 7] - 1,  7, M2); /* CustomWtHH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 5] - 1,  9, M2); /* CustomWtHL2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 6] - 1, 11, M2); /* CustomWtLH2 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[11] - 1, 13, M2); /* CustomWtHH3 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 9] - 1, 15, M2); /* CustomWtHL3 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[10] - 1, 17, M2); /* CustomWtLH3 */
-		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 8] - 1, 19, M2); /* CustomWtLL3 */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 3] - 1,  1, M2); /* CustomWtHH1 (DWT_HH0) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 1] - 1,  3, M2); /* CustomWtHL1 (DWT_HL0) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 2] - 1,  5, M2); /* CustomWtLH1 (DWT_LH0) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 7] - 1,  7, M2); /* CustomWtHH2 (DWT_HH1) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 5] - 1,  9, M2); /* CustomWtHL2 (DWT_HL1) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 6] - 1, 11, M2); /* CustomWtLH2 (DWT_LH1) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[11] - 1, 13, M2); /* CustomWtHH3 (DWT_HH2) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 9] - 1, 15, M2); /* CustomWtHL3 (DWT_HL2) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[10] - 1, 17, M2); /* CustomWtLH3 (DWT_LH2) */
+		word |= SET_UINT_INTO_UINT32(bpe->segment_header.weight[ 8] - 1, 19, M2); /* CustomWtLL3 (DWT_LL2) */
 	 }
 	 /* +21 Reserved : 11 */
 
@@ -639,16 +639,16 @@ int bpe_read_segment_header_part4(struct bpe *bpe)
 
 	bpe->segment_header.CustomWtFlag = GET_BOOL_FROM_UINT32(word, 0);
 	if (bpe->segment_header.CustomWtFlag) {
-		bpe->segment_header.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word,  1, M2); /* CustomWtHH1 */
-		bpe->segment_header.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word,  3, M2); /* CustomWtHL1 */
-		bpe->segment_header.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word,  5, M2); /* CustomWtLH1 */
-		bpe->segment_header.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word,  7, M2); /* CustomWtHH2 */
-		bpe->segment_header.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word,  9, M2); /* CustomWtHL2 */
-		bpe->segment_header.weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 */
-		bpe->segment_header.weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 */
-		bpe->segment_header.weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 */
-		bpe->segment_header.weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 */
-		bpe->segment_header.weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 */
+		bpe->segment_header.weight[ 3] = 1 + (int)GET_UINT_FROM_UINT32(word,  1, M2); /* CustomWtHH1 (DWT_HH0) */
+		bpe->segment_header.weight[ 1] = 1 + (int)GET_UINT_FROM_UINT32(word,  3, M2); /* CustomWtHL1 (DWT_HL0) */
+		bpe->segment_header.weight[ 2] = 1 + (int)GET_UINT_FROM_UINT32(word,  5, M2); /* CustomWtLH1 (DWT_LH0) */
+		bpe->segment_header.weight[ 7] = 1 + (int)GET_UINT_FROM_UINT32(word,  7, M2); /* CustomWtHH2 (DWT_HH1) */
+		bpe->segment_header.weight[ 5] = 1 + (int)GET_UINT_FROM_UINT32(word,  9, M2); /* CustomWtHL2 (DWT_HL1) */
+		bpe->segment_header.weight[ 6] = 1 + (int)GET_UINT_FROM_UINT32(word, 11, M2); /* CustomWtLH2 (DWT_LH1) */
+		bpe->segment_header.weight[11] = 1 + (int)GET_UINT_FROM_UINT32(word, 13, M2); /* CustomWtHH3 (DWT_HH2) */
+		bpe->segment_header.weight[ 9] = 1 + (int)GET_UINT_FROM_UINT32(word, 15, M2); /* CustomWtHL3 (DWT_HL2) */
+		bpe->segment_header.weight[10] = 1 + (int)GET_UINT_FROM_UINT32(word, 17, M2); /* CustomWtLH3 (DWT_LH2) */
+		bpe->segment_header.weight[ 8] = 1 + (int)GET_UINT_FROM_UINT32(word, 19, M2); /* CustomWtLL3 (DWT_LL2) */
 	}
 	/* +21 Reserved : 11 */
 
