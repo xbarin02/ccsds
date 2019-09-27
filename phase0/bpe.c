@@ -797,6 +797,21 @@ size_t BitShift(const struct bpe *bpe, int subband)
 	}
 }
 
+/* maps N to length of the Code Option Identifiers in Table 4-9 */
+static const size_t code_option_length[11] = {
+	0, /* N = 0 */
+	0, /* N = 1 */
+	1, /* N = 2 */
+	2, /* N = 3 */
+	2, /* N = 4 */
+	3, /* N = 5 */
+	3, /* N = 6 */
+	3, /* N = 7 */
+	3, /* N = 8 */
+	4, /* N = 9 */
+	4, /* N = 10 */
+};
+
 /* Section 4.3.2.6 */
 static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N)
 {
@@ -819,10 +834,21 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (k == -1) {
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
-			int err;
-
 			/* first gaggle in a segment */
+			int err;
+			UINT32 code_option_k;
+
+			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
+
 			/* code option k */
+#if 0
+			code_option_k = (UINT32)-1;
+			err = bio_write_bits(bpe->bio, code_option_k, code_option_length[N]);
+
+			if (err) {
+				return err;
+			}
+#endif
 			/* N-bit reference */
 			dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 
