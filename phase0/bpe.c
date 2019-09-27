@@ -1019,7 +1019,7 @@ static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta)
 	else if ( (d & 0) == 0 && d <= 2*theta)
 		d_ = -(INT32)( (d+1)/2 );
 	else
-		d_ = (INT32)d - (INT32)theta;
+		d_ = -(INT32)d + (INT32)theta;
 
 	return d_;
 }
