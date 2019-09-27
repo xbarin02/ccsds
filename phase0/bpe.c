@@ -815,10 +815,9 @@ static const size_t code_option_length[11] = {
 /* Section 4.3.2.6 */
 static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N)
 {
-	int k;
+	UINT32 k;
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
-	UINT32 code_option_k;
 	int err;
 
 	assert(bpe != NULL);
@@ -831,17 +830,14 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	assert(size > 0);
 
 	/* TODO 4.3.2.7 */
-	k = -1; /* uncoded */
+	k = (UINT32)-1; /* uncoded */
 
 	/* write code option k */
-#if 1
-	code_option_k = (UINT32)-1;
-	err = bio_write_bits(bpe->bio, code_option_k, code_option_length[N]);
+	err = bio_write_bits(bpe->bio, k, code_option_length[N]);
 
 	if (err) {
 		return err;
 	}
-#endif
 
 	if (first) {
 		/* first gaggle in a segment */
@@ -858,7 +854,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		}
 	}
 
-	if (k == -1) {
+	if (k == (UINT32)-1) {
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
@@ -891,10 +887,9 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N)
 {
-	int k;
+	UINT32 k;
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
-	UINT32 code_option_k;
 	int err;
 
 	assert(bpe != NULL);
@@ -906,16 +901,12 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	assert(mapped_quantized_dc != NULL);
 	assert(size > 0);
 
-	/* TODO: read code option */
-#if 1
-	err = bio_read_dc_bits(bpe->bio, &code_option_k, code_option_length[N]);
+	/* read code option */
+	err = bio_read_dc_bits(bpe->bio, &k, code_option_length[N]);
 
 	if (err) {
 		return err;
 	}
-#endif
-
-	k = -1;
 
 	if (first) {
 		/* first gaggle in a segment */
@@ -932,7 +923,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		}
 	}
 
-	if (k == -1) {
+	if (k == (UINT32)-1) {
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
