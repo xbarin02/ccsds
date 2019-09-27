@@ -909,6 +909,45 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta)
 	return d;
 }
 
+/* 4.3.2.4 */
+static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
+{
+	size_t S;
+	INT32 *quantized_dc;
+	UINT32 *mapped_quantized_dc;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	quantized_dc = bpe->quantized_dc;
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
+
+	assert(quantized_dc != NULL);
+	assert(mapped_quantized_dc != NULL);
+
+	assert(S > 0);
+	assert(N > 1);
+
+	/* 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
+	 * coefficient values (taken in raster scan order) shall be encoded. */
+	for (m = 1; m < S; ++m) {
+		INT32 d_ = quantized_dc[m] - quantized_dc[m-1]; /* (18) */
+		INT32 x_min = -((INT32)1 << (N-1));
+		INT32 x_max = +((INT32)1 << (N-1)) - 1;
+		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
+		UINT32 d; /* (19) = mapped quantized coefficients */
+
+		assert(quantized_dc[m-1] - x_min >= 0);
+		assert(x_max - quantized_dc[m-1] >= 0);
+
+		/* Each difference value ... shall be mapped to a non-negative integer ... */
+		d = map_quantized_dc(d_, theta);
+
+		mapped_quantized_dc[m] = d;
+	}
+}
+
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
 int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
 {
@@ -950,8 +989,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			}
 		}
 	} else {
+#if 0
 		size_t m;
 		UINT32 *mapped_quantized_dc = bpe->mapped_quantized_dc;
+#endif
 		size_t g, G;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
@@ -965,7 +1006,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/* NOTE the N-bit reference sample is written in bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle */
 
 		assert(S > 0);
-
+#if 0
 		assert(mapped_quantized_dc != NULL);
 
 		/* NOTE mapped_quantized_dc[0] is not accessed */
@@ -989,6 +1030,9 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			mapped_quantized_dc[m] = d;
 		}
+#else
+		map_quantized_dcs_to_mapped_quantized_dcs(bpe, N);
+#endif
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
 		G = S / 16;
