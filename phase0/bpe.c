@@ -1090,8 +1090,11 @@ static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
 		assert(quantized_dc[m-1] - x_min >= 0);
 		assert(x_max - quantized_dc[m-1] >= 0);
 
-		/* quantized_dc[m] = inverse_map_quantized_dc(mapped_quantized_dc[m], theta) + quantized_dc[m-1]; */
+#if 0
+		quantized_dc[m] = inverse_map_quantized_dc(mapped_quantized_dc[m], theta) + quantized_dc[m-1];
+#else
 		quantized_dc[m] = 0;
+#endif
 	}
 }
 
