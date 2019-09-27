@@ -1097,6 +1097,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	size_t blk;
 	size_t q;
 	size_t S;
+	INT32 *quantized_dc;
 
 	assert(bpe != NULL);
 
@@ -1106,32 +1107,31 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
-	{
-		INT32 *quantized_dc = bpe->quantized_dc;
 
-		assert(quantized_dc != NULL);
+	quantized_dc = bpe->quantized_dc;
 
-		for (blk = 0; blk < S; ++blk) {
-			/* FIXME in general, DC coefficients are INT32 and can be negative */
-			quantized_dc[blk] = *(bpe->segment + blk * BLOCK_SIZE) >> q;
-		}
+	assert(quantized_dc != NULL);
 
-		/* 4.3.1.6 TODO
-		 * The quantized DC coefficients shall be encoded using
-		 * the procedure described in 4.3.2, which effectively
-		 * encodes several of the most significant bits from
-		 * each DC coefficient. */
-
-		/* 4.3.1.7 TODO
-		 * When q >max{BitDepthAC,BitShift(LL3)}, the next
-		 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
-		 * of each DC coefficient appear in the coded bitstream,
-		 * as described in 4.3.3.
-		 */
-
-		/* NOTE Section 4.3.2 */
-		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+	for (blk = 0; blk < S; ++blk) {
+		/* NOTE in general, DC coefficients are INT32 and can be negative */
+		quantized_dc[blk] = *(bpe->segment + blk * BLOCK_SIZE) >> q; /* Eq. (16) */
 	}
+
+	/* 4.3.1.6 TODO
+	 * The quantized DC coefficients shall be encoded using
+	 * the procedure described in 4.3.2, which effectively
+	 * encodes several of the most significant bits from
+	 * each DC coefficient. */
+
+	/* 4.3.1.7 TODO
+	 * When q >max{BitDepthAC,BitShift(LL3)}, the next
+	 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
+	 * of each DC coefficient appear in the coded bitstream,
+	 * as described in 4.3.3.
+	 */
+
+	/* NOTE Section 4.3.2 */
+	bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
 
 	return RET_SUCCESS;
 }
@@ -1141,6 +1141,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	size_t blk;
 	size_t q;
 	size_t S;
+	INT32 *quantized_dc;
 
 	assert(bpe != NULL);
 
@@ -1150,30 +1151,29 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
-	{
-		INT32 *quantized_dc = bpe->quantized_dc;
 
-		assert(quantized_dc != NULL);
+	quantized_dc = bpe->quantized_dc;
 
-		/* 4.3.1.6 TODO
-		 * The quantized DC coefficients shall be encoded using
-		 * the procedure described in 4.3.2, which effectively
-		 * encodes several of the most significant bits from
-		 * each DC coefficient. */
+	assert(quantized_dc != NULL);
 
-		/* 4.3.1.7 TODO
-		 * When q >max{BitDepthAC,BitShift(LL3)}, the next
-		 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
-		 * of each DC coefficient appear in the coded bitstream,
-		 * as described in 4.3.3.
-		 */
+	/* 4.3.1.6 TODO
+	 * The quantized DC coefficients shall be encoded using
+	 * the procedure described in 4.3.2, which effectively
+	 * encodes several of the most significant bits from
+	 * each DC coefficient. */
 
-		/* NOTE Section 4.3.2 */
-		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+	/* 4.3.1.7 TODO
+	 * When q >max{BitDepthAC,BitShift(LL3)}, the next
+	 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
+	 * of each DC coefficient appear in the coded bitstream,
+	 * as described in 4.3.3.
+	 */
 
-		for (blk = 0; blk < S; ++blk) {
-			*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q;
-		}
+	/* NOTE Section 4.3.2 */
+	bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+
+	for (blk = 0; blk < S; ++blk) {
+		*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q; /* inverse of Eq. (16) */
 	}
 
 	return RET_SUCCESS;
