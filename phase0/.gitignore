@@ -4,6 +4,9 @@ doc
 # binaries
 compress
 perftest
+biotest
+pgm2h
+aquas
 
 # backup files
 *~
@@ -16,4 +19,3 @@ perftest
 
 # Makefile overlay
 Makefile.local
-biotest

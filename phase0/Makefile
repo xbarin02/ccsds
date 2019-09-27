@@ -33,6 +33,16 @@ bpe.o: bpe.c bpe.h frame.h common.h bio.h
 
 biotest: biotest.o bio.o common.o
 
+biotest.o: biotest.c common.h bio.h
+
+pgm2h: pgm2h.o common.o frame.o
+
+pgm2h.o: pgm2h.c common.h frame.h
+
+aquas: aquas.o common.o frame.o dwt.o dwtfloat.o dwtint.o bio.o bpe.o
+
+aquas.o: aquas.c config.h common.h frame.h dwt.h bio.h bpe.h Lenna256.h
+
 clean:
 	$(RM) -- *.o $(TARGETS)
 
