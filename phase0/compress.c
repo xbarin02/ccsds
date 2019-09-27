@@ -18,42 +18,6 @@
 #include "bio.h"
 #include "bpe.h"
 
-#if 0
-int bpe_encode(const struct frame *frame, const struct parameters *parameters)
-{
-	/* LL band size */
-	size_t width_s = frame->width >> 3;
-	size_t height_s = frame->height >> 3;
-
-	/* start of the current segment (in LL band) */
-	size_t segment_y = 0, segment_x = 0;
-
-	/* for each segment */
-	{
-		/* encode segment header, BLUE BOOK section 4.2 */
-
-		/* quantize DC coefficients, BLUE BOOK section 4.3 */
-
-		/* encode quantized DC coefficients, BLUE BOOK section 4.3 */
-
-		/* output additional DC bit planes, BLUE BOOK section 4.3 */
-
-		/* encode AC bit depths, BLUE BOOK section 4.4 */
-
-		/* for each bit plane, BLUE BOOK section 4.5 */
-		{
-			/* stage 0: DC refinement bits for all blocks */
-			/* stage 1: code parents update for all blocks */
-			/* stage 2: code children updates for all blocks */
-			/* stage 3: code grandchildren updates for all blocks */
-			/* stage 4: produce refinement bits for all blocks */
-		}
-	}
-
-	return RET_SUCCESS;
-}
-#endif
-
 int main(int argc, char *argv[])
 {
 	struct frame frame, input_frame;
