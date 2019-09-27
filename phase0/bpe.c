@@ -196,6 +196,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	assert(parameters != NULL);
 
 	bpe->segment = NULL;
+	bpe->quantized_dc = NULL;
 
 	bpe->bio = bio;
 
@@ -266,6 +267,12 @@ int bpe_realloc_segment(struct bpe *bpe, size_t S)
 	bpe->segment = realloc(bpe->segment, S * BLOCK_SIZE * sizeof(INT32));
 
 	if (bpe->segment == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	bpe->quantized_dc = realloc(bpe->quantized_dc, S * sizeof(INT32));
+
+	if (bpe->quantized_dc == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
@@ -351,6 +358,7 @@ int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 	assert(bpe != NULL);
 
 	free(bpe->segment);
+	free(bpe->quantized_dc);
 
 	if (parameters != NULL) {
 		parameters->DWTtype = bpe->segment_header.DWTtype;
@@ -782,11 +790,15 @@ size_t BitShift(const struct bpe *bpe, int subband)
 }
 
 /* Section 4.3.2.6 */
-static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N, INT32 *quantized_dc, UINT32 *mapped_quantized_dc)
+static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N, UINT32 *mapped_quantized_dc)
 {
 	int k;
+	INT32 *quantized_dc;
 
 	assert(bpe != NULL);
+
+	quantized_dc = bpe->quantized_dc;
+
 	assert(first == 0 || quantized_dc != NULL);
 	assert(mapped_quantized_dc != NULL);
 	assert(size > 0);
@@ -846,12 +858,15 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 }
 
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
-int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q, INT32 *quantized_dc)
+int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q)
 {
 	size_t bitDepthDC;
 	size_t N;
+	INT32 *quantized_dc;
 
 	assert(bpe != NULL);
+
+	quantized_dc = bpe->quantized_dc;
 
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 
@@ -869,7 +884,9 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		for (blk = 0; blk < S; ++blk) {
 			int err;
 
-			assert( quantized_dc[blk] == 0 || quantized_dc[blk] == -1 );
+			assert(quantized_dc != NULL);
+
+			assert(quantized_dc[blk] == 0 || quantized_dc[blk] == -1);
 
 			err = bio_put_bit(bpe->bio, (unsigned char) (quantized_dc[blk] != 0));
 
@@ -900,6 +917,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			return RET_FAILURE_MEMORY_ALLOCATION;
 
 		/* NOTE mapped_quantized_dc[0] is not accessed */
+
+		assert(quantized_dc != NULL);
 
 		/* 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
 		 * coefficient values (taken in raster scan order) shall be encoded. */
@@ -936,10 +955,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			if (g == 0) {
 				/* the first gaggle */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, mapped_quantized_dc);
 			} else {
 				/* all other gaggles */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, mapped_quantized_dc);
 			}
 		}
 
@@ -951,10 +970,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			if (g == 0) {
 				/* the first gaggle */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N, mapped_quantized_dc);
 			} else {
 				/* all other gaggles */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, quantized_dc, mapped_quantized_dc);
+				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N, mapped_quantized_dc);
 			}
 		}
 
@@ -966,12 +985,15 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	return RET_SUCCESS;
 }
 
-int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q, INT32 *quantized_dc)
+int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q)
 {
 	size_t bitDepthDC;
 	size_t N;
+	INT32 *quantized_dc;
 
 	assert(bpe != NULL);
+
+	quantized_dc = bpe->quantized_dc;
 
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 
@@ -979,6 +1001,8 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	N = size_max(bitDepthDC - q, 1);
 
 	assert(N <= 10);
+
+	assert(quantized_dc != NULL);
 
 	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
 	if (N == 1) {
@@ -1057,11 +1081,9 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
 	{
-		INT32 *quantized_dc = malloc(S * sizeof(INT32));
+		INT32 *quantized_dc = bpe->quantized_dc;
 
-		if (quantized_dc == NULL) {
-			return RET_FAILURE_MEMORY_ALLOCATION;
-		}
+		assert(quantized_dc != NULL);
 
 		for (blk = 0; blk < S; ++blk) {
 			/* FIXME in general, DC coefficients are INT32 and can be negative */
@@ -1082,9 +1104,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		 */
 
 		/* NOTE Section 4.3.2 */
-		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q, quantized_dc);
-
-		free(quantized_dc);
+		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q);
 	}
 
 	return RET_SUCCESS;
@@ -1121,11 +1141,9 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
 	{
-		INT32 *quantized_dc = malloc(S * sizeof(INT32));
+		INT32 *quantized_dc = bpe->quantized_dc;
 
-		if (quantized_dc == NULL) {
-			return RET_FAILURE_MEMORY_ALLOCATION;
-		}
+		assert(quantized_dc != NULL);
 
 		/* 4.3.1.6 TODO
 		 * The quantized DC coefficients shall be encoded using
@@ -1141,13 +1159,11 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		 */
 
 		/* NOTE Section 4.3.2 */
-		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q, quantized_dc);
+		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q);
 
 		for (blk = 0; blk < S; ++blk) {
 			*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q;
 		}
-
-		free(quantized_dc);
 	}
 
 	return RET_SUCCESS;

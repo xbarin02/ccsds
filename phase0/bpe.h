@@ -61,6 +61,9 @@ struct bpe {
 	struct segment_header segment_header;
 
 	struct frame *frame;
+
+	/* array of S quantized DC coefficients */
+	INT32 *quantized_dc;
 };
 
 size_t BitShift(const struct bpe *bpe, int subband);
