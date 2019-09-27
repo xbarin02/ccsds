@@ -840,6 +840,21 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		return err;
 	}
 #endif
+	if (first) {
+		/* first gaggle in a segment */
+		int err;
+
+		dprint (("BPE: first gaggle in a segment\n"));
+
+		/* N-bit reference */
+		dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
+
+		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
+
+		if (err) {
+			return err;
+		}
+	}
 
 	if (k == -1) {
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
@@ -849,15 +864,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			UINT32 code_option_k;
 
 			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
-
-			/* N-bit reference */
-			dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
-
-			err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
-
-			if (err) {
-				return err;
-			}
 
 			/* 15 mapped sample differences */
 		} else {
@@ -870,15 +876,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		if (first) {
 			/* first gaggle in a segment */
 			int err;
-
-			/* N-bit reference */
-			dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
-
-			err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
-
-			if (err) {
-				return err;
-			}
 
 			/* first part words */
 			/* second part words */
@@ -910,6 +907,22 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 	k = -1; /* TODO: read code option k */
 
+	if (first) {
+		/* first gaggle in a segment */
+		int err;
+
+		dprint (("BPE: first gaggle in a segment\n"));
+
+		/* N-bit reference */
+		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
+
+		err = bio_read_dc_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
+
+		if (err) {
+			return err;
+		}
+	}
+
 	if (k == -1) {
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
@@ -918,15 +931,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			UINT32 code_option_k;
 
 			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
-
-			/* N-bit reference */
-			dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
-
-			err = bio_read_dc_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
-
-			if (err) {
-				return err;
-			}
 
 			/* 15 mapped sample differences */
 		} else {
@@ -939,15 +943,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		if (first) {
 			/* first gaggle in a segment */
 			int err;
-
-			/* N-bit reference */
-			dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
-
-			err = bio_read_dc_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
-
-			if (err) {
-				return err;
-			}
 
 			/* first part words */
 			/* second part words */
