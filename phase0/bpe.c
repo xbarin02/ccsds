@@ -868,13 +868,16 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 }
 
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
-int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q)
+int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
 {
 	size_t bitDepthDC;
 	size_t N;
 	INT32 *quantized_dc;
+	size_t S;
 
 	assert(bpe != NULL);
+
+	S = bpe->S;
 
 	quantized_dc = bpe->quantized_dc;
 
@@ -990,13 +993,16 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	return RET_SUCCESS;
 }
 
-int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t S, size_t q)
+int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
 {
 	size_t bitDepthDC;
 	size_t N;
 	INT32 *quantized_dc;
+	size_t S;
 
 	assert(bpe != NULL);
+
+	S = bpe->S;
 
 	quantized_dc = bpe->quantized_dc;
 
@@ -1055,15 +1061,18 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 }
 
 /* Section 4.3 */
-int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t S)
+int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 {
 	size_t blk;
 	size_t bitDepthDC;
 	size_t bitDepthAC;
 	size_t q_; /* q' in Table 4-8 */
 	size_t q;
+	size_t S;
 
 	assert(bpe != NULL);
+
+	S = bpe->S;
 
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
@@ -1109,21 +1118,24 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		 */
 
 		/* NOTE Section 4.3.2 */
-		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q);
+		bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
 	}
 
 	return RET_SUCCESS;
 }
 
-int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t S)
+int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 {
 	size_t blk;
 	size_t bitDepthDC;
 	size_t bitDepthAC;
 	size_t q_; /* q' in Table 4-8 */
 	size_t q;
+	size_t S;
 
 	assert(bpe != NULL);
+
+	S = bpe->S;
 
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
@@ -1164,7 +1176,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe, size_t
 		 */
 
 		/* NOTE Section 4.3.2 */
-		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, S, q);
+		bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
 
 		for (blk = 0; blk < S; ++blk) {
 			*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q;
@@ -1208,7 +1220,7 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	}
 
 	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
-	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe, S);
+	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe);
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
@@ -1299,7 +1311,7 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 
-	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe, S);
+	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe);
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
