@@ -813,12 +813,13 @@ static const size_t code_option_length[11] = {
 };
 
 /* Section 4.3.2.6 */
-static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N)
+static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	UINT32 k;
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
 	int err;
+	int first = (g == 0);
 
 	assert(bpe != NULL);
 
@@ -855,6 +856,21 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	}
 
 	if (k == (UINT32)-1) {
+		size_t i;
+
+		for (i = first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g*16 + i;
+#if 0
+			/* TODO 4.3.2.8 */
+			err = bio_write_bits(bpe->bio, mapped_quantized_dc[m], /* TODO */ N);
+
+			if (err) {
+				return err;
+			}
+#endif
+		}
+
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
@@ -885,12 +901,13 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	return RET_SUCCESS;
 }
 
-static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, int first, size_t size, size_t N)
+static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	UINT32 k;
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
 	int err;
+	int first = (g == 0);
 
 	assert(bpe != NULL);
 
@@ -1076,13 +1093,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			dprint (("BPE(4.3.2.5): full gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			if (g == 0) {
-				/* the first gaggle */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N);
-			} else {
-				/* all other gaggles */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N);
-			}
+			bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
 
 		/* and (the last in the segment) smaller gaggle */
@@ -1091,13 +1102,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			if (g == 0) {
-				/* the first gaggle */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N);
-			} else {
-				/* all other gaggles */
-				bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N);
-			}
+			bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
 
 		/* TODO */
@@ -1180,13 +1185,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			dprint (("BPE(4.3.2.5): full gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			if (g == 0) {
-				/* the first gaggle */
-				bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N);
-			} else {
-				/* all other gaggles */
-				bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N);
-			}
+			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
 
 		/* and (the last in the segment) smaller gaggle */
@@ -1195,13 +1194,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			if (g == 0) {
-				/* the first gaggle */
-				bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 1, ge, N);
-			} else {
-				/* all other gaggles */
-				bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, 0, ge, N);
-			}
+			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
 
 		/* TODO */
