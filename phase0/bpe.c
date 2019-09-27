@@ -858,7 +858,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (k == (UINT32)-1) {
 		size_t i;
 
-		for (i = first; i < size; ++i) {
+		for (i = (size_t)first; i < size; ++i) {
 			/* write mapped sample difference */
 			size_t m = g*16 + i;
 #if 1
@@ -945,7 +945,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (k == (UINT32)-1) {
 		size_t i;
 
-		for (i = first; i < size; ++i) {
+		for (i = (size_t)first; i < size; ++i) {
 			/* write mapped sample difference */
 			size_t m = g*16 + i;
 #if 1
@@ -997,13 +997,28 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta)
 
 	/* Each difference value ... shall be mapped to a non-negative integer ... */
 	if (d_ >= 0 && (UINT32)d_ <= theta)
-		d = 2 * (UINT32)d_;
+		d = 2 * (UINT32)d_; /* case 0 */
 	else if (d_ < 0 && (UINT32)-d_ <= theta)
-		d = 2 * uint32_abs(d_) - 1;
+		d = 2 * uint32_abs(d_) - 1; /* case 1 */
 	else
-		d = theta + uint32_abs(d_);
+		d = theta + uint32_abs(d_); /* case 2 */
 
 	return d;
+}
+
+/* FIXME this is certainly wrong */
+static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta)
+{
+	INT32 d_;
+
+	if ( (d & 1) == 0 && d <= 2*theta)
+		d_ = (INT32)d/2;
+	else if ( (d & 0) == 0 && d <= 2*theta)
+		d_ = -(INT32)( (d+1)/2 );
+	else
+		d_ = (INT32)d - (INT32)theta;
+
+	return d_;
 }
 
 /* 4.3.2.4 */
@@ -1033,15 +1048,47 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 		INT32 x_min = -((INT32)1 << (N-1));
 		INT32 x_max = +((INT32)1 << (N-1)) - 1;
 		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
-		UINT32 d; /* (19) = mapped quantized coefficients */
 
 		assert(quantized_dc[m-1] - x_min >= 0);
 		assert(x_max - quantized_dc[m-1] >= 0);
 
 		/* Each difference value ... shall be mapped to a non-negative integer ... */
-		d = map_quantized_dc(d_, theta);
+		mapped_quantized_dc[m] = map_quantized_dc(d_, theta); /* (19) = mapped quantized coefficients */
+	}
+}
 
-		mapped_quantized_dc[m] = d;
+/* FIXME this is certainly wrong */
+static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
+{
+	size_t S;
+	INT32 *quantized_dc;
+	UINT32 *mapped_quantized_dc;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	quantized_dc = bpe->quantized_dc;
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
+
+	assert(quantized_dc != NULL);
+	assert(mapped_quantized_dc != NULL);
+
+	assert(S > 0);
+	assert(N > 1);
+
+	/* 4.3.2.4 For the remaining S-1 DC coefficients, the difference between successive quantized
+	 * coefficient values (taken in raster scan order) shall be encoded. */
+	for (m = 1; m < S; ++m) {
+		INT32 x_min = -((INT32)1 << (N-1));
+		INT32 x_max = +((INT32)1 << (N-1)) - 1;
+		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
+
+		assert(quantized_dc[m-1] - x_min >= 0);
+		assert(x_max - quantized_dc[m-1] >= 0);
+
+		/* quantized_dc[m] = inverse_map_quantized_dc(mapped_quantized_dc[m], theta) + quantized_dc[m-1]; */
+		quantized_dc[m] = 0;
 	}
 }
 
@@ -1172,7 +1219,6 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 	} else {
 		size_t g, G;
-		int err;
 
 		dprint (("BPE(4.3.2): N > 1\n"));
 
@@ -1183,16 +1229,6 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
 
 		assert(S > 0);
-
-#if 0
-		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
-
-		err = bio_read_dc_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
-
-		if (err) {
-			return err;
-		}
-#endif
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
 		G = S / 16;
@@ -1215,6 +1251,8 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
+
+		map_mapped_quantized_dcs_to_quantized_dcs(bpe, N);
 
 		/* TODO */
 	}
