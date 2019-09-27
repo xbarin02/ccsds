@@ -1000,8 +1000,11 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta)
 		d = 2 * (UINT32)d_; /* case 0 */
 	else if (d_ < 0 && (UINT32)-d_ <= theta)
 		d = 2 * uint32_abs(d_) - 1; /* case 1 */
-	else
+	else {
+		assert( theta == 0 || d_ < 0 );
+
 		d = theta + uint32_abs(d_); /* case 2 */
+	}
 
 	return d;
 }
