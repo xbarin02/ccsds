@@ -1060,19 +1060,15 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	return RET_SUCCESS;
 }
 
-/* Section 4.3 */
-int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
+/* Sections 4.3.1.2 and 4.3.1.3, returns q, using Eq. (15) and Table 4-8 */
+static size_t DC_quantization_factor(struct bpe *bpe)
 {
-	size_t blk;
-	size_t bitDepthDC;
-	size_t bitDepthAC;
+	size_t bitDepthDC; /* BitDepthDC */
+	size_t bitDepthAC; /* BitDepthAC */
 	size_t q_; /* q' in Table 4-8 */
-	size_t q;
-	size_t S;
+	size_t q; /* q in Eq. (15) */
 
 	assert(bpe != NULL);
-
-	S = bpe->S;
 
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
@@ -1091,6 +1087,22 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	/* The value of q indicates the number of least-significant bits
 	 * in each DC coefficient that are not encoded in the quantized
 	 * DC coefficient values. */
+
+	return q;
+}
+
+/* Section 4.3 */
+int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
+{
+	size_t blk;
+	size_t q;
+	size_t S;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	q = DC_quantization_factor(bpe);
 
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
@@ -1127,9 +1139,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 {
 	size_t blk;
-	size_t bitDepthDC;
-	size_t bitDepthAC;
-	size_t q_; /* q' in Table 4-8 */
 	size_t q;
 	size_t S;
 
@@ -1137,23 +1146,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 
 	S = bpe->S;
 
-	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
-	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
-
-	if (bitDepthDC <= 3)
-		q_ = 0;
-	else if (bitDepthDC - (1 + bitDepthAC/2) <= 1 && bitDepthDC > 3)
-		q_ = bitDepthDC - 3;
-	else if (bitDepthDC - (1 + bitDepthAC/2) > 10 && bitDepthDC > 3)
-		q_ = bitDepthDC - 10;
-	else
-		q_ = 1 + bitDepthAC/2;
-
-	q = size_max(q_, BitShift(bpe, DWT_LL2)); /* FIXME LL3 in (15) */
-
-	/* The value of q indicates the number of least-significant bits
-	 * in each DC coefficient that are not encoded in the quantized
-	 * DC coefficient values. */
+	q = DC_quantization_factor(bpe);
 
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
