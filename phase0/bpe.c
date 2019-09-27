@@ -861,7 +861,9 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		for (i = first; i < size; ++i) {
 			/* write mapped sample difference */
 			size_t m = g*16 + i;
-#if 0
+#if 1
+			dprint (("BPE(4.3.2.8): writing mapped_quantized_dc[%lu]\n", m));
+
 			/* TODO 4.3.2.8 */
 			err = bio_write_bits(bpe->bio, mapped_quantized_dc[m], /* TODO */ N);
 
@@ -941,6 +943,23 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	}
 
 	if (k == (UINT32)-1) {
+		size_t i;
+
+		for (i = first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g*16 + i;
+#if 1
+			dprint (("BPE(4.3.2.8): reading mapped_quantized_dc[%lu]\n", m));
+
+			/* TODO 4.3.2.8 */
+			err = bio_read_bits(bpe->bio, &mapped_quantized_dc[m], /* TODO */ N);
+
+			if (err) {
+				return err;
+			}
+#endif
+		}
+
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */

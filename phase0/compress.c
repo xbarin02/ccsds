@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 	init_parameters(&parameters);
 
 	parameters.DWTtype = 0;
+	parameters.S = 128;
 
 	dprint (("[DEBUG] transform...\n"));
 
