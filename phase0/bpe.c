@@ -818,6 +818,8 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	int k;
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
+	UINT32 code_option_k;
+	int err;
 
 	assert(bpe != NULL);
 
@@ -831,8 +833,8 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	/* TODO 4.3.2.7 */
 	k = -1; /* uncoded */
 
-	/* code option k */
-#if 0
+	/* write code option k */
+#if 1
 	code_option_k = (UINT32)-1;
 	err = bio_write_bits(bpe->bio, code_option_k, code_option_length[N]);
 
@@ -840,9 +842,9 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		return err;
 	}
 #endif
+
 	if (first) {
 		/* first gaggle in a segment */
-		int err;
 
 		dprint (("BPE: first gaggle in a segment\n"));
 
@@ -860,8 +862,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
-			int err;
-			UINT32 code_option_k;
 
 			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
 
@@ -875,7 +875,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* Coded Data Format for a Gaggle When a Coding Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
-			int err;
 
 			/* first part words */
 			/* second part words */
@@ -895,6 +894,8 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	int k;
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
+	UINT32 code_option_k;
+	int err;
 
 	assert(bpe != NULL);
 
@@ -905,11 +906,19 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	assert(mapped_quantized_dc != NULL);
 	assert(size > 0);
 
-	k = -1; /* TODO: read code option k */
+	/* TODO: read code option */
+#if 1
+	err = bio_read_dc_bits(bpe->bio, &code_option_k, code_option_length[N]);
+
+	if (err) {
+		return err;
+	}
+#endif
+
+	k = -1;
 
 	if (first) {
 		/* first gaggle in a segment */
-		int err;
 
 		dprint (("BPE: first gaggle in a segment\n"));
 
@@ -927,8 +936,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
-			int err;
-			UINT32 code_option_k;
 
 			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
 
@@ -942,7 +949,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* Coded Data Format for a Gaggle When a Coding Option Is Selected */
 		if (first) {
 			/* first gaggle in a segment */
-			int err;
 
 			/* first part words */
 			/* second part words */
