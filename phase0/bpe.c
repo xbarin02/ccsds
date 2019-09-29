@@ -1054,6 +1054,7 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 		/* x_min - quantized_dc[m-1] .. the smallest prediction error value */
 		/* x_max - quantized_dc[m-1] .. the largest prediction error value */
 		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
+		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1; /* FIXME: sign if d' is outside [-theta;+theta] */
 
 		/* NOTE see also CCSDS 121.0-B-2 */
 #if 1
