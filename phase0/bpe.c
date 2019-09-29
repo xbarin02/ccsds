@@ -2,7 +2,6 @@
 #include "common.h"
 #include <assert.h>
 #include <stdlib.h>
-#include <stdlib.h>
 
 #define DEBUG_ENCODE_BLOCKS 1
 
