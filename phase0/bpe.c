@@ -994,6 +994,8 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta)
 {
 	UINT32 d; /* (19) = mapped quantized coefficients */
 
+	assert((theta == 0 || d_ < 0) || (d_ <= (INT32)theta && d_ >= -(INT32)theta));
+
 	/* Each difference value ... shall be mapped to a non-negative integer ... */
 	if (d_ >= 0 && (UINT32)d_ <= theta)
 		d = 2 * (UINT32)d_; /* case 0 */
