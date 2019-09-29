@@ -990,7 +990,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 }
 
 /* Eq. (19) */
-static UINT32 map_quantized_dc(INT32 d_, UINT32 theta)
+static UINT32 map_quantized_dc(INT32 d_, UINT32 theta, INT32 sign)
 {
 	UINT32 d; /* (19) = mapped quantized coefficients */
 
@@ -1003,6 +1003,8 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta)
 		d = 2 * uint32_abs(d_) - 1; /* case 1 */
 	else {
 		assert( theta == 0 || d_ < 0 );
+		if (d_ < 0) assert( sign == -1 );
+		if (d_ > 0) assert( sign == +1 );
 
 		d = theta + uint32_abs(d_); /* case 2 */
 	}
@@ -1066,7 +1068,7 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 		assert(x_max - quantized_dc[m-1] >= 0);
 
 		/* Each difference value ... shall be mapped to a non-negative integer ... */
-		mapped_quantized_dc[m] = map_quantized_dc(d_, theta); /* (19) = mapped quantized coefficients */
+		mapped_quantized_dc[m] = map_quantized_dc(d_, theta, sign); /* (19) = mapped quantized coefficients */
 	}
 }
 
