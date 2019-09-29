@@ -1013,7 +1013,7 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta, INT32 sign)
 }
 
 /* FIXME this is certainly wrong */
-static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta)
+static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta, INT32 sign)
 {
 	INT32 d_;
 
@@ -1022,7 +1022,7 @@ static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta)
 	else if ( (d & 0) == 0 && d <= 2*theta)
 		d_ = -(INT32)( (d+1)/2 );
 	else
-		d_ = -(INT32)d + (INT32)theta;
+		d_ = sign*(INT32)(d - (INT32)theta);
 
 	return d_;
 }
@@ -1098,12 +1098,13 @@ static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
 		INT32 x_min = -((INT32)1 << (N-1));
 		INT32 x_max = +((INT32)1 << (N-1)) - 1;
 		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
+		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1;
 
 		assert(quantized_dc[m-1] - x_min >= 0);
 		assert(x_max - quantized_dc[m-1] >= 0);
 
-#if 0
-		quantized_dc[m] = inverse_map_quantized_dc(mapped_quantized_dc[m], theta) + quantized_dc[m-1];
+#if 1
+		quantized_dc[m] = inverse_map_quantized_dc(mapped_quantized_dc[m], theta, sign) + quantized_dc[m-1];
 #else
 		quantized_dc[m] = 0;
 #endif
