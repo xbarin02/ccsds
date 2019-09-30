@@ -993,16 +993,18 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 static UINT32 map_quantized_dc(INT32 d_, UINT32 theta, INT32 sign)
 {
 	UINT32 d; /* (19) = mapped quantized coefficients */
-
+#if 0
 	assert((theta == 0 || d_ < 0) || (d_ <= (INT32)theta && d_ >= -(INT32)theta));
-
+#endif
 	/* Each difference value ... shall be mapped to a non-negative integer ... */
 	if (d_ >= 0 && (UINT32)d_ <= theta)
 		d = 2 * (UINT32)d_; /* case 0 */
 	else if (d_ < 0 && (UINT32)-d_ <= theta)
 		d = 2 * uint32_abs(d_) - 1; /* case 1 */
 	else {
+#if 0
 		assert( theta == 0 || d_ < 0 );
+#endif
 		if (d_ < 0) assert( sign == -1 );
 		if (d_ > 0) assert( sign == +1 );
 
