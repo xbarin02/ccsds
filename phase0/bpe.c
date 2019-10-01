@@ -993,38 +993,39 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 static UINT32 map_quantized_dc(INT32 d_, UINT32 theta, INT32 sign)
 {
 	UINT32 d; /* (19) = mapped quantized coefficients */
-#if 0
-	assert((theta == 0 || d_ < 0) || (d_ <= (INT32)theta && d_ >= -(INT32)theta));
-#endif
+
 	/* Each difference value ... shall be mapped to a non-negative integer ... */
-	if (d_ >= 0 && (UINT32)d_ <= theta)
-		d = 2 * (UINT32)d_; /* case 0 */
-	else if (d_ < 0 && (UINT32)-d_ <= theta)
-		d = 2 * uint32_abs(d_) - 1; /* case 1 */
-	else {
-#if 0
-		assert( theta == 0 || d_ < 0 );
-#endif
+	if (d_ >= 0 && (UINT32)d_ <= theta) {
+		/* case 0: d is even && d <= 2*theta */
+		d = 2 * (UINT32)d_;
+	} else if (d_ < 0 && (UINT32)-d_ <= theta) {
+		/* case 1: d is odd && d < 2*theta */
+		d = 2 * uint32_abs(d_) - 1;
+	} else {
+		/* case 2: d > 2*theta */
 		if (d_ < 0) assert( sign == -1 );
 		if (d_ > 0) assert( sign == +1 );
 
-		d = theta + uint32_abs(d_); /* case 2 */
+		d = theta + uint32_abs(d_);
 	}
 
 	return d;
 }
 
-/* FIXME this is certainly wrong */
 static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta, INT32 sign)
 {
 	INT32 d_;
 
-	if ( (d & 1) == 0 && d <= 2*theta)
-		d_ = (INT32)d/2;
-	else if ( (d & 0) == 0 && d <= 2*theta)
-		d_ = -(INT32)( (d+1)/2 );
-	else
+	if ( (d & 1) == 0 && d <= 2*theta) {
+		/* case 1 */
+		d_ = (INT32)d / 2;
+	} else if ( (d & 0) == 0 && d <= 2*theta) {
+		/* case 1 */
+		d_ = -(INT32)( (d + 1) / 2 );
+	} else {
+		/* case 2 */
 		d_ = sign*(INT32)(d - (INT32)theta);
+	}
 
 	return d_;
 }
