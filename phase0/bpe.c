@@ -1174,8 +1174,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
-
-		/* TODO */
 	}
 
 	return RET_SUCCESS;
@@ -1257,8 +1255,6 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 
 		map_mapped_quantized_dcs_to_quantized_dcs(bpe, N);
-
-		/* TODO */
 	}
 
 	return RET_SUCCESS;
