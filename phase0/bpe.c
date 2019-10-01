@@ -1073,7 +1073,6 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 	}
 }
 
-/* FIXME this is certainly wrong */
 static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
 {
 	size_t S;
