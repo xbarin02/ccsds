@@ -380,7 +380,7 @@ int bpe_encode_block(INT32 *data, size_t stride, struct bio *bio)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			bio_write_int(bio, (UINT32) data[y*stride + x]); /* FIXME INT32 -> UINT32 */
+			bio_write_int(bio, (UINT32) data[y*stride + x]); /* HACK INT32 -> UINT32 */
 		}
 	}
 
@@ -856,7 +856,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 	if (k == (UINT32)-1) {
 		/* UNCODED */
-		/* that is, each δm is encoded using the conventional N-bit unsigned binary integer representation */
+		/* that is, each delta_m is encoded using the conventional N-bit unsigned binary integer representation */
 		size_t i;
 
 		for (i = (size_t)first; i < size; ++i) {
@@ -1519,7 +1519,7 @@ int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
 
 	for (y = 0; y < 8; ++y) {
 		for (x = 0; x < 8; ++x) {
-			bio_read_int(bio, (UINT32 *) &data[y*stride + x]); /* FIXME UINT32 -> INT32 */
+			bio_read_int(bio, (UINT32 *) &data[y*stride + x]); /* HACK UINT32 -> INT32 */
 		}
 	}
 
