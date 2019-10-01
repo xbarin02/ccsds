@@ -1339,6 +1339,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	 * effectively encodes the first N bits of each DC coefficient.
 	 */
 
+#if 0
 	/* TODO Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
@@ -1360,9 +1361,12 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 			/* TODO 4.3.3.2: encode p-th most-significant (?) bit of each DC coefficient */
 			for (blk = 0; blk < S; ++blk) {
 				INT32 dc_bit = (*(bpe->segment + blk * BLOCK_SIZE) >> p) & 1;
+
+				bio_put_bit(bpe->bio, (unsigned char)dc_bit);
 			}
 		}
 	}
+#endif
 
 	return RET_SUCCESS;
 }
@@ -1373,6 +1377,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	size_t q;
 	size_t S;
 	INT32 *quantized_dc;
+	size_t bitDepthAC;
 
 	assert(bpe != NULL);
 
@@ -1406,6 +1411,37 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	for (blk = 0; blk < S; ++blk) {
 		*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q; /* inverse of Eq. (16) */
 	}
+
+#if 0
+	/* TODO...*/
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
+		/* TODO 4.3.3.1 */
+		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
+		size_t b;
+
+		dprint (("BPE(4.3.3): coding additional %lu bits\n", B));
+
+		assert(B > 0);
+
+		for (b = 0; b < B; ++b) {
+			size_t p; /* bit plane */
+
+			assert(q-1 >= b);
+
+			p = q-1-b;
+
+			/* TODO 4.3.3.2: encode p-th most-significant (?) bit of each DC coefficient */
+			for (blk = 0; blk < S; ++blk) {
+				unsigned char bit;
+
+				bio_get_bit(bpe->bio, &bit);
+
+				*(bpe->segment + blk * BLOCK_SIZE) |= ((INT32)bit << p);
+			}
+		}
+	}
+#endif
 
 	return RET_SUCCESS;
 }
