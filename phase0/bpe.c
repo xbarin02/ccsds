@@ -1342,7 +1342,21 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	/* TODO Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
-		/* TODO */
+		/* TODO 4.3.3.1 */
+		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
+		size_t b;
+
+		assert(B > 0);
+
+		for (b = 0; b < B; ++b) {
+			size_t bp; /* bit plane */
+
+			assert(q-1 >= b);
+
+			bp = q-1-b;
+
+			/* TODO 4.3.3.2: encode bp-th most-significant (?) bit of each DC coefficient */
+		}
 	}
 
 	return RET_SUCCESS;
