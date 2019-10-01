@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	init_parameters(&parameters);
 
 	parameters.DWTtype = 0;
-	parameters.S = 128;
+	parameters.S = 64;
 
 	dprint (("[DEBUG] transform...\n"));
 
@@ -84,6 +84,8 @@ int main(int argc, char *argv[])
 	bio_open(&bio, ptr, BIO_MODE_WRITE);
 	bpe_encode(&frame, &parameters, &bio);
 	bio_close(&bio);
+
+	dprint (("coded stream size: %lu bytes\n", (unsigned long)(bio.ptr - (unsigned char *)ptr)));
 
 	/* rewrite the frame with random data */
 	frame_randomize(&frame);
