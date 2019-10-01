@@ -1062,10 +1062,8 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1; /* FIXME: sign if d' is outside [-theta;+theta] */
 
 		/* NOTE see also CCSDS 121.0-B-2 */
-#if 1
 		assert(quantized_dc[m] <= x_max);
 		assert(quantized_dc[m] >= x_min);
-#endif
 
 		assert(quantized_dc[m-1] - x_min >= 0);
 		assert(x_max - quantized_dc[m-1] >= 0);
@@ -1106,11 +1104,10 @@ static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
 		assert(quantized_dc[m-1] - x_min >= 0);
 		assert(x_max - quantized_dc[m-1] >= 0);
 
-#if 1
 		quantized_dc[m] = inverse_map_quantized_dc(mapped_quantized_dc[m], theta, sign) + quantized_dc[m-1];
-#else
-		quantized_dc[m] = 0;
-#endif
+
+		assert(quantized_dc[m] <= x_max);
+		assert(quantized_dc[m] >= x_min);
 	}
 }
 
