@@ -884,6 +884,12 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			size_t m = g*16 + i;
 
 			/* first part words */
+		}
+
+		for (i = (size_t)first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g*16 + i;
+
 			/* second part words */
 		}
 	}
@@ -931,6 +937,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	}
 
 	if (k == (UINT32)-1) {
+		/* UNCODED */
 		size_t i;
 
 		for (i = (size_t)first; i < size; ++i) {
@@ -948,30 +955,19 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 				return err;
 			}
 		}
-
-		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
-		if (first) {
-			/* first gaggle in a segment */
-
-			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
-
-			/* 15 mapped sample differences */
-		} else {
-			/* subsequent gaggles */
-
-			/* J mapped sample differences */
-		}
 	} else {
-		/* Coded Data Format for a Gaggle When a Coding Option Is Selected */
-		if (first) {
-			/* first gaggle in a segment */
+		/* CODED Data Format for a Gaggle When a Coding Option Is Selected */
+		size_t i;
+
+		for (i = (size_t)first; i < size; ++i) {
+			size_t m = g*16 + i;
 
 			/* first part words */
-			/* second part words */
-		} else {
-			/* subsequent gaggles */
+		}
 
-			/* first part words */
+		for (i = (size_t)first; i < size; ++i) {
+			size_t m = g*16 + i;
+
 			/* second part words */
 		}
 	}
