@@ -1454,6 +1454,19 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	return RET_SUCCESS;
 }
 
+int bpe_zero_block(INT32 *data, size_t stride)
+{
+	size_t y, x;
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			data[y*stride + x] = 0;
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
 int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
 {
 	size_t y, x;
@@ -1524,6 +1537,11 @@ int bpe_decode_segment(struct bpe *bpe)
 	}
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
+
+	/* HACK: until the BPE is fully implemented */
+#if (DEBUG_ENCODE_BLOCKS == 0)
+	bpe_zero_block(bpe->segment + blk * BLOCK_SIZE, 8);
+#endif
 
 	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe);
 
