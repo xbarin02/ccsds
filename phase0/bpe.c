@@ -1045,7 +1045,7 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 		/* x_min - quantized_dc[m-1] .. the smallest prediction error value */
 		/* x_max - quantized_dc[m-1] .. the largest prediction error value */
 		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
-		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1; /* FIXME: sign if d' is outside [-theta;+theta] */
+		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1; /* FIXME: sign when d' is outside [-theta;+theta] */
 
 		/* NOTE see also CCSDS 121.0-B-2 */
 		assert(quantized_dc[m] <= x_max);
@@ -1156,6 +1156,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
 		G = S / 16;
 		g = 0; /* gaggle number */
+
+		/* TODO rewrite the following two for-if statements into a single do-while statement */
 
 		/* full 16-element gaggles */
 		for (; g < G; ++g) {
