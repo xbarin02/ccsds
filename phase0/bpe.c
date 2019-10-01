@@ -1349,13 +1349,16 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 		assert(B > 0);
 
 		for (b = 0; b < B; ++b) {
-			size_t bp; /* bit plane */
+			size_t p; /* bit plane */
 
 			assert(q-1 >= b);
 
-			bp = q-1-b;
+			p = q-1-b;
 
-			/* TODO 4.3.3.2: encode bp-th most-significant (?) bit of each DC coefficient */
+			/* TODO 4.3.3.2: encode p-th most-significant (?) bit of each DC coefficient */
+			for (blk = 0; blk < S; ++blk) {
+				INT32 dc_bit = (*(bpe->segment + blk * BLOCK_SIZE) >> p) & 1;
+			}
 		}
 	}
 
