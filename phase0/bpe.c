@@ -1346,6 +1346,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
 		size_t b;
 
+		dprint (("BPE(4.3.3): coding additional %lu bits\n", B));
+
 		assert(B > 0);
 
 		for (b = 0; b < B; ++b) {
