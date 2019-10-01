@@ -855,6 +855,8 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	}
 
 	if (k == (UINT32)-1) {
+		/* UNCODED */
+		/* that is, each δm is encoded using the conventional N-bit unsigned binary integer representation */
 		size_t i;
 
 		for (i = (size_t)first; i < size; ++i) {
@@ -864,7 +866,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			dprint (("BPE(4.3.2.8): writing mapped_quantized_dc[%lu]\n", m));
 
 			/* 4.3.2.8 */
-			assert( mapped_quantized_dc[m] < (1<<N) );
+			assert( mapped_quantized_dc[m] < (1U<<N) );
 
 			err = bio_write_bits(bpe->bio, mapped_quantized_dc[m], N);
 
@@ -872,28 +874,14 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 				return err;
 			}
 		}
-
-		/* Coded Data Format for a Gaggle When Uncoded Option Is Selected */
-		if (first) {
-			/* first gaggle in a segment */
-
-			dprint (("BPE: first gaggle in a segment, UNCODED\n"));
-
-			/* 15 mapped sample differences */
-		} else {
-			/* subsequent gaggles */
-
-			/* J mapped sample differences */
-		}
 	} else {
-		/* Coded Data Format for a Gaggle When a Coding Option Is Selected */
-		if (first) {
-			/* first gaggle in a segment */
+		/* CODED Data Format for a Gaggle When a Coding Option Is Selected */
+		/* encoded via one of several variable-length codes parameterized by a nonnegative integer k */
+		size_t i;
 
-			/* first part words */
-			/* second part words */
-		} else {
-			/* subsequent gaggles */
+		for (i = (size_t)first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g*16 + i;
 
 			/* first part words */
 			/* second part words */
@@ -954,7 +942,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			/* 4.3.2.8 */
 			err = bio_read_bits(bpe->bio, &mapped_quantized_dc[m], N);
 
-			assert( mapped_quantized_dc[m] < (1<<N) );
+			assert( mapped_quantized_dc[m] < (1U<<N) );
 
 			if (err) {
 				return err;
@@ -1026,7 +1014,7 @@ static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta, INT32 sign)
 		d_ = -(INT32)( (d + 1) / 2 );
 	} else {
 		/* case 2 */
-		d_ = sign*(INT32)(d - (INT32)theta);
+		d_ = sign*(INT32)((INT32)d - (INT32)theta);
 	}
 
 	return d_;
