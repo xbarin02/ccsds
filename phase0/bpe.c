@@ -1339,7 +1339,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	 * effectively encodes the first N bits of each DC coefficient.
 	 */
 
-#if 0
+#if 1
 	/* TODO Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
@@ -1412,7 +1412,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 		*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q; /* inverse of Eq. (16) */
 	}
 
-#if 0
+#if 1
 	/* TODO...*/
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
