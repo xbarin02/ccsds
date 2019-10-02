@@ -812,7 +812,7 @@ static const size_t code_option_length[11] = {
 };
 
 /* Section 4.3.2.11 b) heuristic procedure */
-static UINT32 select_code_option(struct bpe *bpe, size_t size, size_t N, size_t g)
+static UINT32 heuristic_select_code_option(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	size_t i;
 	UINT32 *mapped_quantized_dc;
@@ -898,9 +898,17 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
 	} else {
-		assert(bpe->segment_header.OptDCSelect == 0);
-
-		k = select_code_option(bpe, size, N, g);
+		switch (bpe->segment_header.OptDCSelect) {
+			case 0:
+				k = heuristic_select_code_option(bpe, size, N, g);
+				break;
+			case 1:
+				dprint (("[ERROR] not implemented\n"));
+				return RET_FAILURE_LOGIC_ERROR;
+			default:
+				dprint (("[ERROR] invalid value for OptDCSelect\n"));
+				return RET_FAILURE_LOGIC_ERROR;
+		}
 	}
 
 	/* write code option k */
