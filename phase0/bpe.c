@@ -769,10 +769,12 @@ static size_t size_max(size_t a, size_t b)
 	return a > b ? a : b;
 }
 
+#if 0
 static INT32 int32_min(INT32 a, INT32 b)
 {
 	return a < b ? a : b;
 }
+#endif
 
 static UINT32 uint32_min(UINT32 a, UINT32 b)
 {
@@ -1528,6 +1530,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	S = bpe->S;
 
 	q = DC_quantization_factor(bpe);
+
+	assert(q <= 32);
 
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
