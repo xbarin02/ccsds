@@ -1382,7 +1382,11 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			dprint (("BPE(4.3.2.5): gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+			err = bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+
+			if (err) {
+				return err;
+			}
 		}
 
 		map_mapped_quantized_dcs_to_quantized_dcs(bpe, N);
