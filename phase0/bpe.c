@@ -1780,6 +1780,9 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, int flush)
 
 	S = bpe->S;
 	s = bpe->s;
+
+	assert(s < S);
+
 	local = bpe->segment + s * BLOCK_SIZE;
 
 	for (y = 0; y < 8; ++y) {
