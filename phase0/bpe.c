@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define DEBUG_ENCODE_BLOCKS 1
+#define DEBUG_ENCODE_BLOCKS 0
 
 #define BLOCK_SIZE (8 * 8)
 

@@ -41,6 +41,8 @@ int main()
 	bpe_encode(&input_frame, &parameters, &bio);
 	bio_close(&bio);
 
+	dprint (("coded stream size: %lu bytes\n", (unsigned long)(bio.ptr - (unsigned char *)compressed_bitstream)));
+
 	dprint (("[DEBUG] bit-plane decoder...\n"));
 
 	output_frame = input_frame;
