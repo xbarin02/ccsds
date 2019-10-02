@@ -880,7 +880,7 @@ static UINT32 select_code_option(struct bpe *bpe, size_t size, size_t N, size_t 
 /* Section 4.3.2.6 */
 static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
-	UINT32 k;
+	UINT32 k = (UINT32)-1; /* uncoded by default */
 	INT32 *quantized_dc;
 	UINT32 *mapped_quantized_dc;
 	int err;
@@ -897,14 +897,15 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
-		k = (UINT32)-1; /* say, uncoded */
 	} else {
 		k = select_code_option(bpe, size, N, g);
 		dprint (("BPE(4.3.2.11): k = %lu\n", k));
 	}
 
+#if 0
 	/* TODO 4.3.2.7 */
 	k = (UINT32)-1; /* uncoded */
+#endif
 
 	/* write code option k */
 	err = bio_write_bits(bpe->bio, k, code_option_length[N]);
@@ -958,6 +959,11 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			size_t m = g*16 + i;
 
 			/* first part words */
+			err = bio_write_gr_1st_part(bpe->bio, (size_t)k, mapped_quantized_dc[m]);
+
+			if (err) {
+				return err;
+			}
 		}
 
 		for (i = (size_t)first; i < size; ++i) {
@@ -965,6 +971,11 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			size_t m = g*16 + i;
 
 			/* second part words */
+			err = bio_write_gr_2nd_part(bpe->bio, (size_t)k, mapped_quantized_dc[m]);
+
+			if (err) {
+				return err;
+			}
 		}
 	}
 
@@ -993,6 +1004,11 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 	if (err) {
 		return err;
+	}
+
+	/* e.g. 100 (in binary) should not be considered as negative number */
+	if (k != (UINT32)-1) {
+		k &= ((UINT32)1 << code_option_length[N]) - 1;
 	}
 
 	if (first) {
@@ -1033,16 +1049,28 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* CODED Data Format for a Gaggle When a Coding Option Is Selected */
 		size_t i;
 
+		dprint (("BPE: CODED OPTION k=%lu\n", k));
+
 		for (i = (size_t)first; i < size; ++i) {
 			size_t m = g*16 + i;
 
 			/* first part words */
+			err = bio_read_gr_1st_part(bpe->bio, (size_t)k, &mapped_quantized_dc[m]);
+
+			if (err) {
+				return err;
+			}
 		}
 
 		for (i = (size_t)first; i < size; ++i) {
 			size_t m = g*16 + i;
 
 			/* second part words */
+			err = bio_read_gr_2nd_part(bpe->bio, (size_t)k, &mapped_quantized_dc[m]);
+
+			if (err) {
+				return err;
+			}
 		}
 	}
 
@@ -1972,5 +2000,5 @@ size_t get_maximum_stream_size(struct frame *frame)
 	width = ceil_multiple8(frame->width);
 	height = ceil_multiple8(frame->height);
 
-	return height * width * sizeof(int) + 20 * get_total_no_blocks(frame) + 4096;
+	return height * width * sizeof(int) + 4096 * get_total_no_blocks(frame) + 4096;
 }

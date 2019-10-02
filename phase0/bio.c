@@ -159,6 +159,8 @@ int bio_write_bits(struct bio *bio, UINT32 b, size_t n)
 {
 	size_t i;
 
+	assert(n <= 32);
+
 	for (i = 0; i < n; ++i) {
 		/* masking the LSB omitted */
 		int err = bio_put_bit(bio, (unsigned char)b);
@@ -176,6 +178,8 @@ int bio_write_bits(struct bio *bio, UINT32 b, size_t n)
 int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 {
 	size_t i;
+
+	assert(n <= 32);
 
 	UINT32 word = 0;
 
@@ -268,19 +272,7 @@ int bio_write_unary(struct bio *bio, UINT32 N)
 	return RET_SUCCESS;
 }
 
-int bio_write_gr_1st_part(struct bio *bio, size_t k, UINT32 N)
-{
-	UINT32 Q = N >> k;
-
-	return bio_write_unary(bio, Q);
-}
-
-int bio_write_gr_2nd_part(struct bio *bio, size_t k, UINT32 N)
-{
-	return bio_write_bits(bio, N, k);
-}
-
-int bio_read_gr_1st_part(struct bio *bio, size_t k, UINT32 *N)
+int bio_read_unary(struct bio *bio, UINT32 *N)
 {
 	UINT32 Q = 0;
 
@@ -300,6 +292,36 @@ int bio_read_gr_1st_part(struct bio *bio, size_t k, UINT32 *N)
 
 	assert(N != NULL);
 
+	*N = Q;
+
+	return RET_SUCCESS;
+}
+
+int bio_write_gr_1st_part(struct bio *bio, size_t k, UINT32 N)
+{
+	UINT32 Q = N >> k;
+
+	return bio_write_unary(bio, Q);
+}
+
+int bio_write_gr_2nd_part(struct bio *bio, size_t k, UINT32 N)
+{
+	assert(k <= 32);
+
+	return bio_write_bits(bio, N, k);
+}
+
+int bio_read_gr_1st_part(struct bio *bio, size_t k, UINT32 *N)
+{
+	UINT32 Q;
+	int err = bio_read_unary(bio, &Q);
+
+	if (err) {
+		return err;
+	}
+
+	assert(N != NULL);
+
 	*N = Q << k;
 
 	return RET_SUCCESS;
@@ -308,7 +330,11 @@ int bio_read_gr_1st_part(struct bio *bio, size_t k, UINT32 *N)
 int bio_read_gr_2nd_part(struct bio *bio, size_t k, UINT32 *N)
 {
 	UINT32 w;
-	int err = bio_read_bits(bio, &w, k);
+	int err;
+
+	assert(k <= 32);
+
+	err = bio_read_bits(bio, &w, k);
 
 	if (err) {
 		return err;

@@ -73,6 +73,8 @@ int main(int argc, char *argv[])
 
 	frame_dump_chunked_as_semiplanar(&frame, "dwt3.pgm", 8);
 
+	dprint (("allocating %lu bytes...\n", (unsigned long)get_maximum_stream_size(&frame)));
+
 	/** (3) BPE */
 	ptr = malloc(get_maximum_stream_size(&frame));
 
