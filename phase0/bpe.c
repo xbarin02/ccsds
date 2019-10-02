@@ -761,7 +761,7 @@ int bpe_read_segment_header(struct bpe *bpe)
 		}
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 static size_t size_max(size_t a, size_t b)
@@ -1233,7 +1233,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_2st_step(struct bpe *bp
 		}
 	}
 
-	return 0;
+	return RET_SUCCESS;
 }
 
 int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
@@ -1312,6 +1312,53 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		}
 
 		map_mapped_quantized_dcs_to_quantized_dcs(bpe, N);
+	}
+
+	return RET_SUCCESS;
+}
+
+/* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
+int bpe_decode_segment_initial_coding_of_DC_coefficients_2st_step(struct bpe *bpe, size_t q)
+{
+	size_t blk;
+	size_t S;
+	size_t bitDepthAC;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
+		/* 4.3.3.1 */
+		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
+		size_t b;
+
+		dprint (("BPE(4.3.3): decoding additional %lu bits\n", B));
+
+		assert(B > 0);
+
+		for (b = 0; b < B; ++b) {
+			size_t p; /* bit plane */
+
+			assert(q-1 >= b);
+
+			p = q-1-b;
+
+			/* 4.3.3.2: encode p-th most-significant bit of each DC coefficient */
+			for (blk = 0; blk < S; ++blk) {
+				unsigned char bit;
+
+				int err = bio_get_bit(bpe->bio, &bit);
+
+				if (err) {
+					return err;
+				}
+
+				*(bpe->segment + blk * BLOCK_SIZE) |= ((INT32)bit << p);
+			}
+		}
 	}
 
 	return RET_SUCCESS;
@@ -1398,7 +1445,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	size_t q;
 	size_t S;
 	INT32 *quantized_dc;
-	size_t bitDepthAC;
+	int err;
 
 	assert(bpe != NULL);
 
@@ -1413,56 +1460,23 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 
 	assert(quantized_dc != NULL);
 
-	/* 4.3.1.6 TODO
-	 * The quantized DC coefficients shall be encoded using
-	 * the procedure described in 4.3.2, which effectively
-	 * encodes several of the most significant bits from
-	 * each DC coefficient. */
-
-	/* 4.3.1.7 TODO
-	 * When q >max{BitDepthAC,BitShift(LL3)}, the next
-	 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
-	 * of each DC coefficient appear in the coded bitstream,
-	 * as described in 4.3.3.
-	 */
-
 	/* NOTE Section 4.3.2 */
-	bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+	err = bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+
+	if (err) {
+		return err;
+	}
 
 	for (blk = 0; blk < S; ++blk) {
 		*(bpe->segment + blk * BLOCK_SIZE) = quantized_dc[blk] << q; /* inverse of Eq. (16) */
 	}
 
-#if 1
-	/* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
-	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
-	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
-		/* 4.3.3.1 */
-		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
-		size_t b;
+	/* NOTE Section 4.3.3 */
+	err = bpe_decode_segment_initial_coding_of_DC_coefficients_2st_step(bpe, q);
 
-		dprint (("BPE(4.3.3): decoding additional %lu bits\n", B));
-
-		assert(B > 0);
-
-		for (b = 0; b < B; ++b) {
-			size_t p; /* bit plane */
-
-			assert(q-1 >= b);
-
-			p = q-1-b;
-
-			/* 4.3.3.2: encode p-th most-significant bit of each DC coefficient */
-			for (blk = 0; blk < S; ++blk) {
-				unsigned char bit;
-
-				bio_get_bit(bpe->bio, &bit);
-
-				*(bpe->segment + blk * BLOCK_SIZE) |= ((INT32)bit << p);
-			}
-		}
+	if (err) {
+		return err;
 	}
-#endif
 
 	return RET_SUCCESS;
 }
