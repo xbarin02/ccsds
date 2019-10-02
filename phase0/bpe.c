@@ -898,14 +898,12 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
 	} else {
-		k = select_code_option(bpe, size, N, g);
-		dprint (("BPE(4.3.2.11): k = %lu\n", k));
-	}
+		assert(bpe->segment_header.OptDCSelect == 0);
 
-#if 0
-	/* TODO 4.3.2.7 */
-	k = (UINT32)-1; /* uncoded */
-#endif
+		k = select_code_option(bpe, size, N, g);
+
+		dprint (("BPE(4.3.2.11): k = %lu (heuristic selection of k)\n", k));
+	}
 
 	/* write code option k */
 	err = bio_write_bits(bpe->bio, k, code_option_length[N]);
@@ -1587,7 +1585,9 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 int bpe_encode_segment(struct bpe *bpe, int flush)
 {
 	size_t S;
+#if (DEBUG_ENCODE_BLOCKS == 1)
 	size_t blk;
+#endif
 	int err;
 
 	assert(bpe != NULL);
