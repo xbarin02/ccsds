@@ -1043,7 +1043,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* CODED Data Format for a Gaggle When a Coding Option Is Selected */
 		size_t i;
 
-		dprint (("BPE: CODED OPTION k=%lu\n", k));
+		dprint (("BPE(4.3.2.9): reading mapped_quantized_dc[] using Golomb-Rice code with parameter k=%lu\n", k));
 
 		for (i = (size_t)first; i < size; ++i) {
 			size_t m = g*16 + i;
