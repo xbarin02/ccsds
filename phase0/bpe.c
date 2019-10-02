@@ -1544,13 +1544,13 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 
 	S = bpe->S;
 
+	dprint (("BPE: encoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
+
 	/* next block is not valid block (behind the image) */
 	if (flush) {
-		dprint (("BPE: encoding segment %lu (%lu blocks) <-- the last segment\n", bpe->segment_index, S));
+		dprint (("BPE: the last segment indicated\n"));
 		bpe->segment_header.EndImgFlag = 1;
 		bpe->segment_header.Part3Flag = 1; /* signal new "S" */
-	} else {
-		dprint (("BPE: encoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 	}
 
 	bpe->segment_header.StartImgFlag = (bpe->block_index == 0);
@@ -1710,7 +1710,6 @@ int bpe_push_block(struct bpe *bpe, INT32 *data, size_t stride, int flush)
 	}
 
 	if (flush) {
-		dprint (("BPE: flush\n"));
 		bpe_realloc_segment(bpe, s + 1);
 		S = s + 1;
 	}
@@ -1925,7 +1924,7 @@ int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *b
 		bpe_pop_block_copy_data(&bpe, block.data, block.stride);
 
 		if (bpe_is_last_segment(&bpe) && bpe.s == 0) {
-			dprint (("BPE: last segment indicated, breaking the decoding loop!\n"));
+			dprint (("BPE: the last segment indicated, breaking the decoding loop!\n"));
 			break;
 		}
 	}
