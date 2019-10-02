@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+/* HACK: until the BPE is fully implemented */
 #define DEBUG_ENCODE_BLOCKS 1
 
 #define BLOCK_SIZE (8 * 8)
@@ -1206,7 +1207,7 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 		/* x_min - quantized_dc[m-1] .. the smallest prediction error value */
 		/* x_max - quantized_dc[m-1] .. the largest prediction error value */
 		UINT32 theta = uint32_min((UINT32)(quantized_dc[m-1] - x_min), (UINT32)(x_max - quantized_dc[m-1]));
-		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1; /* FIXME: sign when d' is outside [-theta;+theta] */
+		INT32 sign = (UINT32)(quantized_dc[m-1] - x_min) > (UINT32)(x_max - quantized_dc[m-1]) ? -1 : +1; /* the sign when d' is outside [-theta;+theta] */
 
 		/* NOTE see also CCSDS 121.0-B-2 */
 		assert(quantized_dc[m] <= x_max);
@@ -1515,7 +1516,7 @@ static size_t DC_quantization_factor(struct bpe *bpe)
 	else
 		q_ = 1 + bitDepthAC/2;
 
-	q = size_max(q_, BitShift(bpe, DWT_LL2)); /* FIXME LL3 in (15) */
+	q = size_max(q_, BitShift(bpe, DWT_LL2)); /* LL3 in (15) */
 
 	/* The value of q indicates the number of least-significant bits
 	 * in each DC coefficient that are not encoded in the quantized
@@ -1751,7 +1752,6 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 
-	/* HACK: until the BPE is fully implemented */
 #if (DEBUG_ENCODE_BLOCKS == 0)
 	for (blk = 0; blk < S; ++blk) {
 		bpe_zero_block(bpe->segment + blk * BLOCK_SIZE, 8);
