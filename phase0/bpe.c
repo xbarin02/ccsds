@@ -901,8 +901,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		assert(bpe->segment_header.OptDCSelect == 0);
 
 		k = select_code_option(bpe, size, N, g);
-
-		dprint (("BPE(4.3.2.11): k = %lu (heuristic selection of k)\n", k));
 	}
 
 	/* write code option k */
@@ -916,8 +914,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* first gaggle in a segment */
 
 		/* N-bit reference */
-		dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
-
 		err = bio_write_bits(bpe->bio, (UINT32) quantized_dc[0], N);
 
 		if (err) {
@@ -1011,8 +1007,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		/* first gaggle in a segment */
 
 		/* N-bit reference */
-		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
-
 		err = bio_read_dc_bits(bpe->bio, (UINT32 *) &quantized_dc[0], N);
 
 		if (err) {
@@ -1042,8 +1036,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	} else {
 		/* CODED Data Format for a Gaggle When a Coding Option Is Selected */
 		size_t i;
-
-		dprint (("BPE(4.3.2.9): reading mapped_quantized_dc[] using Golomb-Rice code with parameter k=%lu\n", k));
 
 		for (i = (size_t)first; i < size; ++i) {
 			size_t m = g*16 + i;
@@ -1250,8 +1242,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			size_t ge = (g < full_G) ? 16 : (S % 16);
 			int err;
 
-			dprint (("BPE(4.3.2.5): gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
-
 			err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 
 			if (err) {
@@ -1363,8 +1353,6 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		for (g = 0; g < G; ++g) {
 			size_t ge = (g < full_G) ? 16 : (S % 16);
 			int err;
-
-			dprint (("BPE(4.3.2.5): gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
 			err = bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 
@@ -1655,7 +1643,6 @@ int bpe_decode_segment(struct bpe *bpe)
 	if (bpe->segment_header.Part3Flag) {
 		int err;
 
-		dprint (("BPE: S changed from %lu to %lu ==> reallocate\n", bpe->S, bpe->segment_header.S));
 		err = bpe_realloc_segment(bpe, bpe->segment_header.S);
 
 		if (err) {
@@ -1668,14 +1655,12 @@ int bpe_decode_segment(struct bpe *bpe)
 	if (bpe->segment_header.Part4Flag) {
 		int err;
 
-		dprint (("BPE: width changed %lu to %u ==> reallocate\n", bpe->frame->width, bpe->segment_header.ImageWidth));
 		err = bpe_realloc_frame_width(bpe);
 
 		if (err) {
 			return err;
 		}
 
-		dprint (("BPE: bpp changed from %lu to %lu\n", bpe->frame->bpp, (size_t) ((!!bpe->segment_header.ExtendedPixelBitDepthFlag * 1UL) * 16 + bpe->segment_header.PixelBitDepth)));
 		bpe_realloc_frame_bpp(bpe);
 
 		/* what about DWTtype, etc.? */
@@ -1928,7 +1913,6 @@ int bpe_decode(struct frame *frame, struct parameters *parameters, struct bio *b
 			int err;
 
 			/* increase height */
-			dprint (("BPE: this block starts new strip, increasing the image height!\n"));
 			err = bpe_increase_frame_height(&bpe);
 
 			if (err) {
