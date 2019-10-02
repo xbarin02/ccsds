@@ -41,4 +41,10 @@ int bio_put_bit(struct bio *bio, unsigned char b);
 /* read a single bit */
 int bio_get_bit(struct bio *bio, unsigned char *b);
 
+/* Golomb-Rice, encode/decode non-negative integer N, parameter M = 2^k */
+int bio_write_gr_1st_part(struct bio *bio, size_t k, UINT32 N);
+int bio_write_gr_2nd_part(struct bio *bio, size_t k, UINT32 N);
+int bio_read_gr_1st_part(struct bio *bio, size_t k, UINT32 *N);
+int bio_read_gr_2nd_part(struct bio *bio, size_t k, UINT32 *N);
+
 #endif /* BIO_H_ */

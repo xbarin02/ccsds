@@ -245,3 +245,78 @@ int bio_close(struct bio *bio)
 
 	return RET_SUCCESS;
 }
+
+int bio_write_unary(struct bio *bio, UINT32 N)
+{
+	UINT32 n;
+	int err;
+
+	for (n = 0; n < N; ++n) {
+		int err = bio_put_bit(bio, 0);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	err = bio_put_bit(bio, 1);
+
+	if (err) {
+		return err;
+	}
+
+	return RET_SUCCESS;
+}
+
+int bio_write_gr_1st_part(struct bio *bio, size_t k, UINT32 N)
+{
+	UINT32 Q = N >> k;
+
+	return bio_write_unary(bio, Q);
+}
+
+int bio_write_gr_2nd_part(struct bio *bio, size_t k, UINT32 N)
+{
+	return bio_write_bits(bio, N, k);
+}
+
+int bio_read_gr_1st_part(struct bio *bio, size_t k, UINT32 *N)
+{
+	UINT32 Q = 0;
+
+	do {
+		unsigned char b;
+		int err = bio_get_bit(bio, &b);
+
+		if (err) {
+			return err;
+		}
+
+		if (b == 0)
+			Q++;
+		else
+			break;
+	} while (1);
+
+	assert(N != NULL);
+
+	*N = Q << k;
+
+	return RET_SUCCESS;
+}
+
+int bio_read_gr_2nd_part(struct bio *bio, size_t k, UINT32 *N)
+{
+	UINT32 w;
+	int err = bio_read_bits(bio, &w, k);
+
+	if (err) {
+		return err;
+	}
+
+	assert(N != NULL);
+
+	*N |= w;
+
+	return RET_SUCCESS;
+}
