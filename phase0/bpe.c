@@ -1162,23 +1162,78 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		/* full 16-element gaggles */
 		for (; g < G; ++g) {
 			size_t ge = 16;
+			int err;
 
 			dprint (("BPE(4.3.2.5): full gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+			err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+
+			if (err) {
+				return err;
+			}
 		}
 
 		/* and (the last in the segment) smaller gaggle */
 		if (S % 16 != 0) {
 			size_t ge = S % 16;
+			int err;
 
 			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
 
-			bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+			err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+
+			if (err) {
+				return err;
+			}
 		}
 	}
 
 	return RET_SUCCESS;
+}
+
+/* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
+int bpe_encode_segment_initial_coding_of_DC_coefficients_2st_step(struct bpe *bpe, size_t q)
+{
+	size_t bitDepthAC;
+	size_t blk;
+	size_t S;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
+		/* 4.3.3.1 */
+		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
+		size_t b;
+
+		dprint (("BPE(4.3.3): encoding additional %lu bits\n", B));
+
+		assert(B > 0);
+
+		for (b = 0; b < B; ++b) {
+			size_t p; /* bit plane */
+
+			assert(q-1 >= b);
+
+			p = q-1-b;
+
+			/* 4.3.3.2: encode p-th most-significant bit of each DC coefficient */
+			for (blk = 0; blk < S; ++blk) {
+				INT32 dc_bit = (*(bpe->segment + blk * BLOCK_SIZE) >> p) & 1;
+
+				int err = bio_put_bit(bpe->bio, (unsigned char)dc_bit);
+
+				if (err) {
+					return err;
+				}
+			}
+		}
+	}
+
+	return 0;
 }
 
 int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
@@ -1300,7 +1355,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	size_t q;
 	size_t S;
 	INT32 *quantized_dc;
-	size_t bitDepthAC;
+	int err;
 
 	assert(bpe != NULL);
 
@@ -1320,55 +1375,19 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 		quantized_dc[blk] = *(bpe->segment + blk * BLOCK_SIZE) >> q; /* Eq. (16) */
 	}
 
-	/* 4.3.1.6 TODO
-	 * The quantized DC coefficients shall be encoded using
-	 * the procedure described in 4.3.2, which effectively
-	 * encodes several of the most significant bits from
-	 * each DC coefficient. */
-
-	/* 4.3.1.7 TODO
-	 * When q >max{BitDepthAC,BitShift(LL3)}, the next
-	 * q-max{BitDepthAC,BitShift(LL3)} most significant bits
-	 * of each DC coefficient appear in the coded bitstream,
-	 * as described in 4.3.3.
-	 */
-
 	/* NOTE Section 4.3.2 */
-	bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+	err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
 
-	/* NOTE
-	 * The coding of quantized DC coefficients described in 4.3.2
-	 * effectively encodes the first N bits of each DC coefficient.
-	 */
-
-#if 1
-	/* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
-	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
-	if (q > size_max(bitDepthAC, BitShift(bpe, DWT_LL2))) {
-		/* 4.3.3.1 */
-		size_t B = q - size_max(bitDepthAC, BitShift(bpe, DWT_LL2));
-		size_t b;
-
-		dprint (("BPE(4.3.3): encoding additional %lu bits\n", B));
-
-		assert(B > 0);
-
-		for (b = 0; b < B; ++b) {
-			size_t p; /* bit plane */
-
-			assert(q-1 >= b);
-
-			p = q-1-b;
-
-			/* 4.3.3.2: encode p-th most-significant bit of each DC coefficient */
-			for (blk = 0; blk < S; ++blk) {
-				INT32 dc_bit = (*(bpe->segment + blk * BLOCK_SIZE) >> p) & 1;
-
-				bio_put_bit(bpe->bio, (unsigned char)dc_bit);
-			}
-		}
+	if (err) {
+		return err;
 	}
-#endif
+
+	/* NOTE Section 4.3.3 */
+	err = bpe_encode_segment_initial_coding_of_DC_coefficients_2st_step(bpe, q);
+
+	if (err) {
+		return err;
+	}
 
 	return RET_SUCCESS;
 }

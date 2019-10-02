@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 make compress
 
 for f in data/*.pgm; do
