@@ -178,10 +178,9 @@ int bio_write_bits(struct bio *bio, UINT32 b, size_t n)
 int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 {
 	size_t i;
+	UINT32 word = 0;
 
 	assert(n <= 32);
-
-	UINT32 word = 0;
 
 	for (i = 0; i < n; ++i) {
 		unsigned char bit;
