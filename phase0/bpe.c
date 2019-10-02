@@ -915,8 +915,6 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	if (first) {
 		/* first gaggle in a segment */
 
-		dprint (("BPE: first gaggle in a segment\n"));
-
 		/* N-bit reference */
 		dprint (("BPE(4.3.2.6): writing %lu-bit reference sample...\n", N));
 
@@ -1011,8 +1009,6 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 	if (first) {
 		/* first gaggle in a segment */
-
-		dprint (("BPE: first gaggle in a segment\n"));
 
 		/* N-bit reference */
 		dprint (("BPE(4.3.2.6): reading %lu-bit reference sample...\n", N));
@@ -1239,15 +1235,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	} else {
 		size_t g, full_G, G;
 
-		dprint (("BPE(4.3.2): N > 1\n"));
-
-		/* DC coefficients are represented using two’s-complement representation. */
-
-		/*
-		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
-		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
-
-		/* NOTE the N-bit reference sample is written in bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle */
+		/* DC coefficients are represented using two's-complement representation. */
 
 		assert(S > 0);
 
@@ -1363,13 +1351,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	} else {
 		size_t g, full_G, G;
 
-		dprint (("BPE(4.3.2): N > 1\n"));
-
-		/* DC coefficients are represented using two’s-complement representation. */
-
-		/*
-		 * 4.3.2.3 The first quantized DC coefficient for every sequence of S consecutive coefficients,
-		 * referred to as a reference sample, shall be written to the encoded bitstream directly */
+		/* DC coefficients are represented using two's-complement representation. */
 
 		assert(S > 0);
 
