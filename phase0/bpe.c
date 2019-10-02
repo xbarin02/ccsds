@@ -1588,7 +1588,9 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	/* HACK: until the BPE is fully implemented */
 #if (DEBUG_ENCODE_BLOCKS == 0)
-	bpe_zero_block(bpe->segment + blk * BLOCK_SIZE, 8);
+	for (blk = 0; blk < S; ++blk) {
+		bpe_zero_block(bpe->segment + blk * BLOCK_SIZE, 8);
+	}
 #endif
 
 	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe);
