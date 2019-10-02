@@ -46,7 +46,7 @@ static UINT32 uint32_abs(INT32 j)
 /* Round up to the next highest power of 2 */
 static UINT32 uint32_ceil_pow2(UINT32 v)
 {
-	assert( v != 0 );
+	assert(v != 0);
 
 	v--;
 
@@ -65,7 +65,7 @@ static size_t uint32_floor_log2(UINT32 n)
 {
 	size_t r = 0;
 
-	assert( n != 0 );
+	assert(n != 0);
 
 	while (n >>= 1) {
 		r++;
@@ -1098,7 +1098,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			/* 4.3.2.8 */
 			err = bio_read_bits(bpe->bio, &mapped_quantized_dc[m], N);
 
-			assert( mapped_quantized_dc[m] < (1U<<N) );
+			assert(mapped_quantized_dc[m] < (1U<<N));
 
 			if (err) {
 				return err;
@@ -1148,8 +1148,8 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta, INT32 sign)
 		d = 2 * uint32_abs(d_) - 1;
 	} else {
 		/* case 2: d > 2*theta */
-		if (d_ < 0) assert( sign == -1 );
-		if (d_ > 0) assert( sign == +1 );
+		if (d_ < 0) assert(sign == -1);
+		if (d_ > 0) assert(sign == +1);
 
 		d = theta + uint32_abs(d_);
 	}
