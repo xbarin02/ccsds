@@ -897,7 +897,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
-		k = -1; /* say, uncoded */
+		k = (UINT32)-1; /* say, uncoded */
 	} else {
 		k = select_code_option(bpe, size, N, g);
 		dprint (("BPE(4.3.2.11): k = %lu\n", k));
@@ -1266,7 +1266,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 }
 
 /* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
-int bpe_encode_segment_initial_coding_of_DC_coefficients_2st_step(struct bpe *bpe, size_t q)
+int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bpe, size_t q)
 {
 	size_t bitDepthAC;
 	size_t blk;
@@ -1392,7 +1392,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 }
 
 /* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
-int bpe_decode_segment_initial_coding_of_DC_coefficients_2st_step(struct bpe *bpe, size_t q)
+int bpe_decode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bpe, size_t q)
 {
 	size_t blk;
 	size_t S;
@@ -1504,7 +1504,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	}
 
 	/* NOTE Section 4.3.3 */
-	err = bpe_encode_segment_initial_coding_of_DC_coefficients_2st_step(bpe, q);
+	err = bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(bpe, q);
 
 	if (err) {
 		return err;
@@ -1546,7 +1546,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	}
 
 	/* NOTE Section 4.3.3 */
-	err = bpe_decode_segment_initial_coding_of_DC_coefficients_2st_step(bpe, q);
+	err = bpe_decode_segment_initial_coding_of_DC_coefficients_2nd_step(bpe, q);
 
 	if (err) {
 		return err;
