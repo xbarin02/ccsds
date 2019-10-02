@@ -374,6 +374,7 @@ int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 	return RET_SUCCESS;
 }
 
+#if (DEBUG_ENCODE_BLOCKS == 1)
 int bpe_encode_block(INT32 *data, size_t stride, struct bio *bio)
 {
 	size_t y, x;
@@ -386,6 +387,7 @@ int bpe_encode_block(INT32 *data, size_t stride, struct bio *bio)
 
 	return RET_SUCCESS;
 }
+#endif
 
 #define SET_UINT_INTO_UINT32(var, bit_index, bit_mask) ((UINT32)((var) & (bit_mask)) << (bit_index))
 #define SET_BOOL_INTO_UINT32(var, bit_index) ((UINT32)((var) ? 1 : 0) << (bit_index))
@@ -1679,6 +1681,7 @@ int bpe_zero_block(INT32 *data, size_t stride)
 	return RET_SUCCESS;
 }
 
+#if (DEBUG_ENCODE_BLOCKS == 1)
 int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
 {
 	size_t y, x;
@@ -1691,6 +1694,7 @@ int bpe_decode_block(INT32 *data, size_t stride, struct bio *bio)
 
 	return RET_SUCCESS;
 }
+#endif
 
 int bpe_decode_segment(struct bpe *bpe)
 {
