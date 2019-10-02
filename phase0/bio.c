@@ -46,6 +46,7 @@ int bio_read_int(struct bio *bio, UINT32 *i)
 	return bio_read_bits(bio, i, sizeof(UINT32) * CHAR_BIT);
 }
 
+#if (CONFIG_BIO_REVERSE_BITS == 1)
 static const unsigned char lut_reverse_char[256] = {
 	0, 128, 64, 192, 32, 160, 96, 224, 16, 144, 80, 208, 48, 176, 112, 240,
 	8, 136, 72, 200, 40, 168, 104, 232, 24, 152, 88, 216, 56, 184, 120, 248,
@@ -64,6 +65,7 @@ static const unsigned char lut_reverse_char[256] = {
 	7, 135, 71, 199, 39, 167, 103, 231, 23, 151, 87, 215, 55, 183, 119, 247,
 	15, 143, 79, 207, 47, 175, 111, 239, 31, 159, 95, 223, 63, 191, 127, 255
 };
+#endif
 
 int bio_flush_buffer(struct bio *bio)
 {
