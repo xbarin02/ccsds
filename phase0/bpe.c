@@ -1255,39 +1255,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
 		G = S / 16;
-#if 0
-		g = 0; /* gaggle number */
 
-		/* TODO rewrite the following two for-if statements into a single do-while statement */
-
-		/* full 16-element gaggles */
-		for (; g < G; ++g) {
-			size_t ge = 16;
-			int err;
-
-			dprint (("BPE(4.3.2.5): full gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
-
-			err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
-
-			if (err) {
-				return err;
-			}
-		}
-
-		/* and (the last in the segment) smaller gaggle */
-		if (S % 16 != 0) {
-			size_t ge = S % 16;
-			int err;
-
-			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
-
-			err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
-
-			if (err) {
-				return err;
-			}
-		}
-#else
 		/* g .. gaggle number */
 		for (g = 0; g < (S + 15) / 16; ++g) {
 			size_t ge = (g < G) ? 16 : (S % 16);
@@ -1301,7 +1269,6 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 				return err;
 			}
 		}
-#endif
 	}
 
 	return RET_SUCCESS;
@@ -1407,27 +1374,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
 		G = S / 16;
-#if 0
-		g = 0; /* gaggle number */
 
-		/* full 16-element gaggles */
-		for (; g < G; ++g) {
-			size_t ge = 16;
-
-			dprint (("BPE(4.3.2.5): full gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
-
-			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
-		}
-
-		/* and (the last in the segment) smaller gaggle */
-		if (S % 16 != 0) {
-			size_t ge = S % 16;
-
-			dprint (("BPE(4.3.2.5): smaller gaggle #%lu (size %lu)\n", (unsigned long)g, (unsigned long)ge));
-
-			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
-		}
-#else
 		/* g .. gaggle number */
 		for (g = 0; g < (S + 15) / 16; ++g) {
 			size_t ge = (g < G) ? 16 : (S % 16);
@@ -1437,7 +1384,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 			bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(bpe, ge, N, g);
 		}
-#endif
+
 		map_mapped_quantized_dcs_to_quantized_dcs(bpe, N);
 	}
 
