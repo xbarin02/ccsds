@@ -225,7 +225,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
 	bpe->segment_header.UseFill = 0;
 	bpe->segment_header.S = (UINT32) parameters->S;
-	bpe->segment_header.OptDCSelect = 0; /* 0 => heuristic selection of k parameter */
+	bpe->segment_header.OptDCSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
 	bpe->segment_header.OptACSelect = 0; /* 0 => heuristic selection of k parameter */
 	bpe->segment_header.DWTtype = parameters->DWTtype;
 	bpe->segment_header.ExtendedPixelBitDepthFlag = (bpe->frame->bpp >= 16); /* 0 => pixel bit depth is not larger than 16 */
@@ -877,6 +877,67 @@ static UINT32 heuristic_select_code_option(struct bpe *bpe, size_t size, size_t 
 	assert(0 && "internal error");
 }
 
+static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	size_t i;
+	int first = (g == 0);
+	UINT32 k = 8; /* start with the largest possible k */
+	size_t min_bits = SIZE_MAX_;
+	UINT32 *mapped_quantized_dc;
+	UINT32 min_k;
+
+	assert(bpe != NULL);
+
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
+
+	assert(mapped_quantized_dc != NULL);
+
+	assert(N >= 2 && N <= 10);
+
+	/* see Table 4-9 */
+	if (N <= 8)
+		k = 6;
+	if (N <= 4)
+		k = 2;
+	if (N == 2)
+		k = 0;
+
+	min_k = k;
+
+	/* select the value of k that minimizes the number of encoded bits */
+	/* When two or more code parameters minimize the number of encoded bits,
+	 * the smallest code parameter option shall be selected */
+	do {
+		size_t bits = 0;
+
+		/* compute the number of encoded bits with given k */
+		for (i = (size_t)first; i < size; ++i) {
+			size_t m = g*16 + i;
+
+			bits += bio_sizeof_gr(k, mapped_quantized_dc[m]);
+		}
+
+		if (bits <= min_bits) {
+			min_bits = bits;
+			min_k = k;
+		}
+
+		if (k == 0) {
+			break;
+		}
+
+		k--;
+	} while (1);
+
+	/* The uncoded option shall be selected whenever it minimizes the number
+	 * of encoded bits, even if another option gives the same number of bits. */
+	if (min_bits == (size - (size_t)first)*N) {
+		min_k = (UINT32)-1;
+	}
+
+	return min_k;
+}
+
 /* Section 4.3.2.6 */
 static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
@@ -903,8 +964,8 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 				k = heuristic_select_code_option(bpe, size, N, g);
 				break;
 			case 1:
-				dprint (("[ERROR] not implemented\n"));
-				return RET_FAILURE_LOGIC_ERROR;
+				k = optimum_select_code_option(bpe, size, N, g);
+				break;
 			default:
 				dprint (("[ERROR] invalid value for OptDCSelect\n"));
 				return RET_FAILURE_LOGIC_ERROR;
