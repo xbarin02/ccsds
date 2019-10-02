@@ -895,8 +895,14 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	assert(mapped_quantized_dc != NULL);
 	assert(size > 0);
 
-	k = select_code_option(bpe, size, N, g);
-	dprint (("BPE(4.3.2.11): k = %lu\n", k));
+	if (size == 1 && (size_t)first == 1) {
+		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
+		k = -1; /* say, uncoded */
+	} else {
+		k = select_code_option(bpe, size, N, g);
+		dprint (("BPE(4.3.2.11): k = %lu\n", k));
+	}
+
 	/* TODO 4.3.2.7 */
 	k = (UINT32)-1; /* uncoded */
 
