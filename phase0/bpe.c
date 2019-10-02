@@ -1500,9 +1500,9 @@ static size_t DC_quantization_factor(struct bpe *bpe)
 
 	if (bitDepthDC <= 3)
 		q_ = 0;
-	else if (bitDepthDC - (1 + bitDepthAC/2) <= 1 && bitDepthDC > 3)
+	else if (bitDepthDC <= 1 + (1 + bitDepthAC/2) && bitDepthDC > 3)
 		q_ = bitDepthDC - 3;
-	else if (bitDepthDC - (1 + bitDepthAC/2) > 10 && bitDepthDC > 3)
+	else if (bitDepthDC > 10 + (1 + bitDepthAC/2) && bitDepthDC > 3)
 		q_ = bitDepthDC - 10;
 	else
 		q_ = 1 + bitDepthAC/2;
