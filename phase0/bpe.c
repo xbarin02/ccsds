@@ -1272,7 +1272,10 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 
 	/* 4.3.2.1 The number of bits needed to represent each quantized DC coefficient */
-	N = size_max(bitDepthDC - q, 1);
+	if (q > bitDepthDC)
+		N = 1;
+	else
+		N = size_max(bitDepthDC - q, 1);
 
 	assert(N <= 10);
 
@@ -1385,7 +1388,10 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 	bitDepthDC = (size_t) bpe->segment_header.BitDepthDC;
 
 	/* 4.3.2.1 The number of bits needed to represent each quantized DC coefficient */
-	N = size_max(bitDepthDC - q, 1);
+	if (q > bitDepthDC)
+		N = 1;
+	else
+		N = size_max(bitDepthDC - q, 1);
 
 	assert(N <= 10);
 
