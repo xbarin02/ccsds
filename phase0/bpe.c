@@ -811,6 +811,72 @@ static const size_t code_option_length[11] = {
 	4, /* N = 10 */
 };
 
+/* Section 4.3.2.11 b) heuristic procedure */
+static UINT32 select_code_option(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	size_t i;
+	UINT32 *mapped_quantized_dc;
+	int first = (g == 0);
+	size_t delta = 0;
+	size_t J;
+	UINT32 k;
+
+	assert(bpe != NULL);
+
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
+
+	assert(mapped_quantized_dc != NULL);
+
+	assert(size > (size_t)first);
+
+	J = size - (size_t)first;
+
+	/* delta = sum over mapped_quantized_dc[] in the gaggle */
+	for (i = (size_t)first; i < size; ++i) {
+		size_t m = g*16 + i;
+
+		assert(delta <= SIZE_MAX_ - mapped_quantized_dc[m]);
+
+		delta += mapped_quantized_dc[m];
+	}
+
+	/* Table 4-10 */
+
+	assert(delta <= SIZE_MAX_ / 64);
+	assert(J <= (SIZE_MAX_ >> N));
+	assert((J << N) <= SIZE_MAX_ / 23);
+
+	if (64 * delta >= 23 * (J << N)) {
+		return (UINT32)-1; /* uncoded */
+	}
+
+	assert(delta <= SIZE_MAX_ / 128);
+	assert(J <= SIZE_MAX_ / 207);
+
+	if (207 * J > 128 * delta) {
+		return 0; /* k=0 */
+	}
+
+	assert(J <= (SIZE_MAX_ >> (N+5)));
+	assert(128 * delta <= SIZE_MAX_ - 49 * J);
+
+	if ((J << (N+5)) <= 128 * delta + 49 * J) {
+		return (UINT32)(N-2); /* k=N-2 */
+	}
+
+	/* k is the largest nonnegative integer less
+	 * than or equal to N-2 such that ... */
+	for (k = (UINT32)(N-2); ; --k) {
+		assert(J <= (SIZE_MAX_ >> (k+7)));
+		if ((J << (k+7)) <= 128 * delta + 49 * J) {
+			return k;
+		}
+		assert(k != 0 && "internal error");
+	}
+
+	assert(0 && "internal error");
+}
+
 /* Section 4.3.2.6 */
 static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
@@ -829,6 +895,8 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	assert(mapped_quantized_dc != NULL);
 	assert(size > 0);
 
+	k = select_code_option(bpe, size, N, g);
+	dprint (("BPE(4.3.2.11): k = %lu\n", k));
 	/* TODO 4.3.2.7 */
 	k = (UINT32)-1; /* uncoded */
 
@@ -866,7 +934,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			dprint (("BPE(4.3.2.8): writing mapped_quantized_dc[%lu]\n", m));
 
 			/* 4.3.2.8 */
-			assert( mapped_quantized_dc[m] < (1U<<N) );
+			assert(mapped_quantized_dc[m] < (1U<<N));
 
 			err = bio_write_bits(bpe->bio, mapped_quantized_dc[m], N);
 
