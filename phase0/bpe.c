@@ -1129,8 +1129,13 @@ static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta, INT32 sign)
 	return d_;
 }
 
+static void map_ACs_to_mapped_ACs(struct bpe *bpe, size_t N)
+{
+	/* TODO */
+}
+
 /* 4.3.2.4 */
-static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
+static void map_quantized_DCs_to_mapped_quantized_DCs(struct bpe *bpe, size_t N)
 {
 	size_t S;
 	INT32 *quantized_dc;
@@ -1172,7 +1177,7 @@ static void map_quantized_dcs_to_mapped_quantized_dcs(struct bpe *bpe, size_t N)
 	}
 }
 
-static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
+static void map_mapped_quantized_DCs_to_quantized_DCs(struct bpe *bpe, size_t N)
 {
 	size_t S;
 	INT32 *quantized_dc;
@@ -1214,17 +1219,25 @@ int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 {
 	size_t bitDepthAC;
 	size_t N;
+	size_t S;
+	size_t g, full_G, G;
 
 	assert(bpe != NULL);
 
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 
-	N = uint32_ceil_log2(1 + (UINT32)bitDepthAC);
+	N = uint32_ceil_log2(1 + (UINT32)bitDepthAC); /* Eq. (21) */
 
 	/* bitDepthAC > 1 ==> N > 1 */
 	assert(N > 1 && N <= 5);
 
 	dprint (("BPE(4.4c): N > 1\n"));
+
+	S = bpe->S;
+
+	assert(S > 0);
+
+	map_ACs_to_mapped_ACs(bpe, N);
 
 	return RET_SUCCESS;
 }
@@ -1279,7 +1292,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 		assert(S > 0);
 
-		map_quantized_dcs_to_mapped_quantized_dcs(bpe, N);
+		map_quantized_DCs_to_mapped_quantized_DCs(bpe, N);
 
 		/* 4.3.2.5 Each gaggle contains up to 16 mapped quantized coefficients */
 		full_G = S / 16;
@@ -1413,7 +1426,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 			}
 		}
 
-		map_mapped_quantized_dcs_to_quantized_dcs(bpe, N);
+		map_mapped_quantized_DCs_to_quantized_DCs(bpe, N);
 	}
 
 	return RET_SUCCESS;
