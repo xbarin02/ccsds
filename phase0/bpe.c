@@ -859,7 +859,6 @@ static UINT32 heuristic_select_code_option_DC(struct bpe *bpe, size_t size, size
 	return heuristic_select_code_option(size, N, g, mapped_quantized_dc);
 }
 
-/* TODO */
 static UINT32 optimum_select_code_option(size_t size, size_t N, size_t g, UINT32 *mapped)
 {
 	size_t i;
