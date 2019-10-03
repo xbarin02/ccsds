@@ -1657,7 +1657,11 @@ int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 		case 1:
 			/* cf. Sect. 4.4 b) */
 			for (m = 0; m < S; ++m) {
-				/* TODO */
+				int err = bio_put_bit(bpe->bio, (unsigned char)bitDepthAC_Block[m]);
+
+				if (err) {
+					return err;
+				}
 			}
 			break;
 		default:
@@ -1691,7 +1695,14 @@ int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 		case 1:
 			/* cf. Sect. 4.4 b) */
 			for (m = 0; m < S; ++m) {
-				/* TODO */
+				unsigned char b;
+				int err = bio_get_bit(bpe->bio, &b);
+
+				if (err) {
+					return err;
+				}
+
+				bitDepthAC_Block[m] = (UINT32)b;
 			}
 			break;
 		default:
