@@ -1553,16 +1553,18 @@ int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 }
 
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
-int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
+int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe)
 {
 	size_t bitDepthDC;
 	size_t N;
 	INT32 *quantized_dc;
 	size_t S;
+	size_t q;
 
 	assert(bpe != NULL);
 
 	S = bpe->S;
+	q = bpe->q;
 
 	quantized_dc = bpe->quantized_dc;
 
@@ -1625,15 +1627,17 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 }
 
 /* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
-int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bpe, size_t q)
+int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bpe)
 {
 	size_t bitDepthAC;
 	size_t blk;
 	size_t S;
+	size_t q;
 
 	assert(bpe != NULL);
 
 	S = bpe->S;
+	q = bpe->q;
 
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 
@@ -1877,6 +1881,8 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 
 	assert(q <= 32);
 
+	bpe->q = q;
+
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
 
@@ -1890,14 +1896,14 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	}
 
 	/* NOTE Section 4.3.2 */
-	err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+	err = bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(bpe);
 
 	if (err) {
 		return err;
 	}
 
 	/* NOTE Section 4.3.3 */
-	err = bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(bpe, q);
+	err = bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(bpe);
 
 	if (err) {
 		return err;
@@ -2060,6 +2066,62 @@ int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 	return RET_SUCCESS;
 }
 
+int bpe_encode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
+{
+	size_t S;
+	size_t q;
+	size_t m;
+	size_t bitShift;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	q = bpe->q;
+	bitShift = BitShift(bpe, DWT_LL2);
+
+	for (m = 0; m < S; ++m) {
+		if (b >= q)
+			continue;
+		if (b < bitShift)
+			continue;
+		/* TODO b-th most significant bit of the two’s-complement representation of the DC coefficient */
+	}
+
+	return RET_SUCCESS;
+}
+
+/* Section 4.5 */
+int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
+{
+	size_t bitDepthAC;
+	size_t b_;
+
+	assert(bpe != NULL);
+
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	dprint (("BPE(4.5): bitDepthAC=%lu\n", bitDepthAC));
+
+	for (b_ = 0; b_ < bitDepthAC; ++b_) {
+		size_t b = bitDepthAC - 1 - b_;
+		int err;
+		/* encode bit plane 'b' */
+
+		dprint (("BPE(4.5) bit plane b = %lu\n", b));
+
+		/* Stage 0 */
+		err = bpe_encode_segment_bit_plane_coding_stage0(bpe, b);
+
+		if (err) {
+			return err;
+		}
+
+		/* TODO */
+	}
+
+	return RET_SUCCESS;
+}
+
 /* write segment into bitstream */
 int bpe_encode_segment(struct bpe *bpe, int flush)
 {
@@ -2119,7 +2181,12 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 		return err;
 	}
 
-	/* Section 4.5... */
+	/* Section 4.5 */
+	err = bpe_encode_segment_bit_plane_coding(bpe);
+
+	if (err) {
+		return err;
+	}
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {

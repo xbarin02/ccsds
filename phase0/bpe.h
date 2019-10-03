@@ -70,6 +70,8 @@ struct bpe {
 	UINT32 *bitDepthAC_Block;
 	/* array of S, map successive differences to non-negative integers */
 	UINT32 *mapped_BitDepthAC_Block;
+
+	size_t q;
 };
 
 size_t BitShift(const struct bpe *bpe, int subband);
