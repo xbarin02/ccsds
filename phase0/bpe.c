@@ -177,7 +177,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.UseFill = 0;
 	bpe->segment_header.S = (UINT32) parameters->S;
 	bpe->segment_header.OptDCSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
-	bpe->segment_header.OptACSelect = 0; /* 0 => heuristic selection of k parameter */
+	bpe->segment_header.OptACSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
 	bpe->segment_header.DWTtype = parameters->DWTtype;
 	bpe->segment_header.ExtendedPixelBitDepthFlag = (bpe->frame->bpp >= 16); /* 0 => pixel bit depth is not larger than 16 */
 	bpe->segment_header.SignedPixels = 0; /* 0 => unsigned */
@@ -859,20 +859,16 @@ static UINT32 heuristic_select_code_option_DC(struct bpe *bpe, size_t size, size
 	return heuristic_select_code_option(size, N, g, mapped_quantized_dc);
 }
 
-static UINT32 optimum_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
+/* TODO */
+static UINT32 optimum_select_code_option(size_t size, size_t N, size_t g, UINT32 *mapped)
 {
 	size_t i;
 	int first = (g == 0);
 	UINT32 k = 8; /* start with the largest possible k */
 	size_t min_bits = SIZE_MAX_;
-	UINT32 *mapped_quantized_dc;
 	UINT32 min_k;
 
-	assert(bpe != NULL);
-
-	mapped_quantized_dc = bpe->mapped_quantized_dc;
-
-	assert(mapped_quantized_dc != NULL);
+	assert(mapped != NULL);
 
 	assert(N >= 2 && N <= 10);
 
@@ -896,7 +892,7 @@ static UINT32 optimum_select_code_option_DC(struct bpe *bpe, size_t size, size_t
 		for (i = (size_t)first; i < size; ++i) {
 			size_t m = g * 16 + i;
 
-			bits += bio_sizeof_gr(k, mapped_quantized_dc[m]);
+			bits += bio_sizeof_gr(k, mapped[m]);
 		}
 
 		if (bits <= min_bits) {
@@ -920,7 +916,30 @@ static UINT32 optimum_select_code_option_DC(struct bpe *bpe, size_t size, size_t
 	return min_k;
 }
 
-/* TODO adapt from the bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle() */
+/* adapt from optimum_select_code_option_DC() */
+static UINT32 optimum_select_code_option_AC(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	UINT32 *mapped_BitDepthAC_Block;
+
+	assert(bpe != NULL);
+
+	mapped_BitDepthAC_Block = bpe->mapped_BitDepthAC_Block;
+
+	return optimum_select_code_option(size, N, g, mapped_BitDepthAC_Block);
+}
+
+static UINT32 optimum_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	UINT32 *mapped_quantized_dc;
+
+	assert(bpe != NULL);
+
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
+
+	return optimum_select_code_option(size, N, g, mapped_quantized_dc);
+}
+
+/* adapt from the bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle() */
 static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	UINT32 k = (UINT32)-1; /* uncoded by default */
@@ -938,8 +957,6 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 	assert(mapped_BitDepthAC_Block != NULL);
 	assert(size > 0);
 
-	/* TODO adapt the following to mapped_BitDepthAC_Block[] */
-#if 1
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
 	} else {
@@ -948,7 +965,6 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 				k = heuristic_select_code_option_AC(bpe, size, N, g);
 				break;
 			case 1:
-				assert(!"optimum_select_code_option_AC implemented");
 				k = optimum_select_code_option_AC(bpe, size, N, g);
 				break;
 			default:
@@ -956,7 +972,6 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 				return RET_FAILURE_LOGIC_ERROR;
 		}
 	}
-#endif
 
 	/* write code option k */
 	err = bio_write_bits(bpe->bio, k, code_option_length[N]);
@@ -1130,7 +1145,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	return RET_SUCCESS;
 }
 
-/* TODO adapt from bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle() */
+/* adapt from bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle() */
 static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	UINT32 k;
