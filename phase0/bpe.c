@@ -2114,6 +2114,52 @@ int bpe_encode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 	return RET_SUCCESS;
 }
 
+int bpe_decode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
+{
+	size_t S;
+	size_t q;
+	size_t m;
+	size_t bitShift;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	q = bpe->q;
+	bitShift = BitShift(bpe, DWT_LL2);
+
+	for (m = 0; m < S; ++m) {
+		INT32 *dc;
+		unsigned char bit;
+		int err;
+
+		if (b >= q)
+			continue;
+		if (b < bitShift)
+			continue;
+
+		assert(bpe->segment != NULL);
+
+		dc = bpe->segment + m * BLOCK_SIZE;
+
+		/* b-th most significant bit of the two's-complement representation of the DC coefficient */
+#if 0
+		err = bio_get_bit(bpe->bio, &bit);
+
+		if (err) {
+			return err;
+		}
+
+		if (b < 32) {
+			*dc |= (INT32)bit << b;
+		} else {
+			assert(!"set the sign bit, not implemented yet");
+		}
+#endif
+	}
+
+	return RET_SUCCESS;
+}
+
 /* Section 4.5 */
 int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 {
@@ -2133,6 +2179,36 @@ int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 
 		/* Stage 0 */
 		err = bpe_encode_segment_bit_plane_coding_stage0(bpe, b);
+
+		if (err) {
+			return err;
+		}
+
+		/* TODO */
+	}
+
+	return RET_SUCCESS;
+}
+
+/* Section 4.5 */
+int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
+{
+	size_t bitDepthAC;
+	size_t b_;
+
+	assert(bpe != NULL);
+
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	for (b_ = 0; b_ < bitDepthAC; ++b_) {
+		size_t b = bitDepthAC - 1 - b_;
+		int err;
+		/* encode bit plane 'b' */
+
+		dprint (("BPE(4.5) bit plane b = %lu\n", b));
+
+		/* Stage 0 */
+		err = bpe_decode_segment_bit_plane_coding_stage0(bpe, b);
 
 		if (err) {
 			return err;
@@ -2328,7 +2404,12 @@ int bpe_decode_segment(struct bpe *bpe)
 		return err;
 	}
 
-	/* Section 4.5... */
+	/* Section 4.5 */
+	err = bpe_decode_segment_bit_plane_coding(bpe);
+
+	if (err) {
+		return err;
+	}
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
