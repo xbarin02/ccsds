@@ -946,6 +946,17 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 		return err;
 	}
 
+	if (first) {
+		/* first gaggle in a segment */
+
+		/* N-bit reference */
+		err = bio_write_bits(bpe->bio, (UINT32) bitDepthAC_Block[0], N);
+
+		if (err) {
+			return err;
+		}
+	}
+
 	/* TODO */
 
 	return RET_SUCCESS;
@@ -1079,6 +1090,21 @@ static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 
 	if (err) {
 		return err;
+	}
+
+	if (k != (UINT32)-1) {
+		k &= ((UINT32)1 << code_option_length[N]) - 1;
+	}
+
+	if (first) {
+		/* first gaggle in a segment */
+
+		/* N-bit reference */
+		err = bio_read_dc_bits(bpe->bio, (UINT32 *) &bitDepthAC_Block[0], N);
+
+		if (err) {
+			return err;
+		}
 	}
 
 	/* TODO */
