@@ -957,6 +957,29 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 		}
 	}
 
+	if (k == (UINT32)-1) {
+		/* UNCODED */
+		/* that is, each delta_m is encoded using the conventional N-bit unsigned binary integer representation */
+		size_t i;
+
+		for (i = (size_t)first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g * 16 + i;
+
+			/* 4.3.2.8 */
+			assert(mapped_BitDepthAC_Block[m] < (1U << N));
+
+			err = bio_write_bits(bpe->bio, mapped_BitDepthAC_Block[m], N);
+
+			if (err) {
+				return err;
+			}
+		}
+	} else {
+		/* TODO */
+		abort();
+	}
+
 	/* TODO */
 
 	return RET_SUCCESS;
@@ -1105,6 +1128,28 @@ static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 		if (err) {
 			return err;
 		}
+	}
+
+	if (k == (UINT32)-1) {
+		/* UNCODED */
+		size_t i;
+
+		for (i = (size_t)first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g * 16 + i;
+
+			/* 4.3.2.8 */
+			err = bio_read_bits(bpe->bio, &mapped_BitDepthAC_Block[m], N);
+
+			assert(mapped_BitDepthAC_Block[m] < (1U << N));
+
+			if (err) {
+				return err;
+			}
+		}
+	} else {
+		/* TODO */
+		abort();
 	}
 
 	/* TODO */
