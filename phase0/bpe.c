@@ -1669,6 +1669,42 @@ int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 	return RET_SUCCESS;
 }
 
+int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe)
+{
+	UINT32 *bitDepthAC_Block;
+	size_t bitDepthAC;
+	size_t S;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	bitDepthAC_Block = bpe->bitDepthAC_Block;
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	assert(bitDepthAC_Block != NULL);
+
+	switch (bitDepthAC) {
+		case 0:
+			/* cf. Sect. 4.4 a) */
+			break;
+		case 1:
+			/* cf. Sect. 4.4 b) */
+			for (m = 0; m < S; ++m) {
+				/* TODO */
+			}
+			break;
+		default:
+			/* cf. Sect. 4.4 c) */
+			/* TODO */
+			break;
+	}
+
+	/* TODO */
+
+	return RET_SUCCESS;
+}
+
 /* write segment into bitstream */
 int bpe_encode_segment(struct bpe *bpe, int flush)
 {
@@ -1829,10 +1865,20 @@ int bpe_decode_segment(struct bpe *bpe)
 	}
 #endif
 
-	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe);
+	err = bpe_decode_segment_initial_coding_of_DC_coefficients(bpe);
+
+	if (err) {
+		return err;
+	}
 
 	if (bpe->segment_header.DCStop == 1) {
 		return RET_SUCCESS;
+	}
+
+	err = bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(bpe);
+
+	if (err) {
+		return err;
 	}
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
