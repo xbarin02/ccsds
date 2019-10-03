@@ -902,6 +902,7 @@ static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N,
 	return min_k;
 }
 
+/* TODO adapt from the bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle() */
 static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	UINT32 k = (UINT32)-1; /* uncoded by default */
@@ -918,6 +919,32 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 	assert(first == 0 || bitDepthAC_Block != NULL);
 	assert(mapped_BitDepthAC_Block != NULL);
 	assert(size > 0);
+
+	/* TODO adapt the following to mapped_BitDepthAC_Block[] */
+#if 0
+	if (size == 1 && (size_t)first == 1) {
+		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
+	} else {
+		switch (bpe->segment_header.OptDCSelect) {
+			case 0:
+				k = heuristic_select_code_option(bpe, size, N, g);
+				break;
+			case 1:
+				k = optimum_select_code_option(bpe, size, N, g);
+				break;
+			default:
+				dprint (("[ERROR] invalid value for OptDCSelect\n"));
+				return RET_FAILURE_LOGIC_ERROR;
+		}
+	}
+#endif
+
+	/* write code option k */
+	err = bio_write_bits(bpe->bio, k, code_option_length[N]);
+
+	if (err) {
+		return err;
+	}
 
 	/* TODO */
 
@@ -1025,6 +1052,27 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 			}
 		}
 	}
+
+	return RET_SUCCESS;
+}
+
+/* TODO adapt from bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle() */
+static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	UINT32 k;
+	int err;
+	assert(bpe != NULL);
+
+	/* TODO */
+
+	/* read code option */
+	err = bio_read_dc_bits(bpe->bio, &k, code_option_length[N]);
+
+	if (err) {
+		return err;
+	}
+
+	/* TODO */
 
 	return RET_SUCCESS;
 }
@@ -1236,6 +1284,12 @@ static void map_quantized_DCs_to_mapped_quantized_DCs(struct bpe *bpe, size_t N)
 	}
 }
 
+/* TODO adapt from map_mapped_quantized_DCs_to_quantized_DCs() */
+static void map_mapped_ACs_to_ACs(struct bpe *bpe, size_t N)
+{
+	/* TODO */
+}
+
 static void map_mapped_quantized_DCs_to_quantized_DCs(struct bpe *bpe, size_t N)
 {
 	size_t S;
@@ -1289,8 +1343,6 @@ int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 
 	/* bitDepthAC > 1 ==> N > 1 */
 	assert(N > 1 && N <= 5);
-
-	dprint (("BPE(4.4c): N > 1\n"));
 
 	S = bpe->S;
 
@@ -1428,6 +1480,47 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bp
 			}
 		}
 	}
+
+	return RET_SUCCESS;
+}
+
+/* TODO adapt from bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step() */
+int bpe_decode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
+{
+	size_t bitDepthAC;
+	size_t N;
+	size_t S;
+	size_t g, full_G, G;
+
+	assert(bpe != NULL);
+
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	N = uint32_ceil_log2(1 + (UINT32)bitDepthAC); /* Eq. (21) */
+
+	/* bitDepthAC > 1 ==> N > 1 */
+	assert(N > 1 && N <= 5);
+
+	S = bpe->S;
+
+	assert(S > 0);
+
+	full_G = S / 16;
+	G = (S + 15) / 16;
+
+	/* TODO */
+	for (g = 0; g < G; ++g) {
+		size_t ge = (g < full_G) ? 16 : (S % 16);
+		int err;
+
+		err = bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	map_mapped_ACs_to_ACs(bpe, N);
 
 	return RET_SUCCESS;
 }
@@ -1746,6 +1839,7 @@ int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 	assert(bitDepthAC_Block != NULL);
 
 	switch (bitDepthAC) {
+			int err;
 		case 0:
 			/* cf. Sect. 4.4 a) */
 			for (m = 0; m < S; ++m) {
@@ -1767,7 +1861,13 @@ int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 			break;
 		default:
 			/* cf. Sect. 4.4 c) */
-			/* TODO */
+
+			err = bpe_decode_segment_coding_of_AC_coefficients_1st_step(bpe);
+
+			if (err) {
+				return err;
+			}
+
 			break;
 	}
 
