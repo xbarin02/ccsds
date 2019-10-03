@@ -1209,6 +1209,26 @@ static void map_mapped_quantized_dcs_to_quantized_dcs(struct bpe *bpe, size_t N)
 	}
 }
 
+/* Section 4.4 c) --> Sect. 4.3.2 */
+int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
+{
+	size_t bitDepthAC;
+	size_t N;
+
+	assert(bpe != NULL);
+
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	N = uint32_ceil_log2(1 + (UINT32)bitDepthAC);
+
+	/* bitDepthAC > 1 ==> N > 1 */
+	assert(N > 1 && N <= 5);
+
+	dprint (("BPE(4.4c): N > 1\n"));
+
+	return RET_SUCCESS;
+}
+
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
 int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
 {
@@ -1610,6 +1630,7 @@ int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 			break;
 		default:
 			/* cf. Sect. 4.4 c) */
+			bpe_encode_segment_coding_of_AC_coefficients_1st_step(bpe);
 			/* TODO */
 			break;
 	}
