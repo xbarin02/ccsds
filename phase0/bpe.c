@@ -845,7 +845,7 @@ static UINT32 heuristic_select_code_option(struct bpe *bpe, size_t size, size_t 
 
 	/* delta = sum over mapped_quantized_dc[] in the gaggle */
 	for (i = (size_t)first; i < size; ++i) {
-		size_t m = g*16 + i;
+		size_t m = g * 16 + i;
 
 		assert(delta <= SIZE_MAX_ - mapped_quantized_dc[m]);
 
@@ -869,20 +869,22 @@ static UINT32 heuristic_select_code_option(struct bpe *bpe, size_t size, size_t 
 		return 0; /* k=0 */
 	}
 
-	assert(J <= (SIZE_MAX_ >> (N+5)));
+	assert(J <= (SIZE_MAX_ >> (N + 5)));
 	assert(128 * delta <= SIZE_MAX_ - 49 * J);
 
-	if ((J << (N+5)) <= 128 * delta + 49 * J) {
-		return (UINT32)(N-2); /* k=N-2 */
+	if ((J << (N + 5)) <= 128 * delta + 49 * J) {
+		return (UINT32)(N - 2); /* k=N-2 */
 	}
 
 	/* k is the largest nonnegative integer less
 	 * than or equal to N-2 such that ... */
-	for (k = (UINT32)(N-2); ; --k) {
-		assert(J <= (SIZE_MAX_ >> (k+7)));
-		if ((J << (k+7)) <= 128 * delta + 49 * J) {
+	for (k = (UINT32)(N - 2); ; --k) {
+		assert(J <= (SIZE_MAX_ >> (k + 7)));
+
+		if ((J << (k + 7)) <= 128 * delta + 49 * J) {
 			return k;
 		}
+
 		assert(k != 0 && "internal error");
 	}
 
@@ -924,7 +926,7 @@ static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N,
 
 		/* compute the number of encoded bits with given k */
 		for (i = (size_t)first; i < size; ++i) {
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			bits += bio_sizeof_gr(k, mapped_quantized_dc[m]);
 		}
@@ -943,7 +945,7 @@ static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N,
 
 	/* The uncoded option shall be selected whenever it minimizes the number
 	 * of encoded bits, even if another option gives the same number of bits. */
-	if (min_bits == (size - (size_t)first)*N) {
+	if (min_bits == (size - (size_t)first) * N) {
 		min_k = (UINT32)-1;
 	}
 
@@ -1009,12 +1011,12 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 		for (i = (size_t)first; i < size; ++i) {
 			/* write mapped sample difference */
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			dprint (("BPE(4.3.2.8): writing mapped_quantized_dc[%lu]\n", m));
 
 			/* 4.3.2.8 */
-			assert(mapped_quantized_dc[m] < (1U<<N));
+			assert(mapped_quantized_dc[m] < (1U << N));
 
 			err = bio_write_bits(bpe->bio, mapped_quantized_dc[m], N);
 
@@ -1029,7 +1031,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 		for (i = (size_t)first; i < size; ++i) {
 			/* write mapped sample difference */
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			/* first part words */
 			err = bio_write_gr_1st_part(bpe->bio, (size_t)k, mapped_quantized_dc[m]);
@@ -1041,7 +1043,7 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 		for (i = (size_t)first; i < size; ++i) {
 			/* write mapped sample difference */
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			/* second part words */
 			err = bio_write_gr_2nd_part(bpe->bio, (size_t)k, mapped_quantized_dc[m]);
@@ -1101,14 +1103,14 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 
 		for (i = (size_t)first; i < size; ++i) {
 			/* write mapped sample difference */
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			dprint (("BPE(4.3.2.8): reading mapped_quantized_dc[%lu]\n", m));
 
 			/* 4.3.2.8 */
 			err = bio_read_bits(bpe->bio, &mapped_quantized_dc[m], N);
 
-			assert(mapped_quantized_dc[m] < (1U<<N));
+			assert(mapped_quantized_dc[m] < (1U << N));
 
 			if (err) {
 				return err;
@@ -1119,7 +1121,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		size_t i;
 
 		for (i = (size_t)first; i < size; ++i) {
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			/* first part words */
 			err = bio_read_gr_1st_part(bpe->bio, (size_t)k, &mapped_quantized_dc[m]);
@@ -1130,7 +1132,7 @@ static int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 		}
 
 		for (i = (size_t)first; i < size; ++i) {
-			size_t m = g*16 + i;
+			size_t m = g * 16 + i;
 
 			/* second part words */
 			err = bio_read_gr_2nd_part(bpe->bio, (size_t)k, &mapped_quantized_dc[m]);
