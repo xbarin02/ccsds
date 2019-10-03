@@ -1691,6 +1691,9 @@ int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 	switch (bitDepthAC) {
 		case 0:
 			/* cf. Sect. 4.4 a) */
+			for (m = 0; m < S; ++m) {
+				bitDepthAC_Block[m] = 0;
+			}
 			break;
 		case 1:
 			/* cf. Sect. 4.4 b) */
