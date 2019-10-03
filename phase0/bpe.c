@@ -93,7 +93,7 @@ static size_t int32_bitsize(INT32 cm)
 	return 1 + uint32_ceil_log2(1 + (UINT32)cm);
 }
 
-size_t BitDepthDC(struct bpe *bpe, size_t s)
+size_t BitDepthDC(struct bpe *bpe, size_t S)
 {
 	size_t blk;
 	size_t max;
@@ -103,13 +103,13 @@ size_t BitDepthDC(struct bpe *bpe, size_t s)
 	assert(bpe->segment != NULL);
 
 	/* max is not defined on empty set */
-	assert(s > 0);
+	assert(S > 0);
 
 	/* start with the first DC */
 	max = int32_bitsize(*(bpe->segment + 0 * BLOCK_SIZE));
 
 	/* for each block in the segment */
-	for (blk = 0; blk < s; ++blk) {
+	for (blk = 0; blk < S; ++blk) {
 		INT32 *dc = bpe->segment + blk * BLOCK_SIZE;
 
 		size_t dc_bitsize = int32_bitsize(*dc);
@@ -155,7 +155,7 @@ size_t BitDepthAC_Block(INT32 *data, size_t stride)
 	return uint32_ceil_log2(1 + max_abs_ac);
 }
 
-size_t BitDepthAC(struct bpe *bpe, size_t s)
+size_t BitDepthAC(struct bpe *bpe, size_t S)
 {
 	size_t blk;
 	size_t max;
@@ -165,13 +165,13 @@ size_t BitDepthAC(struct bpe *bpe, size_t s)
 	assert(bpe->segment != NULL);
 
 	/* max is not defined on empty set */
-	assert(s > 0);
+	assert(S > 0);
 
 	/* start with the first block */
 	max = BitDepthAC_Block(bpe->segment + 0 * BLOCK_SIZE, 8);
 
 	/* for each block in the segment */
-	for (blk = 0; blk < s; ++blk) {
+	for (blk = 0; blk < S; ++blk) {
 		INT32 *block = bpe->segment + blk * BLOCK_SIZE;
 
 		size_t ac_bitsize = BitDepthAC_Block(block, 8);
@@ -198,6 +198,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment = NULL;
 	bpe->quantized_dc = NULL;
 	bpe->mapped_quantized_dc = NULL;
+	bpe->bitDepthAC_Block = NULL;
 
 	bpe->bio = bio;
 
@@ -280,6 +281,12 @@ int bpe_realloc_segment(struct bpe *bpe, size_t S)
 	bpe->mapped_quantized_dc = realloc(bpe->mapped_quantized_dc, S * sizeof(UINT32));
 
 	if (bpe->mapped_quantized_dc == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	bpe->bitDepthAC_Block = realloc(bpe->bitDepthAC_Block, S * sizeof(UINT32));
+
+	if (bpe->bitDepthAC_Block == NULL && S != 0) {
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
@@ -367,6 +374,7 @@ int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 	free(bpe->segment);
 	free(bpe->quantized_dc);
 	free(bpe->mapped_quantized_dc);
+	free(bpe->bitDepthAC_Block);
 
 	if (parameters != NULL) {
 		parameters->DWTtype = bpe->segment_header.DWTtype;
@@ -1613,6 +1621,54 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	return RET_SUCCESS;
 }
 
+int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe)
+{
+	UINT32 *bitDepthAC_Block;
+	size_t bitDepthAC;
+	size_t S;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	bitDepthAC_Block = bpe->bitDepthAC_Block;
+	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	assert(bitDepthAC_Block != NULL);
+
+	/* The first step in encoding AC coefficient magnitudes in a segment
+	 * is to specify the sequence of BitDepthAC_Blockm values for
+	 * the segment... bitDepthAC_Block[] */
+	for (m = 0; m < S; ++m) {
+		INT32 *block = bpe->segment + m * BLOCK_SIZE;
+
+		size_t ac_bitsize = BitDepthAC_Block(block, 8);
+
+		assert(sizeof(size_t) >= sizeof(UINT32));
+		assert(ac_bitsize <= (size_t)UINT32_MAX_);
+
+		bitDepthAC_Block[m] = (UINT32)ac_bitsize;
+	}
+
+	switch (bitDepthAC) {
+		case 0:
+			/* cf. Sect. 4.4 a) */
+			break;
+		case 1:
+			/* cf. Sect. 4.4 b) */
+			for (m = 0; m < S; ++m) {
+				/* TODO */
+			}
+			break;
+		default:
+			/* cf. Sect. 4.4 c) */
+			/* TODO */
+			break;
+	}
+
+	return RET_SUCCESS;
+}
+
 /* write segment into bitstream */
 int bpe_encode_segment(struct bpe *bpe, int flush)
 {
@@ -1666,6 +1722,11 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	}
 
 	/* continue coding...  Sections 4.4 and 4.5... */
+	err = bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(bpe);
+
+	if (err) {
+		return err;
+	}
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {

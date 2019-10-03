@@ -66,6 +66,10 @@ struct bpe {
 	INT32 *quantized_dc;
 	/* array of S mapped quantized DC coefficients */
 	UINT32 *mapped_quantized_dc;
+	/* array of S BitDepthAC_Block_m values, converted from size_t to UINT32, not (!) yet mapped to non-negative integers */
+	UINT32 *bitDepthAC_Block;
+	/* array of S, map successive differences to non-negative integers */
+	UINT32 *mapped_BitDepthAC_Block;
 };
 
 size_t BitShift(const struct bpe *bpe, int subband);

@@ -13,7 +13,7 @@
 
 #include "config.h"
 
-#define UINT32_MAX_ 4294967295
+#define UINT32_MAX_ 4294967295U
 #define INT32_MAX_ 2147483647
 #define INT32_MIN_ (-2147483647-1)
 
