@@ -1177,7 +1177,7 @@ static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 		/* first gaggle in a segment */
 
 		/* N-bit reference */
-		err = bio_read_dc_bits(bpe->bio, (UINT32 *) &bitDepthAC_Block[0], N);
+		err = bio_read_bits(bpe->bio, (UINT32 *) &bitDepthAC_Block[0], N);
 
 		if (err) {
 			return err;
@@ -1437,10 +1437,38 @@ static void map_quantized_DCs_to_mapped_quantized_DCs(struct bpe *bpe, size_t N)
 	}
 }
 
-/* TODO adapt from map_mapped_quantized_DCs_to_quantized_DCs() */
+/* adapt from map_mapped_quantized_DCs_to_quantized_DCs() */
 static void map_mapped_ACs_to_ACs(struct bpe *bpe, size_t N)
 {
-	/* TODO */
+	size_t S;
+	UINT32 *bitDepthAC_Block;
+	UINT32 *mapped_BitDepthAC_Block;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	bitDepthAC_Block = bpe->bitDepthAC_Block;
+	mapped_BitDepthAC_Block = bpe->mapped_BitDepthAC_Block;
+
+	assert(bitDepthAC_Block != NULL);
+	assert(mapped_BitDepthAC_Block != NULL);
+
+	assert(S > 0);
+	assert(N > 1);
+
+	for (m = 1; m < S; ++m) {
+		UINT32 x_min = 0;
+		UINT32 x_max = (1U << N) - 1;
+		UINT32 theta = uint32_min(bitDepthAC_Block[m-1] - x_min, x_max - bitDepthAC_Block[m-1]);
+		INT32 sign = (bitDepthAC_Block[m-1] - x_min) > (x_max - bitDepthAC_Block[m-1]) ? -1 : +1;
+
+		assert(x_max >= bitDepthAC_Block[m-1]);
+
+		bitDepthAC_Block[m] = (UINT32)inverse_map_quantized_dc(mapped_BitDepthAC_Block[m], theta, sign) + bitDepthAC_Block[m-1];
+
+		assert(bitDepthAC_Block[m] <= x_max);
+	}
 }
 
 static void map_mapped_quantized_DCs_to_quantized_DCs(struct bpe *bpe, size_t N)
@@ -1637,7 +1665,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bp
 	return RET_SUCCESS;
 }
 
-/* TODO adapt from bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step() */
+/* adapt from bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step() */
 int bpe_decode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 {
 	size_t bitDepthAC;
@@ -1661,7 +1689,6 @@ int bpe_decode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 	full_G = S / 16;
 	G = (S + 15) / 16;
 
-	/* TODO */
 	for (g = 0; g < G; ++g) {
 		size_t ge = (g < full_G) ? 16 : (S % 16);
 		int err;
@@ -2023,8 +2050,6 @@ int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 
 			break;
 	}
-
-	/* TODO */
 
 	return RET_SUCCESS;
 }
