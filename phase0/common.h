@@ -142,4 +142,16 @@ struct parameters {
 
 int init_parameters(struct parameters *parameters);
 
+/**
+ * \brief Compute the absolute value of an integer
+ *
+ * The input integer is signed, the result is unsigned.
+ */
+UINT32 uint32_abs(INT32 j);
+
+/**
+ * \brief Compute ceil(log2(n))
+ */
+size_t uint32_ceil_log2(UINT32 n);
+
 #endif /* COMMON_H_ */

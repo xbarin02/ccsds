@@ -53,3 +53,61 @@ int init_parameters(struct parameters *parameters)
 
 	return RET_SUCCESS;
 }
+
+static INT32 int32_abs(INT32 j)
+{
+#if (USHRT_MAX == UINT32_MAX_)
+	return (INT32) abs((int) j);
+#elif (UINT_MAX == UINT32_MAX_)
+	return (INT32) abs((int) j);
+#elif (ULONG_MAX == UINT32_MAX_)
+	return (INT32) labs((long int) j);
+#else
+#	error "Not implemented"
+#endif
+}
+
+UINT32 uint32_abs(INT32 j)
+{
+	if (j == INT32_MIN_) {
+		return (UINT32)INT32_MAX_ + 1;
+	}
+
+	return (UINT32) int32_abs(j);
+}
+
+/* Round up to the next highest power of 2 */
+static UINT32 uint32_ceil_pow2(UINT32 v)
+{
+	assert(v != 0);
+
+	v--;
+
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+
+	v++;
+
+	return v;
+}
+
+static size_t uint32_floor_log2(UINT32 n)
+{
+	size_t r = 0;
+
+	assert(n != 0);
+
+	while (n >>= 1) {
+		r++;
+	}
+
+	return r;
+}
+
+size_t uint32_ceil_log2(UINT32 n)
+{
+	return uint32_floor_log2(uint32_ceil_pow2(n));
+}
