@@ -221,7 +221,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.Part4Flag = 1;
 	bpe->segment_header.PadRows = (UINT32)((8 - bpe->frame->height % 8) % 8);
 	bpe->segment_header.SegByteLimit = (UINT32)parameters->SegByteLimit;
-	bpe->segment_header.DCStop = 0;
+	bpe->segment_header.DCStop = 0; /* 1 => Terminate coded segment after coding quantized DC coefficient information and additional DC bit planes */
 	bpe->segment_header.BitPlaneStop = M5;
 	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
 	bpe->segment_header.UseFill = 0;
@@ -1648,16 +1648,6 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 		return err;
 	}
 
-	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
-	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe);
-
-#if (DEBUG_ENCODE_BLOCKS == 1)
-	for (blk = 0; blk < S; ++blk) {
-		/* encode the block */
-		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
-	}
-#endif
-
 	/* after writing of the first segment, set some flags to zero */
 	bpe->segment_header.StartImgFlag = 0;
 	bpe->segment_header.Part2Flag = 0;
@@ -1665,6 +1655,24 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	bpe->segment_header.Part4Flag = 0;
 
 	bpe->segment_index ++;
+
+	/* Section 4.3 The initial coding of DC coefficients in a segment is performed in two steps. */
+	bpe_encode_segment_initial_coding_of_DC_coefficients(bpe);
+
+	if (bpe->segment_header.DCStop == 1) {
+		dprint (("DCStop is set, stopping the encoding process\n"));
+
+		return RET_SUCCESS;
+	}
+
+	/* continue coding...  Sections 4.4 and 4.5... */
+
+#if (DEBUG_ENCODE_BLOCKS == 1)
+	for (blk = 0; blk < S; ++blk) {
+		/* encode the block */
+		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
+	}
+#endif
 
 	return RET_SUCCESS;
 }
@@ -1752,6 +1760,8 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	dprint (("BPE: decoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
 
+	bpe->segment_index ++;
+
 #if (DEBUG_ENCODE_BLOCKS == 0)
 	for (blk = 0; blk < S; ++blk) {
 		bpe_zero_block(bpe->segment + blk * BLOCK_SIZE, 8);
@@ -1760,6 +1770,10 @@ int bpe_decode_segment(struct bpe *bpe)
 
 	bpe_decode_segment_initial_coding_of_DC_coefficients(bpe);
 
+	if (bpe->segment_header.DCStop == 1) {
+		return RET_SUCCESS;
+	}
+
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
 		/* decode the block */
@@ -1767,7 +1781,7 @@ int bpe_decode_segment(struct bpe *bpe)
 	}
 #endif
 
-	bpe->segment_index ++;
+	/* Sections 4.4 & 4.5 ... */
 
 	return RET_SUCCESS;
 }
