@@ -1384,6 +1384,7 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bp
 	return RET_SUCCESS;
 }
 
+/* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
 int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
 {
 	size_t bitDepthDC;
@@ -1407,8 +1408,6 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 
 	assert(N <= 10);
 
-	assert(quantized_dc != NULL);
-
 	/* 4.3.2.2 When N is 1, each quantized DC coefficient c'm consists of a single bit. */
 	if (N == 1) {
 		size_t blk;
@@ -1418,6 +1417,8 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 		for (blk = 0; blk < S; ++blk) {
 			int err;
 			unsigned char bit;
+
+			assert(quantized_dc != NULL);
 
 			err = bio_get_bit(bpe->bio, (unsigned char *)&bit);
 
