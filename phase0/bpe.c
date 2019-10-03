@@ -93,12 +93,15 @@ static size_t int32_bitsize(INT32 cm)
 	return 1 + uint32_ceil_log2(1 + (UINT32)cm);
 }
 
-size_t BitDepthDC(struct bpe *bpe, size_t S)
+size_t BitDepthDC(struct bpe *bpe)
 {
 	size_t blk;
 	size_t max;
+	size_t S;
 
 	assert(bpe != NULL);
+
+	S = bpe->S;
 
 	assert(bpe->segment != NULL);
 
@@ -155,12 +158,15 @@ size_t BitDepthAC_Block(INT32 *data, size_t stride)
 	return uint32_ceil_log2(1 + max_abs_ac);
 }
 
-size_t BitDepthAC(struct bpe *bpe, size_t S)
+size_t BitDepthAC(struct bpe *bpe)
 {
 	size_t blk;
 	size_t max;
+	size_t S;
 
 	assert(bpe != NULL);
+
+	S = bpe->S;
 
 	assert(bpe->segment != NULL);
 
@@ -1743,8 +1749,8 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 
 	bpe->segment_header.StartImgFlag = (bpe->block_index == 0);
 	bpe->segment_header.SegmentCount = bpe->segment_index & M8;
-	bpe->segment_header.BitDepthDC = (UINT32) BitDepthDC(bpe, S);
-	bpe->segment_header.BitDepthAC = (UINT32) BitDepthAC(bpe, S);
+	bpe->segment_header.BitDepthDC = (UINT32) BitDepthDC(bpe);
+	bpe->segment_header.BitDepthAC = (UINT32) BitDepthAC(bpe);
 	/* Part 2: */
 	/* SegByteLimit */
 
