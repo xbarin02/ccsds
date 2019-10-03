@@ -2080,11 +2080,35 @@ int bpe_encode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 	bitShift = BitShift(bpe, DWT_LL2);
 
 	for (m = 0; m < S; ++m) {
+		INT32 dc;
+		unsigned char bit;
+		int err;
+
 		if (b >= q)
 			continue;
 		if (b < bitShift)
 			continue;
-		/* TODO b-th most significant bit of the two’s-complement representation of the DC coefficient */
+
+		assert(bpe->segment != NULL);
+
+		dc = *(bpe->segment + m * BLOCK_SIZE);
+
+		/* b-th most significant bit of the two's-complement representation of the DC coefficient */
+
+		/* NOTE per C89 standard, the right shift of negative signed type is implementation-defined */
+		if (dc < 0) {
+			assert( ~-1 == 0 );
+			bit = ~(~dc >> b) & 1;
+		} else {
+			bit = (dc >> b) & 1;
+		}
+#if 0
+		err = bio_put_bit(bpe->bio, bit);
+
+		if (err) {
+			return err;
+		}
+#endif
 	}
 
 	return RET_SUCCESS;
@@ -2099,8 +2123,6 @@ int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 	assert(bpe != NULL);
 
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
-
-	dprint (("BPE(4.5): bitDepthAC=%lu\n", bitDepthAC));
 
 	for (b_ = 0; b_ < bitDepthAC; ++b_) {
 		size_t b = bitDepthAC - 1 - b_;
