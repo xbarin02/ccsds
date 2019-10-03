@@ -211,7 +211,7 @@ int bio_read_bits(struct bio *bio, UINT32 *b, size_t n)
 int bio_read_dc_bits(struct bio *bio, UINT32 *b, size_t n)
 {
 	size_t i;
-	unsigned char bit;
+	unsigned char bit = 0;
 	UINT32 word = 0;
 
 	for (i = 0; i < n; ++i) {
