@@ -1714,16 +1714,18 @@ int bpe_decode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 }
 
 /* Section 4.3.2 CODING QUANTIZED DC COEFFICIENTS */
-int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe, size_t q)
+int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bpe)
 {
 	size_t bitDepthDC;
 	size_t N;
 	INT32 *quantized_dc;
 	size_t S;
+	size_t q;
 
 	assert(bpe != NULL);
 
 	S = bpe->S;
+	q = bpe->q;
 
 	quantized_dc = bpe->quantized_dc;
 
@@ -1787,15 +1789,17 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(struct bpe *bp
 }
 
 /* Section 4.3.3 ADDITIONAL BIT PLANES OF DC COEFFICIENTS */
-int bpe_decode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bpe, size_t q)
+int bpe_decode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bpe)
 {
 	size_t blk;
 	size_t S;
 	size_t bitDepthAC;
+	size_t q;
 
 	assert(bpe != NULL);
 
 	S = bpe->S;
+	q = bpe->q;
 
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
 
@@ -1926,6 +1930,8 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 
 	q = DC_quantization_factor(bpe);
 
+	bpe->q = q;
+
 	/* 4.3.1.5 Next, given a sequence of DC coefficients in a segment,
 	 * the BPE shall compute quantized coefficients */
 
@@ -1934,7 +1940,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	assert(quantized_dc != NULL);
 
 	/* NOTE Section 4.3.2 */
-	err = bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe, q);
+	err = bpe_decode_segment_initial_coding_of_DC_coefficients_1st_step(bpe);
 
 	if (err) {
 		return err;
@@ -1945,7 +1951,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	}
 
 	/* NOTE Section 4.3.3 */
-	err = bpe_decode_segment_initial_coding_of_DC_coefficients_2nd_step(bpe, q);
+	err = bpe_decode_segment_initial_coding_of_DC_coefficients_2nd_step(bpe);
 
 	if (err) {
 		return err;
