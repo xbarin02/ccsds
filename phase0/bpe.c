@@ -774,7 +774,7 @@ static const size_t code_option_length[11] = {
 };
 
 /* Section 4.3.2.11 b) heuristic procedure */
-static UINT32 heuristic_select_code_option(struct bpe *bpe, size_t size, size_t N, size_t g)
+static UINT32 heuristic_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	size_t i;
 	UINT32 *mapped_quantized_dc;
@@ -841,7 +841,7 @@ static UINT32 heuristic_select_code_option(struct bpe *bpe, size_t size, size_t 
 	assert(0 && "internal error");
 }
 
-static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N, size_t g)
+static UINT32 optimum_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	size_t i;
 	int first = (g == 0);
@@ -925,12 +925,12 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
 	} else {
-		switch (bpe->segment_header.OptDCSelect) {
+		switch (bpe->segment_header.OptACSelect) {
 			case 0:
-				k = heuristic_select_code_option(bpe, size, N, g);
+				k = heuristic_select_code_option_AC(bpe, size, N, g);
 				break;
 			case 1:
-				k = optimum_select_code_option(bpe, size, N, g);
+				k = optimum_select_code_option_AC(bpe, size, N, g);
 				break;
 			default:
 				dprint (("[ERROR] invalid value for OptDCSelect\n"));
@@ -1008,10 +1008,10 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 	} else {
 		switch (bpe->segment_header.OptDCSelect) {
 			case 0:
-				k = heuristic_select_code_option(bpe, size, N, g);
+				k = heuristic_select_code_option_DC(bpe, size, N, g);
 				break;
 			case 1:
-				k = optimum_select_code_option(bpe, size, N, g);
+				k = optimum_select_code_option_DC(bpe, size, N, g);
 				break;
 			default:
 				dprint (("[ERROR] invalid value for OptDCSelect\n"));
