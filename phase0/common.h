@@ -125,6 +125,9 @@ struct parameters {
 	int weight[12];
 
 	size_t SegByteLimit;
+
+	int OptDCSelect;
+	int OptACSelect;
 };
 
 #define DWT_LL0  0

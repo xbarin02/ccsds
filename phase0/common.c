@@ -51,6 +51,9 @@ int init_parameters(struct parameters *parameters)
 
 	parameters->SegByteLimit = M27;
 
+	parameters->OptDCSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
+	parameters->OptACSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
+
 	return RET_SUCCESS;
 }
 

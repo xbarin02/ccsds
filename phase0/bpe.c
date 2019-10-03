@@ -176,8 +176,8 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
 	bpe->segment_header.UseFill = 0;
 	bpe->segment_header.S = (UINT32) parameters->S;
-	bpe->segment_header.OptDCSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
-	bpe->segment_header.OptACSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
+	bpe->segment_header.OptDCSelect = parameters->OptDCSelect; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
+	bpe->segment_header.OptACSelect = parameters->OptACSelect; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
 	bpe->segment_header.DWTtype = parameters->DWTtype;
 	bpe->segment_header.ExtendedPixelBitDepthFlag = (bpe->frame->bpp >= 16); /* 0 => pixel bit depth is not larger than 16 */
 	bpe->segment_header.SignedPixels = 0; /* 0 => unsigned */
