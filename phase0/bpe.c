@@ -1275,7 +1275,15 @@ int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 
 	map_ACs_to_mapped_ACs(bpe, N);
 
-	/* TODO */
+	full_G = S / 16;
+	G = (S + 15) / 16;
+
+	for (g = 0; g < G; ++g) {
+		size_t ge = (g < full_G) ? 16 : (S % 16);
+		int err;
+
+		/* TODO */
+	}
 
 	return RET_SUCCESS;
 }
