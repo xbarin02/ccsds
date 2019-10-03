@@ -1139,7 +1139,35 @@ static INT32 inverse_map_quantized_dc(UINT32 d, UINT32 theta, INT32 sign)
 
 static void map_ACs_to_mapped_ACs(struct bpe *bpe, size_t N)
 {
-	/* TODO */
+	size_t S;
+	UINT32 *bitDepthAC_Block;
+	UINT32 *mapped_BitDepthAC_Block;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+	bitDepthAC_Block = bpe->bitDepthAC_Block;
+	mapped_BitDepthAC_Block = bpe->mapped_BitDepthAC_Block;
+
+	assert(bitDepthAC_Block != NULL);
+	assert(mapped_BitDepthAC_Block != NULL);
+
+	assert(S > 0);
+	assert(N > 1);
+
+	/* for the remaining S-1 values, the difference between successive
+	 * values shall be encoded */
+	for (m = 1; m < S; ++m) {
+		INT32 d_ = (INT32)bitDepthAC_Block[m] - (INT32)bitDepthAC_Block[m-1];
+		UINT32 x_min = 0;
+		UINT32 x_max = ((UINT32)1 << N) - 1;
+		assert(bitDepthAC_Block[m-1] <= x_max);
+		UINT32 theta = uint32_min(bitDepthAC_Block[m-1] - x_min, x_max - bitDepthAC_Block[m-1]);
+		INT32 sign = bitDepthAC_Block[m-1] > (x_max - bitDepthAC_Block[m-1]) ? -1 : +1;
+
+		mapped_BitDepthAC_Block[m] = map_quantized_dc(d_, theta, sign);
+	}
 }
 
 /* 4.3.2.4 */
