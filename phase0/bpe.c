@@ -1362,9 +1362,9 @@ int bpe_encode_segment_initial_coding_of_DC_coefficients_2nd_step(struct bpe *bp
 		for (b = 0; b < B; ++b) {
 			size_t p; /* bit plane */
 
-			assert(q-1 >= b);
+			assert(q - 1 >= b);
 
-			p = q-1-b;
+			p = q - 1 - b;
 
 			/* 4.3.3.2: encode p-th most-significant bit of each DC coefficient */
 			for (blk = 0; blk < S; ++blk) {
