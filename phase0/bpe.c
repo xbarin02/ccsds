@@ -1628,6 +1628,7 @@ int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 	}
 
 	switch (bitDepthAC) {
+			int err;
 		case 0:
 			/* cf. Sect. 4.4 a) */
 			break;
@@ -1640,11 +1641,16 @@ int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 					return err;
 				}
 			}
+
 			break;
 		default:
 			/* cf. Sect. 4.4 c) */
-			bpe_encode_segment_coding_of_AC_coefficients_1st_step(bpe);
-			/* TODO */
+			err = bpe_encode_segment_coding_of_AC_coefficients_1st_step(bpe);
+
+			if (err) {
+				return err;
+			}
+
 			break;
 	}
 
