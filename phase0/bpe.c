@@ -171,7 +171,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.Part4Flag = 1;
 	bpe->segment_header.PadRows = (UINT32)((8 - bpe->frame->height % 8) % 8);
 	bpe->segment_header.SegByteLimit = (UINT32)parameters->SegByteLimit;
-	bpe->segment_header.DCStop = 0; /* 1 => Terminate coded segment after coding quantized DC coefficient information and additional DC bit planes */
+	bpe->segment_header.DCStop = parameters->DCStop; /* 1 => Terminate coded segment after coding quantized DC coefficient information and additional DC bit planes */
 	bpe->segment_header.BitPlaneStop = M5;
 	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
 	bpe->segment_header.UseFill = 0;

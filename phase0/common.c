@@ -54,6 +54,8 @@ int init_parameters(struct parameters *parameters)
 	parameters->OptDCSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
 	parameters->OptACSelect = 1; /* 0 => heuristic selection of k parameter, 1 => optimum selection */
 
+	parameters->DCStop = 0; /* 1 => Terminate coded segment after coding quantized DC coefficient information and additional DC bit planes */
+
 	return RET_SUCCESS;
 }
 

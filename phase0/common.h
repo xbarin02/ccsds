@@ -128,6 +128,8 @@ struct parameters {
 
 	int OptDCSelect;
 	int OptACSelect;
+
+	int DCStop;
 };
 
 #define DWT_LL0  0
