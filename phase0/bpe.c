@@ -1336,6 +1336,10 @@ static UINT32 map_quantized_dc(INT32 d_, UINT32 theta, INT32 sign)
 		if (d_ < 0) assert(sign == -1);
 		if (d_ > 0) assert(sign == +1);
 
+#ifdef NDEBUG
+		(void)sign;
+#endif
+
 		d = theta + uint32_abs(d_);
 	}
 
