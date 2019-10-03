@@ -773,33 +773,27 @@ static const size_t code_option_length[11] = {
 	4, /* N = 10 */
 };
 
-/* Section 4.3.2.11 b) heuristic procedure */
-static UINT32 heuristic_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
+static UINT32 heuristic_select_code_option(size_t size, size_t N, size_t g, UINT32 *mapped)
 {
 	size_t i;
-	UINT32 *mapped_quantized_dc;
 	int first = (g == 0);
 	size_t delta = 0;
 	size_t J;
 	UINT32 k;
 
-	assert(bpe != NULL);
-
-	mapped_quantized_dc = bpe->mapped_quantized_dc;
-
-	assert(mapped_quantized_dc != NULL);
+	assert(mapped != NULL);
 
 	assert(size > (size_t)first);
 
 	J = size - (size_t)first;
 
-	/* delta = sum over mapped_quantized_dc[] in the gaggle */
+	/* delta = sum over mapped[] in the gaggle */
 	for (i = (size_t)first; i < size; ++i) {
 		size_t m = g * 16 + i;
 
-		assert(delta <= SIZE_MAX_ - mapped_quantized_dc[m]);
+		assert(delta <= SIZE_MAX_ - mapped[m]);
 
-		delta += mapped_quantized_dc[m];
+		delta += mapped[m];
 	}
 
 	/* Table 4-10 */
@@ -839,6 +833,30 @@ static UINT32 heuristic_select_code_option_DC(struct bpe *bpe, size_t size, size
 	}
 
 	assert(0 && "internal error");
+}
+
+/* adapt from heuristic_select_code_option_DC() */
+static UINT32 heuristic_select_code_option_AC(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	UINT32 *mapped_BitDepthAC_Block;
+
+	assert(bpe != NULL);
+
+	mapped_BitDepthAC_Block = bpe->mapped_BitDepthAC_Block;
+
+	return heuristic_select_code_option(size, N, g, mapped_BitDepthAC_Block);
+}
+
+/* Section 4.3.2.11 b) heuristic procedure */
+static UINT32 heuristic_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	UINT32 *mapped_quantized_dc;
+
+	assert(bpe != NULL);
+
+	mapped_quantized_dc = bpe->mapped_quantized_dc;
+
+	return heuristic_select_code_option(size, N, g, mapped_quantized_dc);
 }
 
 static UINT32 optimum_select_code_option_DC(struct bpe *bpe, size_t size, size_t N, size_t g)
@@ -921,7 +939,7 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 	assert(size > 0);
 
 	/* TODO adapt the following to mapped_BitDepthAC_Block[] */
-#if 0
+#if 1
 	if (size == 1 && (size_t)first == 1) {
 		dprint (("the gaggle consists of a single reference sample (J = 0)\n"));
 	} else {
@@ -930,6 +948,7 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 				k = heuristic_select_code_option_AC(bpe, size, N, g);
 				break;
 			case 1:
+				assert(!"optimum_select_code_option_AC implemented");
 				k = optimum_select_code_option_AC(bpe, size, N, g);
 				break;
 			default:
@@ -976,11 +995,32 @@ static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 			}
 		}
 	} else {
-		/* TODO */
-		abort();
-	}
+		size_t i;
 
-	/* TODO */
+		for (i = (size_t)first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g * 16 + i;
+
+			/* first part words */
+			err = bio_write_gr_1st_part(bpe->bio, (size_t)k, mapped_BitDepthAC_Block[m]);
+
+			if (err) {
+				return err;
+			}
+		}
+
+		for (i = (size_t)first; i < size; ++i) {
+			/* write mapped sample difference */
+			size_t m = g * 16 + i;
+
+			/* second part words */
+			err = bio_write_gr_2nd_part(bpe->bio, (size_t)k, mapped_BitDepthAC_Block[m]);
+
+			if (err) {
+				return err;
+			}
+		}
+	}
 
 	return RET_SUCCESS;
 }
@@ -1148,11 +1188,30 @@ static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct b
 			}
 		}
 	} else {
-		/* TODO */
-		abort();
-	}
+		size_t i;
 
-	/* TODO */
+		for (i = (size_t)first; i < size; ++i) {
+			size_t m = g * 16 + i;
+
+			/* first part words */
+			err = bio_read_gr_1st_part(bpe->bio, (size_t)k, &mapped_BitDepthAC_Block[m]);
+
+			if (err) {
+				return err;
+			}
+		}
+
+		for (i = (size_t)first; i < size; ++i) {
+			size_t m = g * 16 + i;
+
+			/* second part words */
+			err = bio_read_gr_2nd_part(bpe->bio, (size_t)k, &mapped_BitDepthAC_Block[m]);
+
+			if (err) {
+				return err;
+			}
+		}
+	}
 
 	return RET_SUCCESS;
 }
