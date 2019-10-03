@@ -786,13 +786,6 @@ static size_t size_max(size_t a, size_t b)
 	return a > b ? a : b;
 }
 
-#if 0
-static INT32 int32_min(INT32 a, INT32 b)
-{
-	return a < b ? a : b;
-}
-#endif
-
 static UINT32 uint32_min(UINT32 a, UINT32 b)
 {
 	return a < b ? a : b;
