@@ -1944,6 +1944,7 @@ int bpe_decode_segment_initial_coding_of_DC_coefficients(struct bpe *bpe)
 	return RET_SUCCESS;
 }
 
+/* Section 4.4 */
 int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe)
 {
 	UINT32 *bitDepthAC_Block;
@@ -2003,6 +2004,7 @@ int bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe
 	return RET_SUCCESS;
 }
 
+/* Section 4.4 */
 int bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(struct bpe *bpe)
 {
 	UINT32 *bitDepthAC_Block;
@@ -2106,12 +2108,14 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 		return RET_SUCCESS;
 	}
 
-	/* continue coding...  Sections 4.4 and 4.5... */
+	/* Section 4.4 */
 	err = bpe_encode_segment_specifying_the_ac_bit_depth_in_each_block(bpe);
 
 	if (err) {
 		return err;
 	}
+
+	/* Section 4.5... */
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
@@ -2224,11 +2228,14 @@ int bpe_decode_segment(struct bpe *bpe)
 		return RET_SUCCESS;
 	}
 
+	/* Section 4.4 */
 	err = bpe_decode_segment_specifying_the_ac_bit_depth_in_each_block(bpe);
 
 	if (err) {
 		return err;
 	}
+
+	/* Section 4.5... */
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	for (blk = 0; blk < S; ++blk) {
