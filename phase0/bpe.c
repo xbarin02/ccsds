@@ -147,6 +147,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->quantized_dc = NULL;
 	bpe->mapped_quantized_dc = NULL;
 	bpe->bitDepthAC_Block = NULL;
+	bpe->mapped_BitDepthAC_Block = NULL;
 
 	bpe->bio = bio;
 
@@ -238,6 +239,12 @@ int bpe_realloc_segment(struct bpe *bpe, size_t S)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
+	bpe->mapped_BitDepthAC_Block = realloc(bpe->mapped_BitDepthAC_Block, S * sizeof(UINT32));
+
+	if (bpe->mapped_BitDepthAC_Block == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
 	return RET_SUCCESS;
 }
 
@@ -323,6 +330,7 @@ int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 	free(bpe->quantized_dc);
 	free(bpe->mapped_quantized_dc);
 	free(bpe->bitDepthAC_Block);
+	free(bpe->mapped_BitDepthAC_Block);
 
 	if (parameters != NULL) {
 		parameters->DWTtype = bpe->segment_header.DWTtype;
@@ -1238,6 +1246,8 @@ int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 	assert(S > 0);
 
 	map_ACs_to_mapped_ACs(bpe, N);
+
+	/* TODO */
 
 	return RET_SUCCESS;
 }
