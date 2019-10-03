@@ -902,6 +902,13 @@ static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N,
 	return min_k;
 }
 
+static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
+{
+	/* TODO */
+
+	return RET_SUCCESS;
+}
+
 /* Section 4.3.2.6 */
 static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
@@ -1162,9 +1169,10 @@ static void map_ACs_to_mapped_ACs(struct bpe *bpe, size_t N)
 		INT32 d_ = (INT32)bitDepthAC_Block[m] - (INT32)bitDepthAC_Block[m-1];
 		UINT32 x_min = 0;
 		UINT32 x_max = ((UINT32)1 << N) - 1;
-		assert(bitDepthAC_Block[m-1] <= x_max);
 		UINT32 theta = uint32_min(bitDepthAC_Block[m-1] - x_min, x_max - bitDepthAC_Block[m-1]);
 		INT32 sign = bitDepthAC_Block[m-1] > (x_max - bitDepthAC_Block[m-1]) ? -1 : +1;
+
+		assert(bitDepthAC_Block[m-1] <= x_max);
 
 		mapped_BitDepthAC_Block[m] = map_quantized_dc(d_, theta, sign);
 	}
@@ -1282,7 +1290,11 @@ int bpe_encode_segment_coding_of_AC_coefficients_1st_step(struct bpe *bpe)
 		size_t ge = (g < full_G) ? 16 : (S % 16);
 		int err;
 
-		/* TODO */
+		err = bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(bpe, ge, N, g);
+
+		if (err) {
+			return err;
+		}
 	}
 
 	return RET_SUCCESS;
