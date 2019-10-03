@@ -1060,10 +1060,19 @@ static int bpe_encode_segment_initial_coding_of_DC_coefficients_1st_step_gaggle(
 static int bpe_decode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
 	UINT32 k;
+	UINT32 *bitDepthAC_Block;
+	UINT32 *mapped_BitDepthAC_Block;
 	int err;
+	int first = (g == 0);
+
 	assert(bpe != NULL);
 
-	/* TODO */
+	bitDepthAC_Block = bpe->bitDepthAC_Block;
+	mapped_BitDepthAC_Block = bpe->mapped_BitDepthAC_Block;
+
+	assert(first == 0 || bitDepthAC_Block != NULL);
+	assert(mapped_BitDepthAC_Block != NULL);
+	assert(size > 0);
 
 	/* read code option */
 	err = bio_read_dc_bits(bpe->bio, &k, code_option_length[N]);
