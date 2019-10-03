@@ -2424,8 +2424,6 @@ int bpe_decode_segment(struct bpe *bpe)
 	}
 #endif
 
-	/* Sections 4.4 & 4.5 ... */
-
 	return RET_SUCCESS;
 }
 
