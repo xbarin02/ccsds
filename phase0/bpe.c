@@ -904,6 +904,7 @@ static UINT32 optimum_select_code_option(struct bpe *bpe, size_t size, size_t N,
 
 static int bpe_encode_segment_coding_of_AC_coefficients_1st_step_gaggle(struct bpe *bpe, size_t size, size_t N, size_t g)
 {
+	UINT32 k = (UINT32)-1; /* uncoded by default */
 	/* TODO */
 
 	return RET_SUCCESS;
