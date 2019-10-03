@@ -16,6 +16,7 @@
 #define M8 255
 #define M20 1048575
 #define M27 134217727
+#define M31 2147483647
 
 struct block {
 	int *data;
@@ -2108,13 +2109,12 @@ int bpe_encode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 		} else {
 			bit = (dc >> b) & 1;
 		}
-#if 0
+
 		err = bio_put_bit(bpe->bio, bit);
 
 		if (err) {
 			return err;
 		}
-#endif
 	}
 
 	return RET_SUCCESS;
@@ -2148,7 +2148,7 @@ int bpe_decode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 		dc = bpe->segment + m * BLOCK_SIZE;
 
 		/* b-th most significant bit of the two's-complement representation of the DC coefficient */
-#if 0
+
 		err = bio_get_bit(bpe->bio, &bit);
 
 		if (err) {
@@ -2158,9 +2158,9 @@ int bpe_decode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 		if (b < 32) {
 			*dc |= (INT32)bit << b;
 		} else {
-			assert(!"set the sign bit, not implemented yet");
+			*dc = ~(*dc);
+			*dc ^= M31;
 		}
-#endif
 	}
 
 	return RET_SUCCESS;
