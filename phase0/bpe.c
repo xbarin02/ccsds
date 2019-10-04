@@ -2390,6 +2390,10 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			/* variable-length words */
 			UINT32 word_types_b_P = 0;
 			size_t word_types_b_P_size = 0;
+			UINT32 word_signs_b_P = 0;
+			size_t word_signs_b_P_size = 0;
+
+			/* TODO compute size of new information */
 
 			/* TODO receive new information */
 
@@ -2399,7 +2403,10 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 				word_types_b_P_size --;
 			}
 
-			/* TODO update types according to the currently indicated information */
+			/* update types according to the currently indicated information */
+			update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
+			update_type(type_lh2, bpe, *magn_lh2, b, DWT_LH2);
+			update_type(type_hh2, bpe, *magn_hh2, b, DWT_HH2);
 		}
 	}
 
