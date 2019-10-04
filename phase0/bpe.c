@@ -2295,6 +2295,13 @@ static void stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, size_t *wo
 	}
 }
 
+static void stage1_decode_sign(size_t b, int *type, UINT32 magn, INT32 *sign, UINT32 *word, size_t *word_size)
+{
+	if (was_type0(type) && is_significant(b, magn)) {
+		*sign = (INT32)pop_bit(word, word_size);
+	}
+}
+
 /* encode parents */
 int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 {
@@ -2338,15 +2345,21 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			UINT32 word_signs_b_P = 0;
 			size_t word_signs_b_P_size = 0;
 
+			/* fill word_types_b_P */
 			stage1_encode_significance(b, type_hl2, *magn_hl2, &word_types_b_P, &word_types_b_P_size);
 			stage1_encode_significance(b, type_lh2, *magn_lh2, &word_types_b_P, &word_types_b_P_size);
 			stage1_encode_significance(b, type_hh2, *magn_hh2, &word_types_b_P, &word_types_b_P_size);
 
+			/* fill word_signs_b_P */
 			stage1_encode_sign(b, type_hl2, *magn_hl2, *sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
 
-			/* TODO send new information: types_b[P], signs_b[P] */
+			/* send types_b[P] */
+			bio_write_bits(bpe->bio, word_types_b_P, word_types_b_P_size);
+
+			/* send signs_b[P] */
+			bio_write_bits(bpe->bio, word_signs_b_P, word_signs_b_P_size);
 
 			/* update types according to the currently indicated information */
 			update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
@@ -2393,16 +2406,31 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			UINT32 word_signs_b_P = 0;
 			size_t word_signs_b_P_size = 0;
 
-			/* TODO compute size of new information */
+			/* compute size of word_types_b_P */
 			stage1_decode_significance_stub(type_hh2, &word_types_b_P_size);
 			stage1_decode_significance_stub(type_lh2, &word_types_b_P_size);
 			stage1_decode_significance_stub(type_hl2, &word_types_b_P_size);
 
-			/* TODO receive magnitude bits */
+			/* receive word_types_b_P */
+			bio_read_bits(bpe->bio, &word_types_b_P, word_types_b_P_size);
 
-			/* TODO compute size of new information: stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, size_t *word_size) */
+			/* set magnitude bits from word_types_b_P */
+			stage1_decode_significance(b, type_hh2, magn_hh2, &word_types_b_P, &word_types_b_P_size);
+			stage1_decode_significance(b, type_lh2, magn_lh2, &word_types_b_P, &word_types_b_P_size);
+			stage1_decode_significance(b, type_hl2, magn_hl2, &word_types_b_P, &word_types_b_P_size);
 
-			/* TODO receive sign bits */
+			/* compute size of word_signs_b_P */
+			stage1_decode_sign_stub(b, type_hh2, *magn_hh2, &word_signs_b_P_size);
+			stage1_decode_sign_stub(b, type_lh2, *magn_lh2, &word_signs_b_P_size);
+			stage1_decode_sign_stub(b, type_hl2, *magn_hl2, &word_signs_b_P_size);
+
+			/* receive word_signs_b_P */
+			bio_read_bits(bpe->bio, &word_signs_b_P, word_signs_b_P_size);
+
+			/* set sign bits from word_signs_b_P */
+			stage1_decode_sign(b, type_hh2, *magn_hh2, sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
+			stage1_decode_sign(b, type_lh2, *magn_lh2, sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
+			stage1_decode_sign(b, type_hl2, *magn_hl2, sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
 
 			/* update types according to the currently indicated information */
 			update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
