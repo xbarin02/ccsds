@@ -2218,6 +2218,14 @@ static int query_type(struct bpe *bpe, UINT32 magnitude, size_t b, int subband)
 	assert(0 && "internal error");
 }
 
+/* Type 0 at the previous bit plane */
+static int is_type0(int *type)
+{
+	assert(type != NULL);
+
+	return *type == 0;
+}
+
 /* encode parents */
 int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 {
@@ -2256,6 +2264,8 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			UINT32 *magn_hh2 = magn + 4*stride + 4;
 
 			/* TODO indicated new information */
+			if (is_type0(type_hl2))
+				;
 
 			/* TODO update types according to the currently indicated information */
 		}
@@ -2293,7 +2303,11 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			UINT32 *magn_lh2 = magn + 4*stride + 0;
 			UINT32 *magn_hh2 = magn + 4*stride + 4;
 
-			/* TODO */
+			/* TODO receive new information */
+			if (is_type0(type_hl2))
+				;
+
+			/* TODO update types according to the currently indicated information */
 		}
 	}
 
