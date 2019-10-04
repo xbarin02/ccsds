@@ -2328,7 +2328,7 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 
 		/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 		{
-			/* types: denote the binary word consisting of the b-th magnitude bit such that t_b == {0, 1} */
+			int err;
 			int *type_hl2 = type + 0*stride + 4;
 			int *type_lh2 = type + 4*stride + 0;
 			int *type_hh2 = type + 4*stride + 4;
@@ -2355,11 +2355,20 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
 
+			/* FIXME: this should be entropy-encoded */
 			/* send types_b[P] */
-			bio_write_bits(bpe->bio, word_types_b_P, word_types_b_P_size);
+			err = bio_write_bits(bpe->bio, word_types_b_P, word_types_b_P_size);
+
+			if (err) {
+				return err;
+			}
 
 			/* send signs_b[P] */
-			bio_write_bits(bpe->bio, word_signs_b_P, word_signs_b_P_size);
+			err = bio_write_bits(bpe->bio, word_signs_b_P, word_signs_b_P_size);
+
+			if (err) {
+				return err;
+			}
 
 			/* update types according to the currently indicated information */
 			update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
@@ -2390,6 +2399,7 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 
 		/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 		{
+			int err;
 			int *type_hl2 = type + 0*stride + 4;
 			int *type_lh2 = type + 4*stride + 0;
 			int *type_hh2 = type + 4*stride + 4;
@@ -2411,8 +2421,13 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			stage1_decode_significance_stub(type_lh2, &word_types_b_P_size);
 			stage1_decode_significance_stub(type_hl2, &word_types_b_P_size);
 
+			/* FIXME: this should be entropy-encoded */
 			/* receive word_types_b_P */
-			bio_read_bits(bpe->bio, &word_types_b_P, word_types_b_P_size);
+			err = bio_read_bits(bpe->bio, &word_types_b_P, word_types_b_P_size);
+
+			if (err) {
+				return err;
+			}
 
 			/* set magnitude bits from word_types_b_P */
 			stage1_decode_significance(b, type_hh2, magn_hh2, &word_types_b_P, &word_types_b_P_size);
@@ -2425,7 +2440,11 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			stage1_decode_sign_stub(b, type_hl2, *magn_hl2, &word_signs_b_P_size);
 
 			/* receive word_signs_b_P */
-			bio_read_bits(bpe->bio, &word_signs_b_P, word_signs_b_P_size);
+			err = bio_read_bits(bpe->bio, &word_signs_b_P, word_signs_b_P_size);
+
+			if (err) {
+				return err;
+			}
 
 			/* set sign bits from word_signs_b_P */
 			stage1_decode_sign(b, type_hh2, *magn_hh2, sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
@@ -2603,7 +2622,6 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 	/* init decoding */
 	for (m = 0; m < S; ++m) {
 		int *block_type = bpe->type + m * BLOCK_SIZE;
-		INT32 *block_coeff = bpe->segment + m * BLOCK_SIZE;
 		INT32 *block_sign = bpe->sign + m * BLOCK_SIZE;
 		UINT32 *block_magnitude = bpe->magnitude + m * BLOCK_SIZE;
 
@@ -2657,7 +2675,6 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 
 	/* after decoding */
 	for (m = 0; m < S; ++m) {
-		int *block_type = bpe->type + m * BLOCK_SIZE;
 		INT32 *block_coeff = bpe->segment + m * BLOCK_SIZE;
 		INT32 *block_sign = bpe->sign + m * BLOCK_SIZE;
 		UINT32 *block_magnitude = bpe->magnitude + m * BLOCK_SIZE;
