@@ -2190,10 +2190,10 @@ int bpe_decode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 	return RET_SUCCESS;
 }
 
-/* t_b: type is valid for more significant bitplanes (> b), this function computes the type for the current bitplane (== b) */
+/* t_b: computes the type for the bitplane b */
 static int query_type(struct bpe *bpe, UINT32 magnitude, size_t b, int subband)
 {
-	UINT32 threshold; /* threshold */
+	UINT32 threshold;
 
 	assert(b <= 32);
 
@@ -2228,6 +2228,8 @@ static int was_type0(int *type)
 
 static void update_type(int *type, struct bpe *bpe, UINT32 magnitude, size_t b, int subband)
 {
+	assert(type != NULL);
+
 	*type = query_type(bpe, magnitude, b, subband);
 }
 
@@ -2243,8 +2245,13 @@ static int get_sign(INT32 sign)
 
 static void push_bit(UINT32 bit, UINT32 *word, size_t *word_size)
 {
+	assert(word != NULL);
+
 	*word <<= 1;
 	*word |= (bit & 1);
+
+	assert(word_size != NULL);
+
 	(*word_size) ++;
 }
 
@@ -2252,9 +2259,14 @@ static UINT32 pop_bit(UINT32 *word, size_t *word_size)
 {
 	UINT32 bit;
 
+	assert(word != NULL);
+
 	bit = (*word) & 1;
 
 	(*word) >>= 1;
+
+	assert(word_size != NULL);
+
 	(*word_size) --;
 
 	return bit;
@@ -2270,6 +2282,8 @@ static void stage1_encode_significance(size_t b, int *type, UINT32 magn, UINT32 
 static void stage1_decode_significance(size_t b, int *type, UINT32 *magn, UINT32 *word, size_t *word_size)
 {
 	if (was_type0(type)) {
+		assert(magn != NULL);
+
 		*magn |= pop_bit(word, word_size) << b; /* magnitude bit */
 	}
 }
@@ -2277,6 +2291,8 @@ static void stage1_decode_significance(size_t b, int *type, UINT32 *magn, UINT32
 static void stage1_decode_significance_stub(int *type, size_t *word_size)
 {
 	if (was_type0(type)) {
+		assert(word_size != NULL);
+
 		(*word_size) ++; /* the encoder encoded the magnitude bit */
 	}
 }
@@ -2291,6 +2307,8 @@ static void stage1_encode_sign(size_t b, int *type, UINT32 magn, INT32 sign, UIN
 static void stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, size_t *word_size)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
+		assert(word_size != NULL);
+
 		(*word_size) ++; /* the encoder encoded the sign bit */
 	}
 }
@@ -2298,6 +2316,8 @@ static void stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, size_t *wo
 static void stage1_decode_sign(size_t b, int *type, UINT32 magn, INT32 *sign, UINT32 *word, size_t *word_size)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
+		assert(sign != NULL);
+
 		*sign = (INT32)pop_bit(word, word_size);
 	}
 }
