@@ -2345,12 +2345,12 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			UINT32 word_signs_b_P = 0;
 			size_t word_signs_b_P_size = 0;
 
-			/* fill word_types_b_P */
+			/* fill types_b[P] from magnitude bits */
 			stage1_encode_significance(b, type_hl2, *magn_hl2, &word_types_b_P, &word_types_b_P_size);
 			stage1_encode_significance(b, type_lh2, *magn_lh2, &word_types_b_P, &word_types_b_P_size);
 			stage1_encode_significance(b, type_hh2, *magn_hh2, &word_types_b_P, &word_types_b_P_size);
 
-			/* fill word_signs_b_P */
+			/* fill signs_b[P] from sign bits */
 			stage1_encode_sign(b, type_hl2, *magn_hl2, *sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
@@ -2416,37 +2416,37 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			UINT32 word_signs_b_P = 0;
 			size_t word_signs_b_P_size = 0;
 
-			/* compute size of word_types_b_P */
+			/* compute size of types_b[P] */
 			stage1_decode_significance_stub(type_hh2, &word_types_b_P_size);
 			stage1_decode_significance_stub(type_lh2, &word_types_b_P_size);
 			stage1_decode_significance_stub(type_hl2, &word_types_b_P_size);
 
 			/* FIXME: this should be entropy-encoded */
-			/* receive word_types_b_P */
+			/* receive types_b[P] */
 			err = bio_read_bits(bpe->bio, &word_types_b_P, word_types_b_P_size);
 
 			if (err) {
 				return err;
 			}
 
-			/* set magnitude bits from word_types_b_P */
+			/* set magnitude bits from types_b[P] */
 			stage1_decode_significance(b, type_hh2, magn_hh2, &word_types_b_P, &word_types_b_P_size);
 			stage1_decode_significance(b, type_lh2, magn_lh2, &word_types_b_P, &word_types_b_P_size);
 			stage1_decode_significance(b, type_hl2, magn_hl2, &word_types_b_P, &word_types_b_P_size);
 
-			/* compute size of word_signs_b_P */
+			/* compute size of signs_b[P] */
 			stage1_decode_sign_stub(b, type_hh2, *magn_hh2, &word_signs_b_P_size);
 			stage1_decode_sign_stub(b, type_lh2, *magn_lh2, &word_signs_b_P_size);
 			stage1_decode_sign_stub(b, type_hl2, *magn_hl2, &word_signs_b_P_size);
 
-			/* receive word_signs_b_P */
+			/* receive signs_b[P] */
 			err = bio_read_bits(bpe->bio, &word_signs_b_P, word_signs_b_P_size);
 
 			if (err) {
 				return err;
 			}
 
-			/* set sign bits from word_signs_b_P */
+			/* set sign bits from signs_b[P] */
 			stage1_decode_sign(b, type_hh2, *magn_hh2, sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_decode_sign(b, type_lh2, *magn_lh2, sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
 			stage1_decode_sign(b, type_hl2, *magn_hl2, sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
