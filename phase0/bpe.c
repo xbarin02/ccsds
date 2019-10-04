@@ -2380,6 +2380,11 @@ int bpe_decode_segment(struct bpe *bpe)
 
 		bpe_realloc_frame_bpp(bpe);
 
+		assert(bpe->segment_header.CodeWordLength < 8);
+
+		if (lut_codeword_length[bpe->segment_header.CodeWordLength] > 32){
+			return RET_FAILURE_FILE_UNSUPPORTED;
+		}
 		/* what about DWTtype, etc.? */
 	}
 
