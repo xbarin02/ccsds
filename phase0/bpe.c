@@ -2226,6 +2226,37 @@ static int was_type0(int *type)
 	return *type == 0;
 }
 
+static int is_significant(size_t b, UINT32 magn)
+{
+	return (magn >> b) & 1;
+}
+
+static int get_sign(INT32 sign)
+{
+	return sign != 0;
+}
+
+static int push_bit(UINT32 bit, UINT32 *word, size_t *word_size)
+{
+	*word <<= 1;
+	*word |= (bit & 1);
+	(*word_size) ++;
+}
+
+static void stage1_encode_significance(size_t b, int *type, UINT32 magn, UINT32 *word, size_t *word_size)
+{
+	if (was_type0(type)) {
+		push_bit((UINT32)is_significant(b, magn), word, word_size); /* magnitude bit */
+	}
+}
+
+static void stage1_encode_sign(size_t b, int *type, UINT32 magn, INT32 sign, UINT32 *word, size_t *word_size)
+{
+	if (was_type0(type) && is_significant(b, magn)) {
+		push_bit((UINT32)get_sign(sign), word, word_size); /* sign bit */
+	}
+}
+
 /* encode parents */
 int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 {
@@ -2266,12 +2297,16 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			/* variable-length words */
 			UINT32 word_types_b_P = 0;
 			size_t word_types_b_P_size = 0;
+			UINT32 word_signs_b_P = 0;
+			size_t word_signs_b_P_size = 0;
 
-			if (was_type0(type_hl2)) {
-				word_types_b_P <<= 1;
-				word_types_b_P |= (*magn_hl2 >> b) & 1; /* magnitude bit */
-				word_types_b_P_size ++;
-			}
+			stage1_encode_significance(b, type_hl2, *magn_hl2, &word_types_b_P, &word_types_b_P_size);
+			stage1_encode_significance(b, type_lh2, *magn_lh2, &word_types_b_P, &word_types_b_P_size);
+			stage1_encode_significance(b, type_hh2, *magn_hh2, &word_types_b_P, &word_types_b_P_size);
+
+			stage1_encode_sign(b, type_hl2, *magn_hl2, *sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
+			stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
+			stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
 
 			/* TODO send new information */
 
