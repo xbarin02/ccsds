@@ -2394,14 +2394,15 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 			size_t word_signs_b_P_size = 0;
 
 			/* TODO compute size of new information */
+			stage1_decode_significance_stub(type_hh2, &word_types_b_P_size);
+			stage1_decode_significance_stub(type_lh2, &word_types_b_P_size);
+			stage1_decode_significance_stub(type_hl2, &word_types_b_P_size);
 
-			/* TODO receive new information */
+			/* TODO receive magnitude bits */
 
-			if (was_type0(type_hl2)) {
-				*magn_hl2 |= (word_types_b_P & 1) << b; /* magnitude bit */
-				word_types_b_P >>= 1;
-				word_types_b_P_size --;
-			}
+			/* TODO compute size of new information: stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, size_t *word_size) */
+
+			/* TODO receive sign bits */
 
 			/* update types according to the currently indicated information */
 			update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
