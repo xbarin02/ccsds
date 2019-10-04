@@ -173,7 +173,7 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->segment_header.PadRows = (UINT32)((8 - bpe->frame->height % 8) % 8);
 	bpe->segment_header.SegByteLimit = (UINT32)parameters->SegByteLimit;
 	bpe->segment_header.DCStop = parameters->DCStop; /* 1 => Terminate coded segment after coding quantized DC coefficient information and additional DC bit planes */
-	bpe->segment_header.BitPlaneStop = M5;
+	bpe->segment_header.BitPlaneStop = 0; /* When BitPlaneStop = b and StageStop = s, coded segment terminates once stage s of bit plane b has been completed */
 	bpe->segment_header.StageStop = 3; /* 3 => stage 4 */
 	bpe->segment_header.UseFill = 0;
 	bpe->segment_header.S = (UINT32) parameters->S;
@@ -2190,7 +2190,29 @@ int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 			return err;
 		}
 
-		/* TODO */
+		/* TODO Stage 1 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 0) {
+			break;
+		}
+
+		/* TODO Stage 2 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 1) {
+			break;
+		}
+
+		/* TODO Stage 3 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 2) {
+			break;
+		}
+
+		/* TODO Stage 4 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 3) {
+			break;
+		}
 	}
 
 	return RET_SUCCESS;
@@ -2220,7 +2242,29 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 			return err;
 		}
 
-		/* TODO */
+		/* TODO Stage 1 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 0) {
+			break;
+		}
+
+		/* TODO Stage 2 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 1) {
+			break;
+		}
+
+		/* TODO Stage 3 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 2) {
+			break;
+		}
+
+		/* TODO Stage 4 */
+
+		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 3) {
+			break;
+		}
 	}
 
 	return RET_SUCCESS;
