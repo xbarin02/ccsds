@@ -2231,9 +2231,9 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 
 	for (m = 0; m < S; ++m) {
 		/* Stage 1 @ block[m] */
+		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
 		INT32 *sign = bpe->sign + m * BLOCK_SIZE;
 		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
-		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
 
 		/* 4.5.3.1.1 */
 		/* P = (HL2, LH2, HH2) */
@@ -2245,11 +2245,19 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 		/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 		{
 			/* types: denote the binary word consisting of the b-th magnitude bit such that t_b == {0, 1} */
+			int *type_hl2 = type + 0*stride + 4;
+			int *type_lh2 = type + 4*stride + 0;
+			int *type_hh2 = type + 4*stride + 4;
+			INT32 *sign_hl2 = sign + 0*stride + 4;
+			INT32 *sign_lh2 = sign + 4*stride + 0;
+			INT32 *sign_hh2 = sign + 4*stride + 4;
 			UINT32 *magn_hl2 = magn + 0*stride + 4;
 			UINT32 *magn_lh2 = magn + 4*stride + 0;
 			UINT32 *magn_hh2 = magn + 4*stride + 4;
 
-			/* TODO */
+			/* TODO indicated new information */
+
+			/* TODO update types according to the currently indicated information */
 		}
 	}
 
@@ -2269,8 +2277,24 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 
 	for (m = 0; m < S; ++m) {
 		/* Stage 1 @ block[m] */
+		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
+		INT32 *sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
 
-		/* TODO */
+		/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
+		{
+			int *type_hl2 = type + 0*stride + 4;
+			int *type_lh2 = type + 4*stride + 0;
+			int *type_hh2 = type + 4*stride + 4;
+			INT32 *sign_hl2 = sign + 0*stride + 4;
+			INT32 *sign_lh2 = sign + 4*stride + 0;
+			INT32 *sign_hh2 = sign + 4*stride + 4;
+			UINT32 *magn_hl2 = magn + 0*stride + 4;
+			UINT32 *magn_lh2 = magn + 4*stride + 0;
+			UINT32 *magn_hh2 = magn + 4*stride + 4;
+
+			/* TODO */
+		}
 	}
 
 	return RET_SUCCESS;
