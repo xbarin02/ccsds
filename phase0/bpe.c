@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 /* HACK: until the BPE is fully implemented */
-#define DEBUG_ENCODE_BLOCKS 1
+#define DEBUG_ENCODE_BLOCKS 0
 
 #define BLOCK_SIZE (8 * 8)
 
@@ -149,6 +149,9 @@ int bpe_init(struct bpe *bpe, const struct parameters *parameters, struct bio *b
 	bpe->mapped_quantized_dc = NULL;
 	bpe->bitDepthAC_Block = NULL;
 	bpe->mapped_BitDepthAC_Block = NULL;
+	bpe->type = NULL;
+	bpe->sign = NULL;
+	bpe->magnitude = NULL;
 
 	bpe->bio = bio;
 
@@ -246,6 +249,24 @@ int bpe_realloc_segment(struct bpe *bpe, size_t S)
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
+	bpe->type = realloc(bpe->type, S * BLOCK_SIZE * sizeof(int));
+
+	if (bpe->type == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	bpe->sign = realloc(bpe->sign, S * BLOCK_SIZE * sizeof(INT32));
+
+	if (bpe->sign == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
+	bpe->magnitude = realloc(bpe->magnitude, S * BLOCK_SIZE * sizeof(UINT32));
+
+	if (bpe->magnitude == NULL && S != 0) {
+		return RET_FAILURE_MEMORY_ALLOCATION;
+	}
+
 	return RET_SUCCESS;
 }
 
@@ -332,6 +353,9 @@ int bpe_destroy(struct bpe *bpe, struct parameters *parameters)
 	free(bpe->mapped_quantized_dc);
 	free(bpe->bitDepthAC_Block);
 	free(bpe->mapped_BitDepthAC_Block);
+	free(bpe->type);
+	free(bpe->sign);
+	free(bpe->magnitude);
 
 	if (parameters != NULL) {
 		parameters->DWTtype = bpe->segment_header.DWTtype;
@@ -2166,15 +2190,188 @@ int bpe_decode_segment_bit_plane_coding_stage0(struct bpe *bpe, size_t b)
 	return RET_SUCCESS;
 }
 
+/* t_b: type is valid for more significant bitplanes (> b), this function computes the type for the current bitplane (== b) */
+static int query_type(struct bpe *bpe, UINT32 magnitude, size_t b, int subband)
+{
+	UINT32 threshold; /* threshold */
+
+	assert(b <= 32);
+
+	threshold = (UINT32)1 << b;
+
+	/* must be zero at this bit plane due to subband scaling */
+	if (b < BitShift(bpe, subband))
+		return -1;
+
+	/* not significant */
+	if (magnitude < threshold)
+		return 0;
+
+	/* significant */
+	if (magnitude >= threshold && magnitude < 2*threshold)
+		return 1;
+
+	/* was significant at some previous bitplane */
+	if (magnitude >= 2*threshold)
+		return 2;
+
+	assert(0 && "internal error");
+}
+
+/* encode parents */
+int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
+{
+	size_t S;
+	size_t m;
+	size_t stride = 8;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	for (m = 0; m < S; ++m) {
+		/* Stage 1 @ block[m] */
+		INT32 *sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
+		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
+
+		/* 4.5.3.1.1 */
+		/* P = (HL2, LH2, HH2) */
+
+		/* 4.5.3.1.8 */
+
+		/* types_b[P], signs_b[P] */
+
+		/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
+		{
+			/* types: denote the binary word consisting of the b-th magnitude bit such that t_b == {0, 1} */
+			UINT32 *magn_hl2 = magn + 0*stride + 4;
+			UINT32 *magn_lh2 = magn + 4*stride + 0;
+			UINT32 *magn_hh2 = magn + 4*stride + 4;
+
+			/* TODO */
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+/* decode parents */
+int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
+{
+	size_t S;
+	size_t m;
+	size_t stride = 8;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	for (m = 0; m < S; ++m) {
+		/* Stage 1 @ block[m] */
+
+		/* TODO */
+	}
+
+	return RET_SUCCESS;
+}
+
+/* set type to 0 (at the start of encoding/decoding) */
+void block_type_reset(int *data, size_t stride)
+{
+	size_t y, x;
+
+	assert(data != NULL);
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			data[y*stride + x] = 0;
+		}
+	}
+}
+
+/* convert AC coefficients in bpe->segment[] into sign-magnitude representation in bpe->sign[] & bpe->magnitude[] */
+void block_magnitude_sign_get(INT32 *data, INT32 *sign, UINT32 *magnitude, size_t stride)
+{
+	size_t y, x;
+
+	assert(data != NULL);
+	assert(sign != NULL);
+	assert(magnitude != NULL);
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			if (x == 0 && y == 0)
+				continue;
+
+			sign[y*stride + x] = data[y*stride + x] < 0;
+			magnitude[y*stride + x] = uint32_abs(data[y*stride + x]);
+		}
+	}
+}
+
+/* reset AC sign-magnitudes at the start of decoding */
+void block_magnitude_sign_reset(INT32 *sign, UINT32 *magnitude, size_t stride)
+{
+	size_t y, x;
+
+	assert(sign != NULL);
+	assert(magnitude != NULL);
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			if (x == 0 && y == 0)
+				continue;
+
+			sign[y*stride + x] = 0;
+			magnitude[y*stride + x] = 0;
+		}
+	}
+}
+
+/* convert AC sign-magnitude representation into pbe->segment[] (after decoding) */
+void block_magnitude_sign_set(INT32 *data, INT32 *sign, UINT32 *magnitude, size_t stride)
+{
+	size_t y, x;
+
+	assert(data != NULL);
+	assert(sign != NULL);
+	assert(magnitude != NULL);
+
+	for (y = 0; y < 8; ++y) {
+		for (x = 0; x < 8; ++x) {
+			if (x == 0 && y == 0)
+				continue;
+
+			data[y*stride + x] = (sign[y*stride + x] ? -(INT32)1 : +(INT32)1) * (INT32)magnitude[y*stride + x];
+		}
+	}
+}
+
 /* Section 4.5 */
 int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 {
 	size_t bitDepthAC;
 	size_t b_;
+	size_t S;
+	size_t m;
 
 	assert(bpe != NULL);
 
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	S = bpe->S;
+
+	/* init encoding */
+	for (m = 0; m < S; ++m) {
+		int *block_type = bpe->type + m * BLOCK_SIZE;
+		INT32 *block_coeff = bpe->segment + m * BLOCK_SIZE;
+		INT32 *block_sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *block_magnitude = bpe->magnitude + m * BLOCK_SIZE;
+
+		block_type_reset(block_type, 8);
+		block_magnitude_sign_get(block_coeff, block_sign, block_magnitude, 8);
+	}
 
 	for (b_ = 0; b_ < bitDepthAC; ++b_) {
 		size_t b = bitDepthAC - 1 - b_;
@@ -2191,6 +2388,11 @@ int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 		}
 
 		/* TODO Stage 1 */
+		err = bpe_encode_segment_bit_plane_coding_stage1(bpe, b);
+
+		if (err) {
+			return err;
+		}
 
 		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 0) {
 			break;
@@ -2223,10 +2425,25 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 {
 	size_t bitDepthAC;
 	size_t b_;
+	size_t S;
+	size_t m;
 
 	assert(bpe != NULL);
 
 	bitDepthAC = (size_t) bpe->segment_header.BitDepthAC;
+
+	S = bpe->S;
+
+	/* init decoding */
+	for (m = 0; m < S; ++m) {
+		int *block_type = bpe->type + m * BLOCK_SIZE;
+		INT32 *block_coeff = bpe->segment + m * BLOCK_SIZE;
+		INT32 *block_sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *block_magnitude = bpe->magnitude + m * BLOCK_SIZE;
+
+		block_type_reset(block_type, 8);
+		block_magnitude_sign_reset(block_sign, block_magnitude, 8);
+	}
 
 	for (b_ = 0; b_ < bitDepthAC; ++b_) {
 		size_t b = bitDepthAC - 1 - b_;
@@ -2243,6 +2460,11 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 		}
 
 		/* TODO Stage 1 */
+		err = bpe_decode_segment_bit_plane_coding_stage1(bpe, b);
+
+		if (err) {
+			return err;
+		}
 
 		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 0) {
 			break;
@@ -2265,6 +2487,16 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 3) {
 			break;
 		}
+	}
+
+	/* after decoding */
+	for (m = 0; m < S; ++m) {
+		int *block_type = bpe->type + m * BLOCK_SIZE;
+		INT32 *block_coeff = bpe->segment + m * BLOCK_SIZE;
+		INT32 *block_sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *block_magnitude = bpe->magnitude + m * BLOCK_SIZE;
+
+		block_magnitude_sign_set(block_coeff, block_sign, block_magnitude, 8);
 	}
 
 	return RET_SUCCESS;

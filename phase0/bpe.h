@@ -72,6 +72,15 @@ struct bpe {
 	UINT32 *mapped_BitDepthAC_Block;
 
 	size_t q;
+
+	/* 8*8*S, type of an AC coefficient; t_b(x), pg. Page 4-26. CCSDS 122.0-B-2 */
+	/* each AC coefficient typically proceeds from type 0 to 1, to 2, to -1 */
+	int *type;
+	/* An AC coefficient is represented using the binary representation of
+	 * the magnitude of the coefficient, along with a bit indicating
+	 * the sign when the coefficient is nonzero. */
+	INT32 *sign;
+	UINT32 *magnitude;
 };
 
 size_t BitShift(const struct bpe *bpe, int subband);
