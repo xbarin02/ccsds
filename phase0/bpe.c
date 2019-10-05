@@ -2460,15 +2460,15 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 
 	size_t stride = 8;
 
-	int *type_hl2 = block_subband_int(type, stride, DWT_P0);
-	int *type_lh2 = block_subband_int(type, stride, DWT_P1);
-	int *type_hh2 = block_subband_int(type, stride, DWT_P2);
-	INT32 *sign_hl2 = block_subband_INT32(sign, stride, DWT_P0);
-	INT32 *sign_lh2 = block_subband_INT32(sign, stride, DWT_P1);
-	INT32 *sign_hh2 = block_subband_INT32(sign, stride, DWT_P2);
-	UINT32 *magn_hl2 = block_subband_UINT32(magn, stride, DWT_P0);
-	UINT32 *magn_lh2 = block_subband_UINT32(magn, stride, DWT_P1);
-	UINT32 *magn_hh2 = block_subband_UINT32(magn, stride, DWT_P2);
+	int *type_P0 = block_subband_int(type, stride, DWT_P0);
+	int *type_P1 = block_subband_int(type, stride, DWT_P1);
+	int *type_P2 = block_subband_int(type, stride, DWT_P2);
+	INT32 *sign_P0 = block_subband_INT32(sign, stride, DWT_P0);
+	INT32 *sign_P1 = block_subband_INT32(sign, stride, DWT_P1);
+	INT32 *sign_P2 = block_subband_INT32(sign, stride, DWT_P2);
+	UINT32 *magn_P0 = block_subband_UINT32(magn, stride, DWT_P0);
+	UINT32 *magn_P1 = block_subband_UINT32(magn, stride, DWT_P1);
+	UINT32 *magn_P2 = block_subband_UINT32(magn, stride, DWT_P2);
 
 	/* variable-length words */
 	UINT32 word_types_b_P = 0;
@@ -2489,14 +2489,14 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 
 	/* fill types_b[P] from magnitude bits */
-	stage1_encode_significance(b, type_hl2, *magn_hl2, &word_types_b_P, &word_types_b_P_size);
-	stage1_encode_significance(b, type_lh2, *magn_lh2, &word_types_b_P, &word_types_b_P_size);
-	stage1_encode_significance(b, type_hh2, *magn_hh2, &word_types_b_P, &word_types_b_P_size);
+	stage1_encode_significance(b, type_P0, *magn_P0, &word_types_b_P, &word_types_b_P_size);
+	stage1_encode_significance(b, type_P1, *magn_P1, &word_types_b_P, &word_types_b_P_size);
+	stage1_encode_significance(b, type_P2, *magn_P2, &word_types_b_P, &word_types_b_P_size);
 
 	/* fill signs_b[P] from sign bits */
-	stage1_encode_sign(b, type_hl2, *magn_hl2, *sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
-	stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
-	stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
+	stage1_encode_sign(b, type_P0, *magn_P0, *sign_P0, &word_signs_b_P, &word_signs_b_P_size);
+	stage1_encode_sign(b, type_P1, *magn_P1, *sign_P1, &word_signs_b_P, &word_signs_b_P_size);
+	stage1_encode_sign(b, type_P2, *magn_P2, *sign_P2, &word_signs_b_P, &word_signs_b_P_size);
 
 	/* FIXME: this should be entropy-encoded */
 	/* send types_b[P] */
@@ -2514,9 +2514,9 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	}
 
 	/* update types according to the just sent information */
-	update_type(type_hl2, bpe, *magn_hl2, b, DWT_P0);
-	update_type(type_lh2, bpe, *magn_lh2, b, DWT_P1);
-	update_type(type_hh2, bpe, *magn_hh2, b, DWT_P2);
+	update_type(type_P0, bpe, *magn_P0, b, DWT_P0);
+	update_type(type_P1, bpe, *magn_P1, b, DWT_P1);
+	update_type(type_P2, bpe, *magn_P2, b, DWT_P2);
 
 	return RET_SUCCESS;
 }
