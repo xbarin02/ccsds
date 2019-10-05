@@ -2356,6 +2356,72 @@ int *block_level_subband_int(int *block, size_t stride, int level, int subband)
 	abort();
 }
 
+INT32 *block_level_subband_INT32(INT32 *block, size_t stride, int level, int subband)
+{
+	assert(block != NULL);
+	assert(level >= 0 && level < 3);
+	assert(subband >= DWT_LL && subband <= DWT_HH);
+
+	switch (level) {
+		case 2:
+			switch (subband) {
+				case DWT_LL: return block + 0*stride + 0; /* stride = 8, size = 1 */
+				case DWT_HL: return block + 0*stride + 4; /* stride = 8, size = 1 */
+				case DWT_LH: return block + 4*stride + 0; /* stride = 8, size = 1 */
+				case DWT_HH: return block + 4*stride + 4; /* stride = 8, size = 1 */
+			}
+		case 1:
+			switch (subband) {
+				case DWT_LL: abort();
+				case DWT_HL: return block + 0*stride + 2; /* stride = 4, size = 2 */
+				case DWT_LH: return block + 2*stride + 0; /* stride = 4, size = 2 */
+				case DWT_HH: return block + 2*stride + 2; /* stride = 4, size = 2 */
+			}
+		case 0:
+			switch (subband) {
+				case DWT_LL: abort();
+				case DWT_HL: return block + 0*stride + 1; /* stride = 2, size = 4 */
+				case DWT_LH: return block + 1*stride + 0; /* stride = 2, size = 4 */
+				case DWT_HH: return block + 1*stride + 1; /* stride = 2, size = 4 */
+			}
+	}
+
+	abort();
+}
+
+UINT32 *block_level_subband_UINT32(UINT32 *block, size_t stride, int level, int subband)
+{
+	assert(block != NULL);
+	assert(level >= 0 && level < 3);
+	assert(subband >= DWT_LL && subband <= DWT_HH);
+
+	switch (level) {
+		case 2:
+			switch (subband) {
+				case DWT_LL: return block + 0*stride + 0; /* stride = 8, size = 1 */
+				case DWT_HL: return block + 0*stride + 4; /* stride = 8, size = 1 */
+				case DWT_LH: return block + 4*stride + 0; /* stride = 8, size = 1 */
+				case DWT_HH: return block + 4*stride + 4; /* stride = 8, size = 1 */
+			}
+		case 1:
+			switch (subband) {
+				case DWT_LL: abort();
+				case DWT_HL: return block + 0*stride + 2; /* stride = 4, size = 2 */
+				case DWT_LH: return block + 2*stride + 0; /* stride = 4, size = 2 */
+				case DWT_HH: return block + 2*stride + 2; /* stride = 4, size = 2 */
+			}
+		case 0:
+			switch (subband) {
+				case DWT_LL: abort();
+				case DWT_HL: return block + 0*stride + 1; /* stride = 2, size = 4 */
+				case DWT_LH: return block + 1*stride + 0; /* stride = 2, size = 4 */
+				case DWT_HH: return block + 1*stride + 1; /* stride = 2, size = 4 */
+			}
+	}
+
+	abort();
+}
+
 /* pointer to the first (top left) coefficient of the subband */
 int *block_subband_int(int *block, size_t stride, int subband_level)
 {
@@ -2365,6 +2431,26 @@ int *block_subband_int(int *block, size_t stride, int subband_level)
 	assert(subband_level >= DWT_LL0 && subband_level <= DWT_HH2);
 
 	return block_level_subband_int(block, stride, level, subband);
+}
+
+INT32 *block_subband_INT32(INT32 *block, size_t stride, int subband_level)
+{
+	int subband = subband_level % 4;
+	int level = subband_level / 4;
+
+	assert(subband_level >= DWT_LL0 && subband_level <= DWT_HH2);
+
+	return block_level_subband_INT32(block, stride, level, subband);
+}
+
+UINT32 *block_subband_UINT32(UINT32 *block, size_t stride, int subband_level)
+{
+	int subband = subband_level % 4;
+	int level = subband_level / 4;
+
+	assert(subband_level >= DWT_LL0 && subband_level <= DWT_HH2);
+
+	return block_level_subband_UINT32(block, stride, level, subband);
 }
 
 /* Stage 1 (encode parents) on particular block */
@@ -2377,12 +2463,12 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	int *type_hl2 = block_subband_int(type, stride, DWT_P0);
 	int *type_lh2 = block_subband_int(type, stride, DWT_P1);
 	int *type_hh2 = block_subband_int(type, stride, DWT_P2);
-	INT32 *sign_hl2 = sign + 0*stride + 4;
-	INT32 *sign_lh2 = sign + 4*stride + 0;
-	INT32 *sign_hh2 = sign + 4*stride + 4;
-	UINT32 *magn_hl2 = magn + 0*stride + 4;
-	UINT32 *magn_lh2 = magn + 4*stride + 0;
-	UINT32 *magn_hh2 = magn + 4*stride + 4;
+	INT32 *sign_hl2 = block_subband_INT32(sign, stride, DWT_P0);
+	INT32 *sign_lh2 = block_subband_INT32(sign, stride, DWT_P1);
+	INT32 *sign_hh2 = block_subband_INT32(sign, stride, DWT_P2);
+	UINT32 *magn_hl2 = block_subband_UINT32(magn, stride, DWT_P0);
+	UINT32 *magn_lh2 = block_subband_UINT32(magn, stride, DWT_P1);
+	UINT32 *magn_hh2 = block_subband_UINT32(magn, stride, DWT_P2);
 
 	/* variable-length words */
 	UINT32 word_types_b_P = 0;
@@ -2393,7 +2479,8 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	assert(bpe != NULL);
 
 	/* 4.5.3.1.1 */
-	/* P = (HL2, LH2, HH2) */
+
+	/* P = (p0, p1, p2) */
 
 	/* 4.5.3.1.8 */
 
