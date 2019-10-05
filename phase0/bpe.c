@@ -2258,12 +2258,18 @@ void vlw_init(struct vlw *vlw)
 	vlw->size = 0;
 }
 
+void vlw_reset_after_read(struct vlw *vlw)
+{
+	assert(vlw != NULL);
+
+	vlw->size = 0;
+}
+
 static void vlw_push_bit(UINT32 bit, struct vlw *vlw)
 {
 	assert(vlw != NULL);
 
-	vlw->word <<= 1;
-	vlw->word |= (bit & 1);
+	vlw->word |= (bit & 1) << vlw->size;
 
 	vlw->size ++;
 }
@@ -2274,11 +2280,9 @@ static UINT32 vlw_pop_bit(struct vlw *vlw)
 
 	assert(vlw != NULL);
 
-	bit = vlw->word & 1;
+	bit = (vlw->word >> vlw->size) & 1;
 
-	vlw->word >>= 1;
-
-	vlw->size --;
+	vlw->size ++;
 
 	return bit;
 }
@@ -2598,9 +2602,9 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 
 	/* compute size of types_b[P] */
-	stage1_decode_significance_stub(type_p[2], &vlw_types_b_P);
-	stage1_decode_significance_stub(type_p[1], &vlw_types_b_P);
 	stage1_decode_significance_stub(type_p[0], &vlw_types_b_P);
+	stage1_decode_significance_stub(type_p[1], &vlw_types_b_P);
+	stage1_decode_significance_stub(type_p[2], &vlw_types_b_P);
 
 	/* FIXME: this should be entropy-encoded */
 	/* receive types_b[P] */
@@ -2610,15 +2614,17 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 		return err;
 	}
 
+	vlw_reset_after_read(&vlw_types_b_P);
+
 	/* set magnitude bits from types_b[P] */
-	stage1_decode_significance(b, type_p[2], magn_p[2], &vlw_types_b_P);
-	stage1_decode_significance(b, type_p[1], magn_p[1], &vlw_types_b_P);
 	stage1_decode_significance(b, type_p[0], magn_p[0], &vlw_types_b_P);
+	stage1_decode_significance(b, type_p[1], magn_p[1], &vlw_types_b_P);
+	stage1_decode_significance(b, type_p[2], magn_p[2], &vlw_types_b_P);
 
 	/* compute size of signs_b[P] */
-	stage1_decode_sign_stub(b, type_p[2], magn_p[2], &vlw_signs_b_P);
-	stage1_decode_sign_stub(b, type_p[1], magn_p[1], &vlw_signs_b_P);
 	stage1_decode_sign_stub(b, type_p[0], magn_p[0], &vlw_signs_b_P);
+	stage1_decode_sign_stub(b, type_p[1], magn_p[1], &vlw_signs_b_P);
+	stage1_decode_sign_stub(b, type_p[2], magn_p[2], &vlw_signs_b_P);
 
 	/* receive signs_b[P] */
 	err = bio_read_bits(bpe->bio, &vlw_signs_b_P.word, vlw_signs_b_P.size);
@@ -2627,10 +2633,12 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 		return err;
 	}
 
+	vlw_reset_after_read(&vlw_signs_b_P);
+
 	/* set sign bits from signs_b[P] */
-	stage1_decode_sign(b, type_p[2], *magn_p[2], sign_p[2], &vlw_signs_b_P);
-	stage1_decode_sign(b, type_p[1], *magn_p[1], sign_p[1], &vlw_signs_b_P);
 	stage1_decode_sign(b, type_p[0], *magn_p[0], sign_p[0], &vlw_signs_b_P);
+	stage1_decode_sign(b, type_p[1], *magn_p[1], sign_p[1], &vlw_signs_b_P);
+	stage1_decode_sign(b, type_p[2], *magn_p[2], sign_p[2], &vlw_signs_b_P);
 
 	/* update types according to the currently indicated information */
 	update_type(type_p[0], bpe, magn_p[0], b, DWT_HL2);
