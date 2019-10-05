@@ -2345,6 +2345,13 @@ static void stage1_decode_sign(size_t b, int *type, UINT32 magn, INT32 *sign, st
 	}
 }
 
+static int dwt_parent(int i)
+{
+	assert(i >= 0 && i < 3);
+
+	return DWT_LL2 + 1 + i;
+}
+
 /* pointer to the first (top left) coefficient of the subband */
 int *block_level_subband_int(int *block, size_t stride, int level, int subband)
 {
@@ -2494,15 +2501,15 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	vlw_init(&vlw_types_b_P);
 	vlw_init(&vlw_signs_b_P);
 
-	type_p[0] = block_subband_int(type, stride, DWT_P0);
-	type_p[1] = block_subband_int(type, stride, DWT_P1);
-	type_p[2] = block_subband_int(type, stride, DWT_P2);
-	sign_p[0] = block_subband_INT32(sign, stride, DWT_P0);
-	sign_p[1] = block_subband_INT32(sign, stride, DWT_P1);
-	sign_p[2] = block_subband_INT32(sign, stride, DWT_P2);
-	magn_p[0] = block_subband_UINT32(magn, stride, DWT_P0);
-	magn_p[1] = block_subband_UINT32(magn, stride, DWT_P1);
-	magn_p[2] = block_subband_UINT32(magn, stride, DWT_P2);
+	type_p[0] = block_subband_int(type, stride, dwt_parent(0));
+	type_p[1] = block_subband_int(type, stride, dwt_parent(1));
+	type_p[2] = block_subband_int(type, stride, dwt_parent(2));
+	sign_p[0] = block_subband_INT32(sign, stride, dwt_parent(0));
+	sign_p[1] = block_subband_INT32(sign, stride, dwt_parent(1));
+	sign_p[2] = block_subband_INT32(sign, stride, dwt_parent(2));
+	magn_p[0] = block_subband_UINT32(magn, stride, dwt_parent(0));
+	magn_p[1] = block_subband_UINT32(magn, stride, dwt_parent(1));
+	magn_p[2] = block_subband_UINT32(magn, stride, dwt_parent(2));
 
 	assert(bpe != NULL);
 
@@ -2534,9 +2541,9 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	}
 
 	/* update types according to the just sent information */
-	update_type(type_p[0], bpe, magn_p[0], b, DWT_P0);
-	update_type(type_p[1], bpe, magn_p[1], b, DWT_P1);
-	update_type(type_p[2], bpe, magn_p[2], b, DWT_P2);
+	update_type(type_p[0], bpe, magn_p[0], b, dwt_parent(0));
+	update_type(type_p[1], bpe, magn_p[1], b, dwt_parent(1));
+	update_type(type_p[2], bpe, magn_p[2], b, dwt_parent(2));
 
 	return RET_SUCCESS;
 }
@@ -2587,15 +2594,15 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	vlw_init(&vlw_types_b_P);
 	vlw_init(&vlw_signs_b_P);
 
-	type_p[0] = block_subband_int(type, stride, DWT_P0);
-	type_p[1] = block_subband_int(type, stride, DWT_P1);
-	type_p[2] = block_subband_int(type, stride, DWT_P2);
-	sign_p[0] = block_subband_INT32(sign, stride, DWT_P0);
-	sign_p[1] = block_subband_INT32(sign, stride, DWT_P1);
-	sign_p[2] = block_subband_INT32(sign, stride, DWT_P2);
-	magn_p[0] = block_subband_UINT32(magn, stride, DWT_P0);
-	magn_p[1] = block_subband_UINT32(magn, stride, DWT_P1);
-	magn_p[2] = block_subband_UINT32(magn, stride, DWT_P2);
+	type_p[0] = block_subband_int(type, stride, dwt_parent(0));
+	type_p[1] = block_subband_int(type, stride, dwt_parent(1));
+	type_p[2] = block_subband_int(type, stride, dwt_parent(2));
+	sign_p[0] = block_subband_INT32(sign, stride, dwt_parent(0));
+	sign_p[1] = block_subband_INT32(sign, stride, dwt_parent(1));
+	sign_p[2] = block_subband_INT32(sign, stride, dwt_parent(2));
+	magn_p[0] = block_subband_UINT32(magn, stride, dwt_parent(0));
+	magn_p[1] = block_subband_UINT32(magn, stride, dwt_parent(1));
+	magn_p[2] = block_subband_UINT32(magn, stride, dwt_parent(2));
 
 	assert(bpe != NULL);
 
@@ -2641,9 +2648,9 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	stage1_decode_sign(b, type_p[2], *magn_p[2], sign_p[2], &vlw_signs_b_P);
 
 	/* update types according to the currently indicated information */
-	update_type(type_p[0], bpe, magn_p[0], b, DWT_P0);
-	update_type(type_p[1], bpe, magn_p[1], b, DWT_P1);
-	update_type(type_p[2], bpe, magn_p[2], b, DWT_P2);
+	update_type(type_p[0], bpe, magn_p[0], b, dwt_parent(0));
+	update_type(type_p[1], bpe, magn_p[1], b, dwt_parent(1));
+	update_type(type_p[2], bpe, magn_p[2], b, dwt_parent(2));
 
 	return RET_SUCCESS;
 }
