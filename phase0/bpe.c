@@ -2484,8 +2484,8 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	UINT32 *magn_p[3];
 
 	/* variable-length words */
-	struct vlw vlw_types_b_P;
-	struct vlw vlw_signs_b_P;
+	struct vlw vlw_types_b_P; /* types_b[P] */
+	struct vlw vlw_signs_b_P; /* signs_b[P] */
 
 	vlw_init(&vlw_types_b_P);
 	vlw_init(&vlw_signs_b_P);
@@ -2501,14 +2501,6 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	magn_p[2] = block_subband_UINT32(magn, stride, DWT_P2);
 
 	assert(bpe != NULL);
-
-	/* 4.5.3.1.1 */
-
-	/* P = (p0, p1, p2) */
-
-	/* 4.5.3.1.8 */
-
-	/* types_b[P], signs_b[P] */
 
 	/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 
@@ -2585,8 +2577,8 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	UINT32 *magn_p[3];
 
 	/* variable-length words */
-	struct vlw vlw_types_b_P;
-	struct vlw vlw_signs_b_P;
+	struct vlw vlw_types_b_P; /* types_b[P] */
+	struct vlw vlw_signs_b_P; /* signs_b[P] */
 
 	vlw_init(&vlw_types_b_P);
 	vlw_init(&vlw_signs_b_P);
