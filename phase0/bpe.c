@@ -2513,10 +2513,10 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 		return err;
 	}
 
-	/* update types according to the currently indicated information */
-	update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
-	update_type(type_lh2, bpe, *magn_lh2, b, DWT_LH2);
-	update_type(type_hh2, bpe, *magn_hh2, b, DWT_HH2);
+	/* update types according to the just sent information */
+	update_type(type_hl2, bpe, *magn_hl2, b, DWT_P0);
+	update_type(type_lh2, bpe, *magn_lh2, b, DWT_P1);
+	update_type(type_hh2, bpe, *magn_hh2, b, DWT_P2);
 
 	return RET_SUCCESS;
 }
