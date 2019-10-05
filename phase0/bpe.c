@@ -2242,11 +2242,25 @@ static int is_significant(size_t b, UINT32 *magn)
 	return (*magn >> b) & 1;
 }
 
+static void set_significance(size_t b, UINT32 *magn, int bit)
+{
+	assert(magn != NULL);
+
+	*magn |= (UINT32)(bit & 1) << b;
+}
+
 static int get_sign(INT32 *sign)
 {
 	assert(sign != NULL);
 
 	return *sign != 0;
+}
+
+static void set_sign(INT32 *sign, int bit)
+{
+	assert(sign != NULL);
+
+	*sign = bit;
 }
 
 /* variable-length word */
@@ -2270,18 +2284,18 @@ void vlw_reset_after_read(struct vlw *vlw)
 	vlw->size = 0;
 }
 
-static void vlw_push_bit(UINT32 bit, struct vlw *vlw)
+static void vlw_push_bit(int bit, struct vlw *vlw)
 {
 	assert(vlw != NULL);
 
-	vlw->word |= (bit & 1) << vlw->size;
+	vlw->word |= (UINT32)(bit & 1) << vlw->size;
 
 	vlw->size ++;
 }
 
-static UINT32 vlw_pop_bit(struct vlw *vlw)
+static int vlw_pop_bit(struct vlw *vlw)
 {
-	UINT32 bit;
+	int bit;
 
 	assert(vlw != NULL);
 
@@ -2295,16 +2309,14 @@ static UINT32 vlw_pop_bit(struct vlw *vlw)
 static void stage1_encode_significance(size_t b, int *type, UINT32 *magn, struct vlw *vlw)
 {
 	if (was_type0(type)) {
-		vlw_push_bit((UINT32)is_significant(b, magn), vlw); /* magnitude bit */
+		vlw_push_bit(is_significant(b, magn), vlw); /* magnitude bit */
 	}
 }
 
 static void stage1_decode_significance(size_t b, int *type, UINT32 *magn, struct vlw *vlw)
 {
 	if (was_type0(type)) {
-		assert(magn != NULL);
-
-		*magn |= vlw_pop_bit(vlw) << b; /* magnitude bit */
+		set_significance(b, magn, vlw_pop_bit(vlw)); /* magnitude bit */
 	}
 }
 
@@ -2320,7 +2332,7 @@ static void stage1_decode_significance_stub(int *type, struct vlw *vlw)
 static void stage1_encode_sign(size_t b, int *type, UINT32 *magn, INT32 *sign, struct vlw *vlw)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
-		vlw_push_bit((UINT32)get_sign(sign), vlw); /* sign bit */
+		vlw_push_bit(get_sign(sign), vlw); /* sign bit */
 	}
 }
 
@@ -2336,9 +2348,7 @@ static void stage1_decode_sign_stub(size_t b, int *type, UINT32 *magn, struct vl
 static void stage1_decode_sign(size_t b, int *type, UINT32 *magn, INT32 *sign, struct vlw *vlw)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
-		assert(sign != NULL);
-
-		*sign = (INT32)vlw_pop_bit(vlw);
+		set_sign(sign, vlw_pop_bit(vlw));
 	}
 }
 
