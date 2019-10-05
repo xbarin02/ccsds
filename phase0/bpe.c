@@ -2641,9 +2641,9 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	stage1_decode_sign(b, type_p[2], *magn_p[2], sign_p[2], &vlw_signs_b_P);
 
 	/* update types according to the currently indicated information */
-	update_type(type_p[0], bpe, magn_p[0], b, DWT_HL2);
-	update_type(type_p[1], bpe, magn_p[1], b, DWT_LH2);
-	update_type(type_p[2], bpe, magn_p[2], b, DWT_HH2);
+	update_type(type_p[0], bpe, magn_p[0], b, DWT_P0);
+	update_type(type_p[1], bpe, magn_p[1], b, DWT_P1);
+	update_type(type_p[2], bpe, magn_p[2], b, DWT_P2);
 
 	return RET_SUCCESS;
 }
