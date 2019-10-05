@@ -2352,6 +2352,7 @@ static void stage1_decode_sign(size_t b, int *type, UINT32 *magn, INT32 *sign, s
 	}
 }
 
+/* i: family number */
 static int dwt_parent(int i)
 {
 	assert(i >= 0 && i < 3);
