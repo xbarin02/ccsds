@@ -2243,82 +2243,92 @@ static int get_sign(INT32 sign)
 	return sign != 0;
 }
 
-static void push_bit(UINT32 bit, UINT32 *word, size_t *word_size)
+/* variable-length word */
+struct vlw {
+	UINT32 word;
+	size_t size;
+};
+
+void vlw_init(struct vlw *vlw)
 {
-	assert(word != NULL);
+	assert(vlw != NULL);
 
-	*word <<= 1;
-	*word |= (bit & 1);
-
-	assert(word_size != NULL);
-
-	(*word_size) ++;
+	vlw->word = 0;
+	vlw->size = 0;
 }
 
-static UINT32 pop_bit(UINT32 *word, size_t *word_size)
+static void vlw_push_bit(UINT32 bit, struct vlw *vlw)
+{
+	assert(vlw != NULL);
+
+	vlw->word <<= 1;
+	vlw->word |= (bit & 1);
+
+	vlw->size ++;
+}
+
+static UINT32 vlw_pop_bit(struct vlw *vlw)
 {
 	UINT32 bit;
 
-	assert(word != NULL);
+	assert(vlw != NULL);
 
-	bit = (*word) & 1;
+	bit = vlw->word & 1;
 
-	(*word) >>= 1;
+	vlw->word >>= 1;
 
-	assert(word_size != NULL);
-
-	(*word_size) --;
+	vlw->size --;
 
 	return bit;
 }
 
-static void stage1_encode_significance(size_t b, int *type, UINT32 magn, UINT32 *word, size_t *word_size)
+static void stage1_encode_significance(size_t b, int *type, UINT32 magn, struct vlw *vlw)
 {
 	if (was_type0(type)) {
-		push_bit((UINT32)is_significant(b, magn), word, word_size); /* magnitude bit */
+		vlw_push_bit((UINT32)is_significant(b, magn), vlw); /* magnitude bit */
 	}
 }
 
-static void stage1_decode_significance(size_t b, int *type, UINT32 *magn, UINT32 *word, size_t *word_size)
+static void stage1_decode_significance(size_t b, int *type, UINT32 *magn, struct vlw *vlw)
 {
 	if (was_type0(type)) {
 		assert(magn != NULL);
 
-		*magn |= pop_bit(word, word_size) << b; /* magnitude bit */
+		*magn |= vlw_pop_bit(vlw) << b; /* magnitude bit */
 	}
 }
 
-static void stage1_decode_significance_stub(int *type, size_t *word_size)
+static void stage1_decode_significance_stub(int *type, struct vlw *vlw)
 {
 	if (was_type0(type)) {
-		assert(word_size != NULL);
+		assert(vlw != NULL);
 
-		(*word_size) ++; /* the encoder encoded the magnitude bit */
+		vlw->size ++; /* the encoder encoded the magnitude bit */
 	}
 }
 
-static void stage1_encode_sign(size_t b, int *type, UINT32 magn, INT32 sign, UINT32 *word, size_t *word_size)
+static void stage1_encode_sign(size_t b, int *type, UINT32 magn, INT32 sign, struct vlw *vlw)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
-		push_bit((UINT32)get_sign(sign), word, word_size); /* sign bit */
+		vlw_push_bit((UINT32)get_sign(sign), vlw); /* sign bit */
 	}
 }
 
-static void stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, size_t *word_size)
+static void stage1_decode_sign_stub(size_t b, int *type, UINT32 magn, struct vlw *vlw)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
-		assert(word_size != NULL);
+		assert(vlw != NULL);
 
-		(*word_size) ++; /* the encoder encoded the sign bit */
+		vlw->size ++; /* the encoder encoded the sign bit */
 	}
 }
 
-static void stage1_decode_sign(size_t b, int *type, UINT32 magn, INT32 *sign, UINT32 *word, size_t *word_size)
+static void stage1_decode_sign(size_t b, int *type, UINT32 magn, INT32 *sign, struct vlw *vlw)
 {
 	if (was_type0(type) && is_significant(b, magn)) {
 		assert(sign != NULL);
 
-		*sign = (INT32)pop_bit(word, word_size);
+		*sign = (INT32)vlw_pop_bit(vlw);
 	}
 }
 
@@ -2465,10 +2475,11 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	UINT32 *magn_p[3];
 
 	/* variable-length words */
-	UINT32 word_types_b_P = 0;
-	size_t word_types_b_P_size = 0;
-	UINT32 word_signs_b_P = 0;
-	size_t word_signs_b_P_size = 0;
+	struct vlw vlw_types_b_P;
+	struct vlw vlw_signs_b_P;
+
+	vlw_init(&vlw_types_b_P);
+	vlw_init(&vlw_signs_b_P);
 
 	type_p[0] = block_subband_int(type, stride, DWT_P0);
 	type_p[1] = block_subband_int(type, stride, DWT_P1);
@@ -2493,25 +2504,25 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 
 	/* fill types_b[P] from magnitude bits */
-	stage1_encode_significance(b, type_p[0], *magn_p[0], &word_types_b_P, &word_types_b_P_size);
-	stage1_encode_significance(b, type_p[1], *magn_p[1], &word_types_b_P, &word_types_b_P_size);
-	stage1_encode_significance(b, type_p[2], *magn_p[2], &word_types_b_P, &word_types_b_P_size);
+	stage1_encode_significance(b, type_p[0], *magn_p[0], &vlw_types_b_P);
+	stage1_encode_significance(b, type_p[1], *magn_p[1], &vlw_types_b_P);
+	stage1_encode_significance(b, type_p[2], *magn_p[2], &vlw_types_b_P);
 
 	/* fill signs_b[P] from sign bits */
-	stage1_encode_sign(b, type_p[0], *magn_p[0], *sign_p[0], &word_signs_b_P, &word_signs_b_P_size);
-	stage1_encode_sign(b, type_p[1], *magn_p[1], *sign_p[1], &word_signs_b_P, &word_signs_b_P_size);
-	stage1_encode_sign(b, type_p[2], *magn_p[2], *sign_p[2], &word_signs_b_P, &word_signs_b_P_size);
+	stage1_encode_sign(b, type_p[0], *magn_p[0], *sign_p[0], &vlw_signs_b_P);
+	stage1_encode_sign(b, type_p[1], *magn_p[1], *sign_p[1], &vlw_signs_b_P);
+	stage1_encode_sign(b, type_p[2], *magn_p[2], *sign_p[2], &vlw_signs_b_P);
 
 	/* FIXME: this should be entropy-encoded */
 	/* send types_b[P] */
-	err = bio_write_bits(bpe->bio, word_types_b_P, word_types_b_P_size);
+	err = bio_write_bits(bpe->bio, vlw_types_b_P.word, vlw_types_b_P.size);
 
 	if (err) {
 		return err;
 	}
 
 	/* send signs_b[P] */
-	err = bio_write_bits(bpe->bio, word_signs_b_P, word_signs_b_P_size);
+	err = bio_write_bits(bpe->bio, vlw_signs_b_P.word, vlw_signs_b_P.size);
 
 	if (err) {
 		return err;
@@ -2565,10 +2576,11 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	UINT32 *magn_p[3];
 
 	/* variable-length words */
-	UINT32 word_types_b_P = 0;
-	size_t word_types_b_P_size = 0;
-	UINT32 word_signs_b_P = 0;
-	size_t word_signs_b_P_size = 0;
+	struct vlw vlw_types_b_P;
+	struct vlw vlw_signs_b_P;
+
+	vlw_init(&vlw_types_b_P);
+	vlw_init(&vlw_signs_b_P);
 
 	type_p[0] = block_subband_int(type, stride, DWT_P0);
 	type_p[1] = block_subband_int(type, stride, DWT_P1);
@@ -2585,39 +2597,39 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
 
 	/* compute size of types_b[P] */
-	stage1_decode_significance_stub(type_p[2], &word_types_b_P_size);
-	stage1_decode_significance_stub(type_p[1], &word_types_b_P_size);
-	stage1_decode_significance_stub(type_p[0], &word_types_b_P_size);
+	stage1_decode_significance_stub(type_p[2], &vlw_types_b_P);
+	stage1_decode_significance_stub(type_p[1], &vlw_types_b_P);
+	stage1_decode_significance_stub(type_p[0], &vlw_types_b_P);
 
 	/* FIXME: this should be entropy-encoded */
 	/* receive types_b[P] */
-	err = bio_read_bits(bpe->bio, &word_types_b_P, word_types_b_P_size);
+	err = bio_read_bits(bpe->bio, &vlw_types_b_P.word, vlw_types_b_P.size);
 
 	if (err) {
 		return err;
 	}
 
 	/* set magnitude bits from types_b[P] */
-	stage1_decode_significance(b, type_p[2], magn_p[2], &word_types_b_P, &word_types_b_P_size);
-	stage1_decode_significance(b, type_p[1], magn_p[1], &word_types_b_P, &word_types_b_P_size);
-	stage1_decode_significance(b, type_p[0], magn_p[0], &word_types_b_P, &word_types_b_P_size);
+	stage1_decode_significance(b, type_p[2], magn_p[2], &vlw_types_b_P);
+	stage1_decode_significance(b, type_p[1], magn_p[1], &vlw_types_b_P);
+	stage1_decode_significance(b, type_p[0], magn_p[0], &vlw_types_b_P);
 
 	/* compute size of signs_b[P] */
-	stage1_decode_sign_stub(b, type_p[2], *magn_p[2], &word_signs_b_P_size);
-	stage1_decode_sign_stub(b, type_p[1], *magn_p[1], &word_signs_b_P_size);
-	stage1_decode_sign_stub(b, type_p[0], *magn_p[0], &word_signs_b_P_size);
+	stage1_decode_sign_stub(b, type_p[2], *magn_p[2], &vlw_signs_b_P);
+	stage1_decode_sign_stub(b, type_p[1], *magn_p[1], &vlw_signs_b_P);
+	stage1_decode_sign_stub(b, type_p[0], *magn_p[0], &vlw_signs_b_P);
 
 	/* receive signs_b[P] */
-	err = bio_read_bits(bpe->bio, &word_signs_b_P, word_signs_b_P_size);
+	err = bio_read_bits(bpe->bio, &vlw_signs_b_P.word, vlw_signs_b_P.size);
 
 	if (err) {
 		return err;
 	}
 
 	/* set sign bits from signs_b[P] */
-	stage1_decode_sign(b, type_p[2], *magn_p[2], sign_p[2], &word_signs_b_P, &word_signs_b_P_size);
-	stage1_decode_sign(b, type_p[1], *magn_p[1], sign_p[1], &word_signs_b_P, &word_signs_b_P_size);
-	stage1_decode_sign(b, type_p[0], *magn_p[0], sign_p[0], &word_signs_b_P, &word_signs_b_P_size);
+	stage1_decode_sign(b, type_p[2], *magn_p[2], sign_p[2], &vlw_signs_b_P);
+	stage1_decode_sign(b, type_p[1], *magn_p[1], sign_p[1], &vlw_signs_b_P);
+	stage1_decode_sign(b, type_p[0], *magn_p[0], sign_p[0], &vlw_signs_b_P);
 
 	/* update types according to the currently indicated information */
 	update_type(type_p[0], bpe, *magn_p[0], b, DWT_HL2);
