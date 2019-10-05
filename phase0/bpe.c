@@ -2322,78 +2322,141 @@ static void stage1_decode_sign(size_t b, int *type, UINT32 magn, INT32 *sign, UI
 	}
 }
 
+/* pointer to the first (top left) coefficient of the subband */
+int *block_level_subband_int(int *block, size_t stride, int level, int subband)
+{
+	assert(block != NULL);
+	assert(level >= 0 && level < 3);
+	assert(subband >= DWT_LL && subband <= DWT_HH);
+
+	switch (level) {
+		case 2:
+			switch (subband) {
+				case DWT_LL: return block + 0*stride + 0; /* stride = 8, size = 1 */
+				case DWT_HL: return block + 0*stride + 4; /* stride = 8, size = 1 */
+				case DWT_LH: return block + 4*stride + 0; /* stride = 8, size = 1 */
+				case DWT_HH: return block + 4*stride + 4; /* stride = 8, size = 1 */
+			}
+		case 1:
+			switch (subband) {
+				case DWT_LL: abort();
+				case DWT_HL: return block + 0*stride + 2; /* stride = 4, size = 2 */
+				case DWT_LH: return block + 2*stride + 0; /* stride = 4, size = 2 */
+				case DWT_HH: return block + 2*stride + 2; /* stride = 4, size = 2 */
+			}
+		case 0:
+			switch (subband) {
+				case DWT_LL: abort();
+				case DWT_HL: return block + 0*stride + 1; /* stride = 2, size = 4 */
+				case DWT_LH: return block + 1*stride + 0; /* stride = 2, size = 4 */
+				case DWT_HH: return block + 1*stride + 1; /* stride = 2, size = 4 */
+			}
+	}
+
+	abort();
+}
+
+/* pointer to the first (top left) coefficient of the subband */
+int *block_subband_int(int *block, size_t stride, int subband_level)
+{
+	int subband = subband_level % 4;
+	int level = subband_level / 4;
+
+	assert(subband_level >= DWT_LL0 && subband_level <= DWT_HH2);
+
+	return block_level_subband_int(block, stride, level, subband);
+}
+
+/* Stage 1 (encode parents) on particular block */
+int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
+{
+	int err;
+
+	size_t stride = 8;
+
+	int *type_hl2 = block_subband_int(type, stride, DWT_P0);
+	int *type_lh2 = block_subband_int(type, stride, DWT_P1);
+	int *type_hh2 = block_subband_int(type, stride, DWT_P2);
+	INT32 *sign_hl2 = sign + 0*stride + 4;
+	INT32 *sign_lh2 = sign + 4*stride + 0;
+	INT32 *sign_hh2 = sign + 4*stride + 4;
+	UINT32 *magn_hl2 = magn + 0*stride + 4;
+	UINT32 *magn_lh2 = magn + 4*stride + 0;
+	UINT32 *magn_hh2 = magn + 4*stride + 4;
+
+	/* variable-length words */
+	UINT32 word_types_b_P = 0;
+	size_t word_types_b_P_size = 0;
+	UINT32 word_signs_b_P = 0;
+	size_t word_signs_b_P_size = 0;
+
+	assert(bpe != NULL);
+
+	/* 4.5.3.1.1 */
+	/* P = (HL2, LH2, HH2) */
+
+	/* 4.5.3.1.8 */
+
+	/* types_b[P], signs_b[P] */
+
+	/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
+
+	/* fill types_b[P] from magnitude bits */
+	stage1_encode_significance(b, type_hl2, *magn_hl2, &word_types_b_P, &word_types_b_P_size);
+	stage1_encode_significance(b, type_lh2, *magn_lh2, &word_types_b_P, &word_types_b_P_size);
+	stage1_encode_significance(b, type_hh2, *magn_hh2, &word_types_b_P, &word_types_b_P_size);
+
+	/* fill signs_b[P] from sign bits */
+	stage1_encode_sign(b, type_hl2, *magn_hl2, *sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
+	stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
+	stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
+
+	/* FIXME: this should be entropy-encoded */
+	/* send types_b[P] */
+	err = bio_write_bits(bpe->bio, word_types_b_P, word_types_b_P_size);
+
+	if (err) {
+		return err;
+	}
+
+	/* send signs_b[P] */
+	err = bio_write_bits(bpe->bio, word_signs_b_P, word_signs_b_P_size);
+
+	if (err) {
+		return err;
+	}
+
+	/* update types according to the currently indicated information */
+	update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
+	update_type(type_lh2, bpe, *magn_lh2, b, DWT_LH2);
+	update_type(type_hh2, bpe, *magn_hh2, b, DWT_HH2);
+
+	return RET_SUCCESS;
+}
+
 /* encode parents */
 int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 {
 	size_t S;
 	size_t m;
-	size_t stride = 8;
 
 	assert(bpe != NULL);
 
 	S = bpe->S;
 
+	/* for each block in the segment */
 	for (m = 0; m < S; ++m) {
+		int err;
+
 		/* Stage 1 @ block[m] */
 		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
 		INT32 *sign = bpe->sign + m * BLOCK_SIZE;
 		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
 
-		/* 4.5.3.1.1 */
-		/* P = (HL2, LH2, HH2) */
+		err = bpe_encode_segment_bit_plane_coding_stage1_block(bpe, b, type, sign, magn);
 
-		/* 4.5.3.1.8 */
-
-		/* types_b[P], signs_b[P] */
-
-		/* update all of the AC coefficients in the block that were Type 0 at the previous bit plane */
-		{
-			int err;
-			int *type_hl2 = type + 0*stride + 4;
-			int *type_lh2 = type + 4*stride + 0;
-			int *type_hh2 = type + 4*stride + 4;
-			INT32 *sign_hl2 = sign + 0*stride + 4;
-			INT32 *sign_lh2 = sign + 4*stride + 0;
-			INT32 *sign_hh2 = sign + 4*stride + 4;
-			UINT32 *magn_hl2 = magn + 0*stride + 4;
-			UINT32 *magn_lh2 = magn + 4*stride + 0;
-			UINT32 *magn_hh2 = magn + 4*stride + 4;
-
-			/* variable-length words */
-			UINT32 word_types_b_P = 0;
-			size_t word_types_b_P_size = 0;
-			UINT32 word_signs_b_P = 0;
-			size_t word_signs_b_P_size = 0;
-
-			/* fill types_b[P] from magnitude bits */
-			stage1_encode_significance(b, type_hl2, *magn_hl2, &word_types_b_P, &word_types_b_P_size);
-			stage1_encode_significance(b, type_lh2, *magn_lh2, &word_types_b_P, &word_types_b_P_size);
-			stage1_encode_significance(b, type_hh2, *magn_hh2, &word_types_b_P, &word_types_b_P_size);
-
-			/* fill signs_b[P] from sign bits */
-			stage1_encode_sign(b, type_hl2, *magn_hl2, *sign_hl2, &word_signs_b_P, &word_signs_b_P_size);
-			stage1_encode_sign(b, type_lh2, *magn_lh2, *sign_lh2, &word_signs_b_P, &word_signs_b_P_size);
-			stage1_encode_sign(b, type_hh2, *magn_hh2, *sign_hh2, &word_signs_b_P, &word_signs_b_P_size);
-
-			/* FIXME: this should be entropy-encoded */
-			/* send types_b[P] */
-			err = bio_write_bits(bpe->bio, word_types_b_P, word_types_b_P_size);
-
-			if (err) {
-				return err;
-			}
-
-			/* send signs_b[P] */
-			err = bio_write_bits(bpe->bio, word_signs_b_P, word_signs_b_P_size);
-
-			if (err) {
-				return err;
-			}
-
-			/* update types according to the currently indicated information */
-			update_type(type_hl2, bpe, *magn_hl2, b, DWT_HL2);
-			update_type(type_lh2, bpe, *magn_lh2, b, DWT_LH2);
-			update_type(type_hh2, bpe, *magn_hh2, b, DWT_HH2);
+		if (err) {
+			return err;
 		}
 	}
 

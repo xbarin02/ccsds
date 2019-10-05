@@ -132,6 +132,19 @@ struct parameters {
 	int DCStop;
 };
 
+/* subbands */
+#define DWT_LL 0
+#define DWT_HL 1
+#define DWT_LH 2
+#define DWT_HH 3
+
+/* families */
+#define DWT_F0 DWT_HL
+#define DWT_F1 DWT_LH
+#define DWT_F2 DWT_HH
+
+/* subbands at particular DWT levels */
+#define DWT_DC   0
 #define DWT_LL0  0
 #define DWT_HL0  1
 #define DWT_LH0  2
@@ -144,6 +157,11 @@ struct parameters {
 #define DWT_HL2  9
 #define DWT_LH2 10
 #define DWT_HH2 11
+
+/* parents */
+#define DWT_P0 DWT_HL2
+#define DWT_P1 DWT_LH2
+#define DWT_P2 DWT_HH2
 
 int init_parameters(struct parameters *parameters);
 
