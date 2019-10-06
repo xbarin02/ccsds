@@ -2352,12 +2352,31 @@ static void stage1_decode_sign(size_t b, int *type, UINT32 *magn, INT32 *sign, s
 	}
 }
 
-/* i: family number */
+/* parent p_i | i : family number */
+/* returns one of { DWT_HL2, DWT_LH2, DWT_HH2 } */
 static int dwt_parent(int i)
 {
 	assert(i >= 0 && i < 3);
 
 	return DWT_LL2 + 1 + i;
+}
+
+/* children group C_i | i : family number */
+/* returns one of { DWT_HL1, DWT_LH1, DWT_HH1 }, then use stride = 4 to address the individial children */
+static int dwt_child(int i)
+{
+	assert(i >= 0 && i < 3);
+
+	return DWT_LL1 + 1 + i;
+}
+
+/* grandchildren group G_i | i : family number */
+/* returns one of { DWT_HL0, DWT_LH0, DWT_HH0 }, then use stride = 2 to address the individial grandchildren */
+static int dwt_grandchildren(int i)
+{
+	assert(i >= 0 && i < 3);
+
+	return DWT_LL0 + 1 + i;
 }
 
 /* pointer to the first (top left) coefficient of the subband */

@@ -163,6 +163,16 @@ struct parameters {
 #define DWT_P1 DWT_LH2
 #define DWT_P2 DWT_HH2
 
+/* children groups */
+#define DWT_C0 DWT_HL1
+#define DWT_C1 DWT_LH1
+#define DWT_C2 DWT_HH1
+
+/* grandchildren groups */
+#define DWT_G0 DWT_HL0
+#define DWT_G1 DWT_LH0
+#define DWT_G2 DWT_HH0
+
 int init_parameters(struct parameters *parameters);
 
 /**
