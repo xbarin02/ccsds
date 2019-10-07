@@ -2510,6 +2510,81 @@ UINT32 *block_subband_UINT32(UINT32 *block, size_t stride, int subband_level)
 	return block_level_subband_UINT32(block, stride, level, subband);
 }
 
+/* iterate through 4 children */
+int t_max_B_C(int *type_C)
+{
+	size_t x, y;
+
+	int max = INT_MIN;
+
+	assert(type_C != NULL);
+
+	for (y = 0; y < 2; ++y) {
+		for (x = 0; x < 2; ++x) {
+			int *type_child = type_C + y*8*4 + x*4;
+
+			if (*type_child > max) {
+				max = *type_child;
+			}
+		}
+	}
+
+	return max;
+}
+
+/* iterate through 16 grandchildren */
+int t_max_B_G(int *type_G)
+{
+	size_t x, y;
+
+	int max = INT_MIN;
+
+	assert(type_G != NULL);
+
+	for (y = 0; y < 4; ++y) {
+		for (x = 0; x < 4; ++x) {
+			int *type_grandchild = type_G + y*8*2 + x*2;
+
+			if (*type_grandchild > max) {
+				max = *type_grandchild;
+			}
+		}
+	}
+
+	return max;
+}
+
+int t_max_B(int *type)
+{
+	int i;
+	int max = INT_MIN;
+
+	/* for each coeff in B */
+	for (i = 0; i < 3; ++i) {
+		/* family i */
+
+		/* 4 children */
+		int Ci = dwt_child(i);
+		int *type_Ci = block_subband_int(type, 8, Ci);
+		int C_max = t_max_B_C(type_Ci);
+
+		/* 16 grandchildren */
+		int Gi = dwt_grandchildren(i);
+		int *type_Gi = block_subband_int(type, 8, Gi);
+		int G_max = t_max_B_G(type_Gi);
+
+		if (C_max > max) {
+			max = C_max;
+		}
+
+		if (G_max > max) {
+			max = G_max;
+		}
+	}
+
+	return max;
+}
+
 /* Stage 1 (encode parents) on particular block */
 int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
 {
