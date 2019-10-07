@@ -2572,6 +2572,15 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	return RET_SUCCESS;
 }
 
+/* TODO */
+/* Stage 2 (encode children) on particular block */
+int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
+{
+	/* TODO */
+
+	return RET_SUCCESS;
+}
+
 /* encode parents */
 int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 {
@@ -2592,6 +2601,36 @@ int bpe_encode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
 
 		err = bpe_encode_segment_bit_plane_coding_stage1_block(bpe, b, type, sign, magn);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+/* TODO */
+/* encode children */
+int bpe_encode_segment_bit_plane_coding_stage2(struct bpe *bpe, size_t b)
+{
+	size_t S;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	/* for each block in the segment */
+	for (m = 0; m < S; ++m) {
+		int err;
+
+		/* Stage 1 @ block[m] */
+		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
+		INT32 *sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
+
+		err = bpe_encode_segment_bit_plane_coding_stage2_block(bpe, b, type, sign, magn);
 
 		if (err) {
 			return err;
@@ -2676,6 +2715,14 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	return RET_SUCCESS;
 }
 
+/* TODO */
+int bpe_decode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
+{
+	/* TODO */
+
+	return RET_SUCCESS;
+}
+
 /* decode parents */
 int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 {
@@ -2695,6 +2742,35 @@ int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
 		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
 
 		err = bpe_decode_segment_bit_plane_coding_stage1_block(bpe, b, type, sign, magn);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	return RET_SUCCESS;
+}
+
+/* TODO */
+/* decode children */
+int bpe_decode_segment_bit_plane_coding_stage2(struct bpe *bpe, size_t b)
+{
+	size_t S;
+	size_t m;
+
+	assert(bpe != NULL);
+
+	S = bpe->S;
+
+	for (m = 0; m < S; ++m) {
+		int err;
+
+		/* Stage 1 @ block[m] */
+		int *type = bpe->type + m * BLOCK_SIZE; /* type at the previous bit plane */
+		INT32 *sign = bpe->sign + m * BLOCK_SIZE;
+		UINT32 *magn = bpe->magnitude + m * BLOCK_SIZE;
+
+		err = bpe_decode_segment_bit_plane_coding_stage2_block(bpe, b, type, sign, magn);
 
 		if (err) {
 			return err;
@@ -2827,6 +2903,11 @@ int bpe_encode_segment_bit_plane_coding(struct bpe *bpe)
 		}
 
 		/* TODO Stage 2 */
+		err = bpe_encode_segment_bit_plane_coding_stage2(bpe, b);
+
+		if (err) {
+			return err;
+		}
 
 		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 1) {
 			break;
@@ -2898,6 +2979,11 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 		}
 
 		/* TODO Stage 2 */
+		err = bpe_decode_segment_bit_plane_coding_stage2(bpe, b);
+
+		if (err) {
+			return err;
+		}
 
 		if (b == bpe->segment_header.BitPlaneStop && bpe->segment_header.StageStop == 1) {
 			break;
