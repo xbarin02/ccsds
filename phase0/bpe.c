@@ -2707,9 +2707,13 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
 {
 	struct vlw vlw_tran_B;
+	struct vlw vlw_tran_D;
 	int old_t_max_B;
+	int old_t_max_D[3];
+	int i;
 
 	vlw_init(&vlw_tran_B);
+	vlw_init(&vlw_tran_D);
 
 	dprint (("BPE(Stage 2): t_max(B)=%i t_max(D0)=%i t_max(D1)=%i t_max(D2)=%i\n", t_max_B(type), t_max_Di(type, 0), t_max_Di(type, 1), t_max_Di(type, 2)));
 
@@ -2717,17 +2721,22 @@ int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, 
 
 	old_t_max_B = t_max_B(type);
 
+	for (i = 0; i < 3; ++i) {
+		old_t_max_D[i] = t_max_Di(type, i);
+	}
+
 	/* update types */
 	update_children_types(bpe, b, type, magn);
 
 	if (old_t_max_B == 0) {
-		if (t_max_B(type) != 0) {
-			/* t_max(B): 0 -> 1 transition */
-			vlw_push_bit(1, &vlw_tran_B);
-		}
-		else {
-			/* t_max(B) still 0 */
-			vlw_push_bit(0, &vlw_tran_B);
+		vlw_push_bit((t_max_B(type) != 0), &vlw_tran_B);
+	}
+
+	if (t_max_B(type) > 0) {
+		for (i = 0; i < 3; ++i) {
+			if (old_t_max_D[i] == 0) {
+				vlw_push_bit((t_max_Di(type, i) != 0), &vlw_tran_D);
+			}
 		}
 	}
 
