@@ -2707,6 +2707,7 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
 {
 	struct vlw vlw_tran_B;
+	int old_t_max_B;
 
 	vlw_init(&vlw_tran_B);
 
@@ -2714,8 +2715,21 @@ int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, 
 
 	assert(bpe != NULL);
 
+	old_t_max_B = t_max_B(type);
+
 	/* update types */
 	update_children_types(bpe, b, type, magn);
+
+	if (old_t_max_B == 0) {
+		if (t_max_B(type) != 0) {
+			/* t_max(B): 0 -> 1 transition */
+			vlw_push_bit(1, &vlw_tran_B);
+		}
+		else {
+			/* t_max(B) still 0 */
+			vlw_push_bit(0, &vlw_tran_B);
+		}
+	}
 
 	return RET_SUCCESS;
 }
