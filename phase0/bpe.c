@@ -2513,6 +2513,7 @@ UINT32 *block_subband_UINT32(UINT32 *block, size_t stride, int subband_level)
 /* iterate through 4 children */
 int t_max_B_C(int *type_C)
 {
+	size_t stride = 8;
 	size_t x, y;
 
 	int max = INT_MIN;
@@ -2521,7 +2522,7 @@ int t_max_B_C(int *type_C)
 
 	for (y = 0; y < 2; ++y) {
 		for (x = 0; x < 2; ++x) {
-			int *type_child = type_C + y*8*4 + x*4;
+			int *type_child = type_C + y*stride*4 + x*4;
 
 			if (*type_child > max) {
 				max = *type_child;
@@ -2535,6 +2536,7 @@ int t_max_B_C(int *type_C)
 /* iterate through 16 grandchildren */
 int t_max_B_G(int *type_G)
 {
+	size_t stride = 8;
 	size_t x, y;
 
 	int max = INT_MIN;
@@ -2543,12 +2545,39 @@ int t_max_B_G(int *type_G)
 
 	for (y = 0; y < 4; ++y) {
 		for (x = 0; x < 4; ++x) {
-			int *type_grandchild = type_G + y*8*2 + x*2;
+			int *type_grandchild = type_G + y*stride*2 + x*2;
 
 			if (*type_grandchild > max) {
 				max = *type_grandchild;
 			}
 		}
+	}
+
+	return max;
+}
+
+/* t_max(D_i) */
+int t_max_Di(int *type, int i)
+{
+	size_t stride = 8;
+	int max = INT_MIN;
+
+	/* 4 children */
+	int Ci = dwt_child(i);
+	int *type_Ci = block_subband_int(type, stride, Ci);
+	int C_max = t_max_B_C(type_Ci);
+
+	/* 16 grandchildren */
+	int Gi = dwt_grandchildren(i);
+	int *type_Gi = block_subband_int(type, stride, Gi);
+	int G_max = t_max_B_G(type_Gi);
+
+	if (C_max > max) {
+		max = C_max;
+	}
+
+	if (G_max > max) {
+		max = G_max;
 	}
 
 	return max;
@@ -2564,22 +2593,10 @@ int t_max_B(int *type)
 	for (i = 0; i < 3; ++i) {
 		/* family i */
 
-		/* 4 children */
-		int Ci = dwt_child(i);
-		int *type_Ci = block_subband_int(type, 8, Ci);
-		int C_max = t_max_B_C(type_Ci);
+		int D_max = t_max_Di(type, i);
 
-		/* 16 grandchildren */
-		int Gi = dwt_grandchildren(i);
-		int *type_Gi = block_subband_int(type, 8, Gi);
-		int G_max = t_max_B_G(type_Gi);
-
-		if (C_max > max) {
-			max = C_max;
-		}
-
-		if (G_max > max) {
-			max = G_max;
+		if (D_max > max) {
+			max = D_max;
 		}
 	}
 
