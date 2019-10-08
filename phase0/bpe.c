@@ -2710,7 +2710,7 @@ int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, 
 
 	vlw_init(&vlw_tran_B);
 
-	dprint (("BPE Stage 2 t_max(B) = %i\n", t_max_B(type)));
+	dprint (("BPE(Stage 2): t_max(B)=%i t_max(D0)=%i t_max(D1)=%i t_max(D2)=%i\n", t_max_B(type), t_max_Di(type, 0), t_max_Di(type, 1), t_max_Di(type, 2)));
 
 	assert(bpe != NULL);
 
@@ -2859,7 +2859,7 @@ int bpe_decode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, 
 
 	vlw_init(&vlw_tran_B);
 
-	dprint (("BPE Stage 2 t_max(B) = %i\n", t_max_B(type)));
+	dprint (("BPE(Stage 2): t_max(B)=%i t_max(D0)=%i t_max(D1)=%i t_max(D2)=%i\n", t_max_B(type), t_max_Di(type, 0), t_max_Di(type, 1), t_max_Di(type, 2)));
 
 	assert(bpe != NULL);
 
