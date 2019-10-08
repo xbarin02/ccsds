@@ -2652,7 +2652,10 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 /* Stage 2 (encode children) on particular block */
 int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
 {
-	/* TODO */
+	struct vlw vlw_tran_B;
+
+	vlw_init(&vlw_tran_B);
+
 	dprint (("BPE Stage 2 t_max(B) = %i\n", t_max_B(type)));
 
 	assert(bpe != NULL);
@@ -2818,10 +2821,36 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 /* TODO */
 int bpe_decode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
 {
-	/* TODO */
+	struct vlw vlw_tran_B;
 
-	return RET_SUCCESS;
-}
+	vlw_init(&vlw_tran_B);
+
+	dprint (("BPE Stage 2 t_max(B) = %i\n", t_max_B(type)));
+
+	assert(bpe != NULL);
+
+	/* TODO update types */
+	{
+		int i;
+		size_t x, y;
+
+		for (i = 0; i < 3; ++i) {
+			int *type_Ci = block_subband_int(type, 8, dwt_child(i));
+			INT32 *sign_Ci = block_subband_INT32(sign, 8, dwt_child(i));
+			UINT32 *magn_Ci = block_subband_UINT32(magn, 8, dwt_child(i));
+			for (y = 0; y < 2; ++y) {
+				for (x = 0; x < 2; ++x) {
+					int *type_child = type_Ci + y*8*4 + x*4;
+					INT32 *sign_child = sign_Ci + y*8*4 + x*4;
+					UINT32 *magn_child = magn_Ci + y*8*4 + x*4;
+
+					update_type(type_child, bpe, magn_child, b, dwt_child(i));
+				}
+			}
+		}
+	}
+
+	return RET_SUCCESS;}
 
 /* decode parents */
 int bpe_decode_segment_bit_plane_coding_stage1(struct bpe *bpe, size_t b)
