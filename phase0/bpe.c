@@ -2586,6 +2586,23 @@ int t_max_B(int *type)
 	return max;
 }
 
+/* update type[] of parents according to magn[] at the bitplane b */
+void update_parent_types(struct bpe *bpe, size_t b, int *type, UINT32 *magn)
+{
+	int i;
+	size_t stride = 8;
+
+	for (i = 0; i < 3; ++i) {
+		update_type(
+			block_subband_int(type, stride, dwt_parent(i)),
+			bpe,
+			block_subband_UINT32(magn, stride, dwt_parent(i)),
+			b,
+			dwt_parent(i)
+		);
+	}
+}
+
 /* Stage 1 (encode parents) on particular block */
 int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, int *type, INT32 *sign, UINT32 *magn)
 {
@@ -2641,9 +2658,7 @@ int bpe_encode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	}
 
 	/* update types according to the just sent information */
-	for (i = 0; i < 3; ++i) {
-		update_type(type_p[i], bpe, magn_p[i], b, dwt_parent(i));
-	}
+	update_parent_types(bpe, b, type, magn);
 
 	return RET_SUCCESS;
 }
@@ -2811,9 +2826,7 @@ int bpe_decode_segment_bit_plane_coding_stage1_block(struct bpe *bpe, size_t b, 
 	}
 
 	/* update types according to the currently indicated information */
-	for (i = 0; i < 3; ++i) {
-		update_type(type_p[i], bpe, magn_p[i], b, dwt_parent(i));
-	}
+	update_parent_types(bpe, b, type, magn);
 
 	return RET_SUCCESS;
 }
