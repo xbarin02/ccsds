@@ -2728,10 +2728,15 @@ int bpe_encode_segment_bit_plane_coding_stage2_block(struct bpe *bpe, size_t b, 
 	/* update types */
 	update_children_types(bpe, b, type, magn);
 
+	/* cf. 4.5.3.1.7 */
+
+	/* as long, as the t_max_B(type) == 0, send tran_B;
+	 * once the tranB becomes > 0, do not send anything (tran_B = null) */
 	if (old_t_max_B == 0) {
 		vlw_push_bit((t_max_B(type) != 0), &vlw_tran_B);
 	}
 
+	/* if the currently signaled tran_B > 0, send tran_D */
 	if (t_max_B(type) > 0) {
 		for (i = 0; i < 3; ++i) {
 			if (old_t_max_D[i] == 0) {
