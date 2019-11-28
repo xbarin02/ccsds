@@ -564,6 +564,8 @@ int dwtint_encode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 	buff_x = malloc( (size_t) (width +4) * 5 * sizeof(int) );
 
 	if (NULL == buff_y || NULL == buff_x) {
+		free(buff_x);
+		free(buff_y);
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
@@ -608,6 +610,8 @@ int dwtint_decode_band(int *band, ptrdiff_t stride_y, ptrdiff_t stride_x, ptrdif
 	buff_x = malloc( (size_t) (width +4) * 5 * sizeof(int) );
 
 	if (NULL == buff_y || NULL == buff_x) {
+		free(buff_x);
+		free(buff_y);
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 

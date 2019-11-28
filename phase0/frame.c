@@ -194,10 +194,12 @@ int frame_write_pgm_data(const struct frame *frame, FILE *stream)
 			}
 			default:
 				dprint (("[ERROR] unhandled bit depth\n"));
+				free(line);
 				return RET_FAILURE_LOGIC_ERROR;
 		}
 		/* write line */
 		if (fwrite(line, depth_, width_, stream) < width_) {
+			free(line);
 			return RET_FAILURE_FILE_IO;
 		}
 	}
@@ -227,6 +229,9 @@ int frame_save_pgm(const struct frame *frame, const char *path)
 	err = frame_write_pgm_header(frame, stream);
 
 	if (err) {
+		if (stream != stdout) {
+			fclose(stream);
+		}
 		return err;
 	}
 
@@ -234,13 +239,17 @@ int frame_save_pgm(const struct frame *frame, const char *path)
 	err = frame_write_pgm_data(frame, stream);
 
 	if (err) {
+		if (stream != stdout) {
+			fclose(stream);
+		}
 		return err;
 	}
 
 	/* close file */
 	if (stream != stdout) {
-		if (EOF == fclose(stream))
+		if (EOF == fclose(stream)) {
 			return RET_FAILURE_FILE_IO;
+		}
 	}
 
 	return RET_SUCCESS;
@@ -439,6 +448,7 @@ int frame_read_pgm_data(struct frame *frame, FILE *stream)
 		/* read line */
 		if (fread(line, depth_, width_, stream) < width_) {
 			dprint (("[ERROR] end-of-file or error while reading a row\n"));
+			free(line);
 			return RET_FAILURE_FILE_IO;
 		}
 		/* copy pixels from line into framebuffer */
@@ -468,6 +478,7 @@ int frame_read_pgm_data(struct frame *frame, FILE *stream)
 				break;
 			}
 			default:
+				free(line);
 				return RET_FAILURE_LOGIC_ERROR;
 		}
 	}
@@ -502,6 +513,9 @@ int frame_load_pgm(struct frame *frame, const char *path)
 	err = frame_read_pgm_header(frame, stream);
 
 	if (err) {
+		if (stream != stdin) {
+			fclose(stream);
+		}
 		return err;
 	}
 
@@ -509,6 +523,9 @@ int frame_load_pgm(struct frame *frame, const char *path)
 	err = frame_alloc_data(frame);
 
 	if (err) {
+		if (stream != stdin) {
+			fclose(stream);
+		}
 		return err;
 	}
 
@@ -516,13 +533,17 @@ int frame_load_pgm(struct frame *frame, const char *path)
 	err = frame_read_pgm_data(frame, stream);
 
 	if (err) {
+		if (stream != stdin) {
+			fclose(stream);
+		}
 		return err;
 	}
 
 	/* close file */
 	if (stream != stdin) {
-		if (EOF == fclose(stream))
+		if (EOF == fclose(stream)) {
 			return RET_FAILURE_FILE_IO;
+		}
 	}
 
 	assert(frame != NULL);
@@ -564,6 +585,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 	}
 
 	if (fprintf(stream, "P5\n%lu %lu\n%lu\n", (unsigned long) width, (unsigned long) height, (unsigned long) maxval) < 0) {
+		fclose(stream);
 		return RET_FAILURE_FILE_IO;
 	}
 
@@ -577,6 +599,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 	line = malloc(stride);
 
 	if (NULL == line) {
+		fclose(stream);
 		return RET_FAILURE_MEMORY_ALLOCATION;
 	}
 
@@ -602,19 +625,22 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 				}
 				default:
 					dprint (("[ERROR] unhandled bit depth\n"));
+					fclose(stream);
 					return RET_FAILURE_LOGIC_ERROR;
 			}
 		}
 
 		if (1 != fwrite(line, stride, 1, stream)) {
+			fclose(stream);
 			return RET_FAILURE_FILE_IO;
 		}
 	}
 
 	free(line);
 
-	if (EOF == fclose(stream))
+	if (EOF == fclose(stream)) {
 		return RET_FAILURE_FILE_IO;
+	}
 
 	return RET_SUCCESS;
 }
