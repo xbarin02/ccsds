@@ -106,10 +106,12 @@ CONFIG[integer-inverse-stripmap-sequential-separable-sl]="1 2 0 0 16 128 1 1"
 CONFIG[integer-inverse-stripmap-sequential-separable-ml]="1 1 0 0 16 128 1 1"
 CONFIG[integer-inverse-stripmap-sequential-separable-conv]="1 0 0 0 16 128 1 1"
 
+mkdir -- plots
+
 for name in "${!CONFIG[@]}"; do
 	echo "measurement: $name"
 
-	PLOTFILE=plot-$name.txt
+	PLOTFILE=plots/plot-$name.txt
 
 	if test -e $PLOTFILE; then
 		continue;
