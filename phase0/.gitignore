@@ -4,6 +4,7 @@ doc
 # binaries
 compress
 perftest
+perftest2
 biotest
 pgm2h
 aquas
@@ -19,3 +20,6 @@ aquas
 
 # Makefile overlay
 Makefile.local
+
+# profiling files
+*.gcda

@@ -34,29 +34,29 @@ CONFIG[float-forward-stripmap-sequential-separable-sl]="1 2 0 0 16 128 0 0"
 CONFIG[float-forward-stripmap-sequential-separable-ml]="1 1 0 0 16 128 0 0"
 CONFIG[float-forward-stripmap-sequential-separable-conv]="1 0 0 0 16 128 0 0"
 
-CONFIG[float-inverse-4:3-interleaved-blocks]="0 2 2 2 16 64 1 0"
-CONFIG[float-inverse-4:3-interleaved-strips]="0 2 2 1 16 64 1 0"
-CONFIG[float-inverse-4:3-sequential-sl-quad]="0 2 2 0 16 64 1 0"
-CONFIG[float-inverse-4:3-sequential-sl-lines]="0 2 1 0 16 64 1 0"
-CONFIG[float-inverse-4:3-sequential-separable-sl]="0 2 0 0 16 64 1 0"
-CONFIG[float-inverse-4:3-sequential-separable-ml]="0 1 0 0 16 64 1 0"
-CONFIG[float-inverse-4:3-sequential-separable-conv]="0 0 0 0 16 64 1 0"
+#CONFIG[float-inverse-4:3-interleaved-blocks]="0 2 2 2 16 64 1 0"
+#CONFIG[float-inverse-4:3-interleaved-strips]="0 2 2 1 16 64 1 0"
+#CONFIG[float-inverse-4:3-sequential-sl-quad]="0 2 2 0 16 64 1 0"
+#CONFIG[float-inverse-4:3-sequential-sl-lines]="0 2 1 0 16 64 1 0"
+#CONFIG[float-inverse-4:3-sequential-separable-sl]="0 2 0 0 16 64 1 0"
+#CONFIG[float-inverse-4:3-sequential-separable-ml]="0 1 0 0 16 64 1 0"
+#CONFIG[float-inverse-4:3-sequential-separable-conv]="0 0 0 0 16 64 1 0"
 
-CONFIG[float-inverse-16:9-interleaved-blocks]="2 2 2 2 16 64 1 0"
-CONFIG[float-inverse-16:9-interleaved-strips]="2 2 2 1 16 64 1 0"
-CONFIG[float-inverse-16:9-sequential-sl-quad]="2 2 2 0 16 64 1 0"
-CONFIG[float-inverse-16:9-sequential-sl-lines]="2 2 1 0 16 64 1 0"
-CONFIG[float-inverse-16:9-sequential-separable-sl]="2 2 0 0 16 64 1 0"
-CONFIG[float-inverse-16:9-sequential-separable-ml]="2 1 0 0 16 64 1 0"
-CONFIG[float-inverse-16:9-sequential-separable-conv]="2 0 0 0 16 64 1 0"
+#CONFIG[float-inverse-16:9-interleaved-blocks]="2 2 2 2 16 64 1 0"
+#CONFIG[float-inverse-16:9-interleaved-strips]="2 2 2 1 16 64 1 0"
+#CONFIG[float-inverse-16:9-sequential-sl-quad]="2 2 2 0 16 64 1 0"
+#CONFIG[float-inverse-16:9-sequential-sl-lines]="2 2 1 0 16 64 1 0"
+#CONFIG[float-inverse-16:9-sequential-separable-sl]="2 2 0 0 16 64 1 0"
+#CONFIG[float-inverse-16:9-sequential-separable-ml]="2 1 0 0 16 64 1 0"
+#CONFIG[float-inverse-16:9-sequential-separable-conv]="2 0 0 0 16 64 1 0"
 
-CONFIG[float-inverse-stripmap-interleaved-blocks]="1 2 2 2 16 128 1 0"
-CONFIG[float-inverse-stripmap-interleaved-strips]="1 2 2 1 16 128 1 0"
-CONFIG[float-inverse-stripmap-sequential-sl-quad]="1 2 2 0 16 128 1 0"
-CONFIG[float-inverse-stripmap-sequential-sl-lines]="1 2 1 0 16 128 1 0"
-CONFIG[float-inverse-stripmap-sequential-separable-sl]="1 2 0 0 16 128 1 0"
-CONFIG[float-inverse-stripmap-sequential-separable-ml]="1 1 0 0 16 128 1 0"
-CONFIG[float-inverse-stripmap-sequential-separable-conv]="1 0 0 0 16 128 1 0"
+#CONFIG[float-inverse-stripmap-interleaved-blocks]="1 2 2 2 16 128 1 0"
+#CONFIG[float-inverse-stripmap-interleaved-strips]="1 2 2 1 16 128 1 0"
+#CONFIG[float-inverse-stripmap-sequential-sl-quad]="1 2 2 0 16 128 1 0"
+#CONFIG[float-inverse-stripmap-sequential-sl-lines]="1 2 1 0 16 128 1 0"
+#CONFIG[float-inverse-stripmap-sequential-separable-sl]="1 2 0 0 16 128 1 0"
+#CONFIG[float-inverse-stripmap-sequential-separable-ml]="1 1 0 0 16 128 1 0"
+#CONFIG[float-inverse-stripmap-sequential-separable-conv]="1 0 0 0 16 128 1 0"
 
 CONFIG[integer-forward-4:3-interleaved-blocks]="0 2 2 2 16 64 0 1"
 CONFIG[integer-forward-4:3-interleaved-strips]="0 2 2 1 16 64 0 1"
@@ -82,36 +82,36 @@ CONFIG[integer-forward-stripmap-sequential-separable-sl]="1 2 0 0 16 128 0 1"
 CONFIG[integer-forward-stripmap-sequential-separable-ml]="1 1 0 0 16 128 0 1"
 CONFIG[integer-forward-stripmap-sequential-separable-conv]="1 0 0 0 16 128 0 1"
 
-CONFIG[integer-inverse-4:3-interleaved-blocks]="0 2 2 2 16 64 1 1"
-CONFIG[integer-inverse-4:3-interleaved-strips]="0 2 2 1 16 64 1 1"
-CONFIG[integer-inverse-4:3-sequential-sl-quad]="0 2 2 0 16 64 1 1"
-CONFIG[integer-inverse-4:3-sequential-sl-lines]="0 2 1 0 16 64 1 1"
-CONFIG[integer-inverse-4:3-sequential-separable-sl]="0 2 0 0 16 64 1 1"
-CONFIG[integer-inverse-4:3-sequential-separable-ml]="0 1 0 0 16 64 1 1"
-CONFIG[integer-inverse-4:3-sequential-separable-conv]="0 0 0 0 16 64 1 1"
+#CONFIG[integer-inverse-4:3-interleaved-blocks]="0 2 2 2 16 64 1 1"
+#CONFIG[integer-inverse-4:3-interleaved-strips]="0 2 2 1 16 64 1 1"
+#CONFIG[integer-inverse-4:3-sequential-sl-quad]="0 2 2 0 16 64 1 1"
+#CONFIG[integer-inverse-4:3-sequential-sl-lines]="0 2 1 0 16 64 1 1"
+#CONFIG[integer-inverse-4:3-sequential-separable-sl]="0 2 0 0 16 64 1 1"
+#CONFIG[integer-inverse-4:3-sequential-separable-ml]="0 1 0 0 16 64 1 1"
+#CONFIG[integer-inverse-4:3-sequential-separable-conv]="0 0 0 0 16 64 1 1"
 
-CONFIG[integer-inverse-16:9-interleaved-blocks]="2 2 2 2 16 64 1 1"
-CONFIG[integer-inverse-16:9-interleaved-strips]="2 2 2 1 16 64 1 1"
-CONFIG[integer-inverse-16:9-sequential-sl-quad]="2 2 2 0 16 64 1 1"
-CONFIG[integer-inverse-16:9-sequential-sl-lines]="2 2 1 0 16 64 1 1"
-CONFIG[integer-inverse-16:9-sequential-separable-sl]="2 2 0 0 16 64 1 1"
-CONFIG[integer-inverse-16:9-sequential-separable-ml]="2 1 0 0 16 64 1 1"
-CONFIG[integer-inverse-16:9-sequential-separable-conv]="2 0 0 0 16 64 1 1"
+#CONFIG[integer-inverse-16:9-interleaved-blocks]="2 2 2 2 16 64 1 1"
+#CONFIG[integer-inverse-16:9-interleaved-strips]="2 2 2 1 16 64 1 1"
+#CONFIG[integer-inverse-16:9-sequential-sl-quad]="2 2 2 0 16 64 1 1"
+#CONFIG[integer-inverse-16:9-sequential-sl-lines]="2 2 1 0 16 64 1 1"
+#CONFIG[integer-inverse-16:9-sequential-separable-sl]="2 2 0 0 16 64 1 1"
+#CONFIG[integer-inverse-16:9-sequential-separable-ml]="2 1 0 0 16 64 1 1"
+#CONFIG[integer-inverse-16:9-sequential-separable-conv]="2 0 0 0 16 64 1 1"
 
-CONFIG[integer-inverse-stripmap-interleaved-blocks]="1 2 2 2 16 128 1 1"
-CONFIG[integer-inverse-stripmap-interleaved-strips]="1 2 2 1 16 128 1 1"
-CONFIG[integer-inverse-stripmap-sequential-sl-quad]="1 2 2 0 16 128 1 1"
-CONFIG[integer-inverse-stripmap-sequential-sl-lines]="1 2 1 0 16 128 1 1"
-CONFIG[integer-inverse-stripmap-sequential-separable-sl]="1 2 0 0 16 128 1 1"
-CONFIG[integer-inverse-stripmap-sequential-separable-ml]="1 1 0 0 16 128 1 1"
-CONFIG[integer-inverse-stripmap-sequential-separable-conv]="1 0 0 0 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-interleaved-blocks]="1 2 2 2 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-interleaved-strips]="1 2 2 1 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-sequential-sl-quad]="1 2 2 0 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-sequential-sl-lines]="1 2 1 0 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-sequential-separable-sl]="1 2 0 0 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-sequential-separable-ml]="1 1 0 0 16 128 1 1"
+#CONFIG[integer-inverse-stripmap-sequential-separable-conv]="1 0 0 0 16 128 1 1"
 
-mkdir -p -- plots
+mkdir -p -- plots2
 
 for name in "${!CONFIG[@]}"; do
 	echo "measurement: $name"
 
-	PLOTFILE=plots/plot-$name.txt
+	PLOTFILE=plots2/plot-$name.txt
 
 	if test -e $PLOTFILE; then
 		continue;
@@ -128,13 +128,13 @@ for name in "${!CONFIG[@]}"; do
 	config CONFIG_PERFTEST_DWTTYPE ${ARG[7]}
 
 	make distclean
-	make perftest EXTRA_CFLAGS=-fprofile-generate EXTRA_LDLIBS=-lgcov
+	make perftest2 EXTRA_CFLAGS=-fprofile-generate EXTRA_LDLIBS=-lgcov
 
-	./perftest
+	./perftest2
 
 	config CONFIG_PERFTEST_NUM ${ARG[5]}
 	make clean
-	make perftest EXTRA_CFLAGS=-fprofile-use
+	make perftest2 EXTRA_CFLAGS=-fprofile-use
 
-	./perftest | tee $PLOTFILE
+	./perftest2 | tee $PLOTFILE
 done
