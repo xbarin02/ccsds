@@ -4,6 +4,11 @@ Open122 is an open-source CCSDS 122.0 codec written in C programming language.
 The CCSDS 122.0 is a standard for lossy-to-lossless image data compression.
 The compression method targets instruments used on board of spacecraft.
 
+### Current status
+
+- The code fully implements the CCSDS 122.0 standard up to Stage 1.
+- Further stages have to be implemented.
+
 ### Prerequisites
 
 The library is written in pure C89 (ANSI C). No compiler extensions nor
