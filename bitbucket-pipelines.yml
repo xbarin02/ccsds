@@ -11,4 +11,13 @@ pipelines:
         script:
           - cd phase0
           - make
-
+    - step:
+        name: Infer analysis
+        image: tomasberanek/custom-infer:0.17.0
+        size: 2x
+        script:
+          - cd phase0
+          - make clean   #necessary
+          - infer -- make
+        after-script:
+          - cd phase0 && make clean   #optional
