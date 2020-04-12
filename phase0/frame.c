@@ -625,6 +625,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 				}
 				default:
 					dprint (("[ERROR] unhandled bit depth\n"));
+					free(line);
 					fclose(stream);
 					return RET_FAILURE_LOGIC_ERROR;
 			}
