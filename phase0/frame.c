@@ -581,6 +581,7 @@ int frame_dump(const struct frame *frame, const char *path, int factor)
 	width = ceil_multiple8(frame->width);
 
 	if (width > ULONG_MAX || height > ULONG_MAX) {
+		fclose(stream);
 		return RET_FAILURE_OVERFLOW_ERROR;
 	}
 
@@ -856,7 +857,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 	mse /= (double)height;
 	mse /= (double)width;
 
-	dprint (("[INFO] mse = %f\n", mse));
+	printf("[INFO] mse = %f\n", mse);
 
 	/*
 	 * The following code computes the PSNR which seems to be a bit
@@ -868,7 +869,7 @@ int frame_dump_mse(const struct frame *frameA, const struct frame *frameB)
 
 	psnr = 10. * log10( (double)maxval * (double)maxval / mse );
 
-	dprint (("[INFO] psnr = %f dB\n", psnr));
+	printf("[INFO] psnr = %f dB\n", psnr);
 #endif
 	return RET_SUCCESS;
 }
