@@ -3190,7 +3190,6 @@ int bpe_decode_segment_bit_plane_coding(struct bpe *bpe)
 /* write segment into bitstream */
 int bpe_encode_segment(struct bpe *bpe, int flush)
 {
-	size_t S;
 #if (DEBUG_ENCODE_BLOCKS == 1)
 	size_t blk;
 #endif
@@ -3198,9 +3197,7 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 
 	assert(bpe != NULL);
 
-	S = bpe->S;
-
-	dprint (("BPE: encoding segment %lu (%lu blocks)\n", bpe->segment_index, S));
+	dprint (("BPE: encoding segment %lu (%lu blocks)\n", bpe->segment_index, bpe->S));
 
 	/* next block is not valid block (behind the image) */
 	if (flush) {
@@ -3254,7 +3251,7 @@ int bpe_encode_segment(struct bpe *bpe, int flush)
 	}
 
 #if (DEBUG_ENCODE_BLOCKS == 1)
-	for (blk = 0; blk < S; ++blk) {
+	for (blk = 0; blk < bpe->S; ++blk) {
 		/* encode the block */
 		bpe_encode_block(bpe->segment + blk * BLOCK_SIZE, 8, bpe->bio);
 	}
